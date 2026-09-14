@@ -1,0 +1,16 @@
+/* Keep the schedule page intro copy on one line on desktop without changing other page heroes. */
+@media (min-width: 901px) {
+  .page-hero:has(+ .schedule-section) p {
+    max-width: none;
+    white-space: nowrap;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+}
+
+@media (max-width: 900px) {
+  .page-hero:has(+ .schedule-section) p {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
