@@ -1,4 +1,5 @@
 /* Keep the schedule page intro copy on one line on desktop without changing other page heroes. */
+/* This file is schedule-only so the shared PageHero layout remains unchanged elsewhere. */
 @media (min-width: 901px) {
   .page-hero:has(+ .schedule-section) p {
     max-width: none;
