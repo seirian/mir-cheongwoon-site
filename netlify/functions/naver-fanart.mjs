@@ -4,6 +4,7 @@ const BOARD_URL = `https://cafe.naver.com/f-e/cafes/${CAFE_ID}/menus/${MENU_ID}?
 const ARTICLE_LIST_URL = `https://apis.naver.com/cafe-web/cafe-boardlist-api/v1/cafes/${CAFE_ID}/menus/${MENU_ID}/articles`;
 const ARTICLE_URL = (articleId) => `https://apis.naver.com/cafe-web/cafe-articleapi/v3/cafes/${CAFE_ID}/articles/${articleId}`;
 const ARTICLE_PAGE_URL = (articleId) => `https://cafe.naver.com/f-e/cafes/${CAFE_ID}/articles/${articleId}`;
+const IMAGE_PROXY_PATH = '/.netlify/functions/naver-fanart-image';
 
 const responseHeaders = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -87,13 +88,21 @@ const isLikelyContentImage = (url) => {
   return !/(?:profile|emoticon|sticker|cafe_icon|default|banner|sp_|ico_)/i.test(url);
 };
 
+const imageFromTag = (tag) => {
+  for (const attribute of ['data-lazy-src', 'data-src', 'src']) {
+    const pattern = new RegExp(`(?:^|\\s)${attribute}\\s*=\\s*["']([^"']+)["']`, 'i');
+    const match = tag.match(pattern);
+    const url = normalizeImageUrl(match?.[1]);
+    if (isLikelyContentImage(url)) return url;
+  }
+  return '';
+};
+
 const imagesFromHtml = (html = '') => {
   const images = [];
   for (const tagMatch of html.matchAll(/<img\b[^>]*>/gi)) {
-    const tag = tagMatch[0];
-    const attrMatch = tag.match(/(?:data-lazy-src|data-src|src)\s*=\s*["']([^"']+)["']/i);
-    const url = normalizeImageUrl(attrMatch?.[1]);
-    if (isLikelyContentImage(url) && !images.includes(url)) images.push(url);
+    const url = imageFromTag(tagMatch[0]);
+    if (url && !images.includes(url)) images.push(url);
   }
   return images;
 };
@@ -208,14 +217,14 @@ const loadArticle = async (candidate) => {
   const contentHtml = firstText(article.contentHtml, article.content);
   const contentImages = imagesFromHtml(contentHtml);
   const structuredImages = imagesFromObject(article);
-  const imageUrl = contentImages[0] || structuredImages[0] || '';
-  if (!imageUrl) return null;
+  const sourceImageUrl = contentImages[0] || structuredImages[0] || '';
+  if (!sourceImageUrl) return null;
 
   return {
     articleId: candidate.articleId,
     title: firstText(article.subject, candidate.title, '팬아트'),
     author: authorFrom(article, candidate.node),
-    imageUrl,
+    imageUrl: `${IMAGE_PROXY_PATH}?url=${encodeURIComponent(sourceImageUrl)}`,
     articleUrl: ARTICLE_PAGE_URL(candidate.articleId),
     sourceDate: candidate.date,
   };
