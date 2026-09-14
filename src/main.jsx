@@ -6,6 +6,7 @@ import './styles.css';
 import './feature-overrides.css';
 import './schedule-harmony.css';
 import './schedule-preview-fixes.css';
+import './schedule-hero-fixes.css';
 import './site-width.css';
 import './fanart-live.css';
 import './schedule-quick-add.css';
