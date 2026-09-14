@@ -4,8 +4,9 @@
   .page-hero:has(+ .schedule-section) p {
     max-width: none;
     white-space: nowrap;
-    font-size: 16px;
+    font-size: clamp(15px, 1.15vw, 16px);
     line-height: 1.65;
+    letter-spacing: -.01em;
   }
 }
 
