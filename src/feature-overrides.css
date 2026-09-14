@@ -42,4 +42,93 @@
   border-radius: 28px;
   border: 1px solid #343648;
   background: linear-gradient(145deg,#252637,#171925);
+  transition: border-color .3s ease, box-shadow .3s ease, filter .3s ease;
+}
+
+.profile-photo-wrap.is-live .mir-profile-image {
+  border-color: #ff425c;
+  box-shadow:
+    0 0 0 3px rgba(255, 66, 92, .12),
+    0 0 26px rgba(255, 66, 92, .35),
+    0 0 58px rgba(255, 66, 92, .14);
+  filter: saturate(1.05);
+}
+
+.soop-status {
+  color: #e7e4ed;
+  text-decoration: none;
+  transition: color .25s ease, background .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+.soop-status:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,.24);
+}
+
+.live-signal {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+}
+
+.soop-status.is-live {
+  color: #fff;
+  background: rgba(94, 8, 21, .88);
+  border-color: rgba(255, 89, 110, .7);
+  box-shadow: 0 6px 24px rgba(255, 44, 72, .28);
+}
+
+.soop-status.is-live::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff4058;
+  box-shadow: 0 0 10px rgba(255, 64, 88, .95);
+  animation: live-dot-pulse 1.25s ease-in-out infinite;
+}
+
+.soop-status.is-live .live-signal {
+  color: #ff6478;
+}
+
+.soop-status.is-live .live-signal::before,
+.soop-status.is-live .live-signal::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: live-radio-wave 1.8s ease-out infinite;
+}
+
+.soop-status.is-live .live-signal::after {
+  animation-delay: .6s;
+}
+
+@keyframes live-radio-wave {
+  0% {
+    opacity: .8;
+    transform: scale(.65);
+  }
+  75%, 100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+
+@keyframes live-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(.78); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soop-status.is-live::before,
+  .soop-status.is-live .live-signal::before,
+  .soop-status.is-live .live-signal::after {
+    animation: none;
+  }
 }
