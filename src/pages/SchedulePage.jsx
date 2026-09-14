@@ -67,7 +67,7 @@ export default function SchedulePage() {
 
     async function loadFeaturedFanart() {
       try {
-        const response = await fetch('/.netlify/functions/naver-fanart', {
+        const response = await fetch('/.netlify/functions/naver-fanart?v=2', {
           headers: { Accept: 'application/json' },
         });
         const data = await response.json();
@@ -296,7 +296,14 @@ export default function SchedulePage() {
                   </div>
                 ) : fanart ? (
                   <a className="fanart-visual fanart-live-link" href={fanart.articleUrl} target="_blank" rel="noreferrer" aria-label={`${fanart.title} 게시글 보기`}>
-                    <img src={fanart.imageUrl} alt={`${fanart.title} - ${fanart.author}`} />
+                    <img
+                      src={fanart.imageUrl}
+                      alt={`${fanart.title} - ${fanart.author}`}
+                      onError={() => {
+                        setFanart(null);
+                        setFanartError(true);
+                      }}
+                    />
                     <span className="fanart-open-label">팬아트 게시글 보기</span>
                   </a>
                 ) : (
