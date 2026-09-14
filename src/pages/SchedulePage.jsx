@@ -18,6 +18,11 @@ const RELATIVE_DAYS = [
 const pad = (value) => String(value).padStart(2, '0');
 const toDateKey = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 const formatSideDate = (date) => `${date.getMonth() + 1}월 ${date.getDate()}일`;
+const formatFanartDate = (dateKey) => {
+  if (!dateKey) return '';
+  const [, month, day] = dateKey.split('-');
+  return `${Number(month)}월 ${Number(day)}일`;
+};
 
 export default function SchedulePage() {
   const now = new Date();
@@ -29,6 +34,9 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [daySummary, setDaySummary] = useState('today');
+  const [fanart, setFanart] = useState(null);
+  const [fanartLoading, setFanartLoading] = useState(true);
+  const [fanartError, setFanartError] = useState(false);
 
   useEffect(() => {
     async function loadSchedule() {
@@ -52,6 +60,41 @@ export default function SchedulePage() {
     }
 
     loadSchedule();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadFeaturedFanart() {
+      try {
+        const response = await fetch('/.netlify/functions/naver-fanart', {
+          headers: { Accept: 'application/json' },
+        });
+        const data = await response.json();
+        if (cancelled) return;
+
+        if (response.ok && data?.status === 'ok' && data.imageUrl && data.articleUrl) {
+          setFanart(data);
+          setFanartError(false);
+        } else {
+          setFanart(null);
+          setFanartError(true);
+        }
+      } catch (loadError) {
+        console.error('Featured fan art load failed', loadError);
+        if (!cancelled) {
+          setFanart(null);
+          setFanartError(true);
+        }
+      } finally {
+        if (!cancelled) setFanartLoading(false);
+      }
+    }
+
+    loadFeaturedFanart();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const eventsByDate = useMemo(() => {
@@ -240,24 +283,43 @@ export default function SchedulePage() {
                     <span>FAN ART</span>
                     <h3>오늘의 팬아트</h3>
                   </div>
-                  <small>FEATURED</small>
+                  <small>{fanart ? (fanart.isToday ? 'TODAY' : `RECENT · ${formatFanartDate(fanart.sourceDate)}`) : 'FEATURED'}</small>
                 </div>
-                <div className="fanart-visual" role="img" aria-label="팬아트 이미지 영역 미리보기">
-                  <div className="fanart-placeholder">
-                    <ImageIcon size={42} />
-                    <strong>FAN ART</strong>
-                    <p>고정 영역 안에서 원본 비율을 유지해 크게 표시됩니다.</p>
+
+                {fanartLoading ? (
+                  <div className="fanart-visual" role="status" aria-label="팬아트 불러오는 중">
+                    <div className="fanart-placeholder fanart-loading">
+                      <ImageIcon size={42} />
+                      <strong>LOADING</strong>
+                      <p>오늘의 팬아트를 불러오고 있습니다.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="fanart-caption">
+                ) : fanart ? (
+                  <a className="fanart-visual fanart-live-link" href={fanart.articleUrl} target="_blank" rel="noreferrer" aria-label={`${fanart.title} 게시글 보기`}>
+                    <img src={fanart.imageUrl} alt={`${fanart.title} - ${fanart.author}`} />
+                    <span className="fanart-open-label">팬아트 게시글 보기</span>
+                  </a>
+                ) : (
+                  <div className="fanart-visual" role="img" aria-label="팬아트 이미지 영역">
+                    <div className="fanart-placeholder">
+                      <ImageIcon size={42} />
+                      <strong>FAN ART</strong>
+                      <p>{fanartError ? '팬아트를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.' : '표시할 팬아트가 없습니다.'}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="fanart-caption fanart-live-caption">
                   <div>
-                    <strong>팬아트 제목 영역</strong>
-                    <span>@artist</span>
+                    <strong>{fanart?.title || '오늘의 팬아트'}</strong>
+                    <span>{fanart ? fanart.author : '네이버 팬아트 게시판에서 자동으로 선정됩니다.'}</span>
                   </div>
-                  <button type="button" aria-label="이전 팬아트"><ChevronLeft size={17} /></button>
-                  <button type="button" aria-label="다음 팬아트"><ChevronRight size={17} /></button>
+                  {fanart && (
+                    <a className="fanart-post-link" href={fanart.articleUrl} target="_blank" rel="noreferrer">
+                      원본 게시글
+                    </a>
+                  )}
                 </div>
-                <div className="fanart-dots" aria-hidden="true"><i className="active" /><i /><i /></div>
               </section>
             </aside>
           </div>
