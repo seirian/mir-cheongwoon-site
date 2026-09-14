@@ -10,7 +10,7 @@ export default function HomePage() {
         <div className="home-hero-content">
           <span className="eyebrow"><Sparkles size={15} /> MIR × CHEONGWOON BAND</span>
           <h1>목소리와 연주가 만나<br /><em>하나의 무대</em>가 되는 순간</h1>
-          <p>버튜버 미르와 청운밴드가 함께 만든 공연, 음악, 그리고 기억을 한곳에 기록합니다.</p>
+          <p>미르와 청운밴드가 함께 만든 공연, 음악, 그리고 기억을 한곳에 기록합니다.</p>
           <div className="hero-actions">
             <Link to="/history" className="btn btn-primary">공연 이력 보기 <ArrowRight size={17} /></Link>
             <Link to="/gallery" className="btn btn-ghost">영상 및 갤러리 둘러보기</Link>
