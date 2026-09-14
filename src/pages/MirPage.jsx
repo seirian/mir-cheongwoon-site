@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import PageHero from '../components/PageHero';
-import { MIR_PROFILE_IMAGE } from '../data/mirProfileImage';
 import { mirProfile } from '../data/siteData';
 
+const MIR_PROFILE_IMAGE = '/mir-profile-site.webp?v=20260914-1';
 const MIR_SOOP_URL = 'https://play.sooplive.com/alice427';
 const LIVE_CHECK_INTERVAL = 60_000;
 
@@ -68,7 +68,14 @@ export default function MirPage() {
       <PageHero eyebrow="ABOUT MIR" title="미르" description="방송에서 무대까지, 미르님의 이야기를 소개합니다." />
       <section className="section-wrap profile-layout">
         <div className={`profile-photo-wrap${isLive ? ' is-live' : ''}`}>
-          <img className="mir-profile-image" src={MIR_PROFILE_IMAGE} alt="버추얼 스트리머 미르 프로필" />
+          <img
+            className="mir-profile-image"
+            src={MIR_PROFILE_IMAGE}
+            alt="버추얼 스트리머 미르 프로필"
+            width="640"
+            height="360"
+            decoding="async"
+          />
           <a
             className={`photo-caption soop-status${isLive ? ' is-live' : ''}`}
             href={liveInfo?.watchUrl || MIR_SOOP_URL}
