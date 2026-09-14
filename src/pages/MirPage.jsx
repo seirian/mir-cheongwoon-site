@@ -1,17 +1,80 @@
+import { useEffect, useState } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import { mirProfile } from '../data/siteData';
 
 const MIR_PROFILE_IMAGE = 'https://i.namu.wiki/i/AWJzDHVawT3NOixrIFVPVnLo0GowaVHBThdOQ8vm8BQOBiBDpy71II4UW5_WzUaGZ7IVpbKz_Pq-D0Y3-_yiAwAWLJXdR_b-JhqBIU5XvWsroDNPJOT12lnr_z_QpnJVaRgBsFXd2Yvr95YhiMVemQ.webp';
+const MIR_SOOP_URL = 'https://play.sooplive.com/alice427';
+const LIVE_CHECK_INTERVAL = 60_000;
 
 export default function MirPage() {
+  const [liveStatus, setLiveStatus] = useState('unknown');
+  const [liveInfo, setLiveInfo] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const checkLiveStatus = async () => {
+      try {
+        const response = await fetch('/.netlify/functions/soop-live', {
+          headers: { Accept: 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Live status request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!active) return;
+
+        if (['live', 'offline', 'unknown'].includes(data.status)) {
+          setLiveStatus(data.status);
+          setLiveInfo(data.status === 'live' ? data : null);
+        } else {
+          setLiveStatus('unknown');
+          setLiveInfo(null);
+        }
+      } catch {
+        if (active) {
+          setLiveStatus('unknown');
+          setLiveInfo(null);
+        }
+      }
+    };
+
+    checkLiveStatus();
+    const timer = window.setInterval(checkLiveStatus, LIVE_CHECK_INTERVAL);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const isLive = liveStatus === 'live';
+  const statusLabel = isLive
+    ? 'LIVE ON SOOP'
+    : liveStatus === 'offline'
+      ? 'SOOP OFFLINE'
+      : 'SOOP';
+
   return (
     <>
       <PageHero eyebrow="ABOUT MIR" title="미르" description="방송에서 무대까지, 미르님의 이야기를 소개합니다." />
       <section className="section-wrap profile-layout">
-        <div className="profile-photo-wrap">
+        <div className={`profile-photo-wrap${isLive ? ' is-live' : ''}`}>
           <img className="mir-profile-image" src={MIR_PROFILE_IMAGE} alt="버추얼 스트리머 미르 프로필" />
-          <div className="photo-caption"><Radio size={16}/> LIVE ON SOOP</div>
+          <a
+            className={`photo-caption soop-status${isLive ? ' is-live' : ''}`}
+            href={liveInfo?.watchUrl || MIR_SOOP_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-live="polite"
+            title={isLive && liveInfo?.title ? `현재 방송: ${liveInfo.title}` : '미르 SOOP 채널 열기'}
+          >
+            <span className="live-signal" aria-hidden="true"><Radio size={16}/></span>
+            <span>{statusLabel}</span>
+          </a>
         </div>
         <div className="profile-copy">
           <span className="soft-label">{mirProfile.role}</span>
