@@ -13,7 +13,9 @@ const responseHeaders = {
 
 const naverHeaders = {
   Accept: 'application/json, text/plain, */*',
+  Origin: 'https://cafe.naver.com',
   Referer: BOARD_URL,
+  'X-Cafe-Product': 'pc',
   'User-Agent': 'Mozilla/5.0 (compatible; MirCheongwoonSite/1.0; +https://mir-cheongwoon.netlify.app)',
 };
 
@@ -124,11 +126,16 @@ const firstText = (...values) => {
 
 const authorFrom = (article, listNode) => {
   const writer = article?.writer || article?.member || article?.author || {};
+  const writerInfo = listNode?.writerInfo || {};
   return firstText(
     writer.nickName,
+    writer.nick,
     writer.nickname,
     writer.name,
     writer.memberNickname,
+    writerInfo.nickName,
+    writerInfo.nick,
+    writerInfo.nickname,
     article?.writerNickname,
     article?.writerName,
     article?.memberNickname,
@@ -168,6 +175,7 @@ const listArticles = async () => {
   const data = unwrap(await response.json());
   const raw = data.articleList || data.articles || [];
   return raw
+    .filter((entry) => !entry?.type || entry.type === 'ARTICLE')
     .map((entry) => {
       const node = articleNode(entry);
       const articleId = Number(node.articleId || node.articleid || 0);
@@ -187,8 +195,6 @@ const listArticles = async () => {
 const loadArticle = async (candidate) => {
   const url = new URL(ARTICLE_URL(candidate.articleId));
   url.searchParams.set('query', '');
-  url.searchParams.set('menuId', MENU_ID);
-  url.searchParams.set('boardType', 'L');
   url.searchParams.set('useCafeId', 'true');
   url.searchParams.set('requestFrom', 'A');
 
