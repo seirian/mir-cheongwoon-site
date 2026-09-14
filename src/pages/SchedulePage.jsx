@@ -80,73 +80,88 @@ export default function SchedulePage() {
       <section className="section-wrap schedule-section">
         {!isSupabaseConfigured && <div className="setup-banner">Supabase 연결이 필요합니다.</div>}
 
-        <div className="schedule-toolbar">
-          <button className="schedule-nav-button" disabled={isFirstMonth} onClick={() => moveMonth(-1)} aria-label="이전 달">
-            <ChevronLeft size={20} />
-          </button>
-          <div className="schedule-heading">
-            <small>MIR MONTHLY SCHEDULE</small>
-            <h2>✨ {year}년 {month + 1}월</h2>
+        <div className="schedule-control-panel">
+          <div className="schedule-toolbar">
+            <button className="schedule-nav-button" disabled={isFirstMonth} onClick={() => moveMonth(-1)} aria-label="이전 달">
+              <ChevronLeft size={20} />
+            </button>
+            <div className="schedule-heading">
+              <small>MIR MONTHLY SCHEDULE</small>
+              <h2>✨ {year}년 {month + 1}월</h2>
+            </div>
+            <button className="schedule-nav-button" disabled={isLastMonth} onClick={() => moveMonth(1)} aria-label="다음 달">
+              <ChevronRight size={20} />
+            </button>
           </div>
-          <button className="schedule-nav-button" disabled={isLastMonth} onClick={() => moveMonth(1)} aria-label="다음 달">
-            <ChevronRight size={20} />
-          </button>
-        </div>
 
-        <div className="schedule-month-tabs" aria-label="연도 선택">
-          {YEARS.map((item) => (
-            <button key={item} className={item === year ? 'active' : ''} onClick={() => setYear(item)}>
-              {item}년
-            </button>
-          ))}
-        </div>
+          <div className="schedule-period-group">
+            <span className="schedule-period-label">YEAR</span>
+            <div className="schedule-year-tabs" aria-label="연도 선택">
+              {YEARS.map((item) => (
+                <button key={item} className={item === year ? 'active' : ''} onClick={() => setYear(item)}>
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="schedule-month-tabs" aria-label="월 선택">
-          {MONTHS.map((item) => (
-            <button key={item} className={item === month ? 'active' : ''} onClick={() => setMonth(item)}>
-              {item + 1}월
-            </button>
-          ))}
-        </div>
+          <div className="schedule-period-group schedule-period-group-month">
+            <span className="schedule-period-label">MONTH</span>
+            <div className="schedule-month-tabs" aria-label="월 선택">
+              {MONTHS.map((item) => (
+                <button key={item} className={item === month ? 'active' : ''} onClick={() => setMonth(item)}>
+                  {item + 1}월
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="schedule-legend">
-          {CATEGORIES.map((category) => <span key={category} className={`category-${category}`}>{category}</span>)}
-          <span className="category-기타">기타 일정</span>
+          <div className="schedule-legend">
+            {CATEGORIES.map((category) => (
+              <span key={category} className={`legend-${category}`}>
+                <i className={`category-${category}`} />{category}
+              </span>
+            ))}
+            <span className="legend-기타"><i className="category-기타" />기타 일정</span>
+          </div>
         </div>
 
         {error && <div className="admin-message">{error}</div>}
         {loading ? <div className="loading">일정표를 불러오는 중...</div> : (
-          <div className="schedule-scroll">
-            <div className="sheet-calendar">
-              <div className="schedule-weekdays">
-                {DAY_LABELS.map((day, index) => <div key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</div>)}
-              </div>
-              <div className="schedule-grid">
-                {days.map((date) => {
-                  const key = toDateKey(date);
-                  const dayEvents = eventsByDate[key] || [];
-                  const isCurrentMonth = date.getFullYear() === year && date.getMonth() === month;
-                  const isToday = key === todayKey;
-                  return (
-                    <article key={key} className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}`}>
-                      <div className="schedule-date">{date.getDate()}</div>
-                      <div className="schedule-day-events">
-                        {dayEvents.map((event) => (
-                          <div key={event.id} className={`schedule-event category-${event.category || '기타'}`}>
-                            {(event.start_time || event.end_time) && (
-                              <div className="schedule-event-time">
-                                {event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}
-                              </div>
-                            )}
-                            <div className="schedule-event-title">{event.title}</div>
-                            {event.description && <div className="schedule-event-description">{event.description}</div>}
-                            {event.link_url && <a href={event.link_url} target="_blank" rel="noreferrer">관련 링크</a>}
-                          </div>
-                        ))}
-                      </div>
-                    </article>
-                  );
-                })}
+          <div className="schedule-calendar-frame">
+            <div className="schedule-scroll-hint">← 좌우로 밀어서 일정을 확인하세요 →</div>
+            <div className="schedule-scroll">
+              <div className="sheet-calendar">
+                <div className="schedule-weekdays">
+                  {DAY_LABELS.map((day, index) => <div key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</div>)}
+                </div>
+                <div className="schedule-grid">
+                  {days.map((date) => {
+                    const key = toDateKey(date);
+                    const dayEvents = eventsByDate[key] || [];
+                    const isCurrentMonth = date.getFullYear() === year && date.getMonth() === month;
+                    const isToday = key === todayKey;
+                    return (
+                      <article key={key} className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}`}>
+                        <div className="schedule-date">{date.getDate()}</div>
+                        <div className="schedule-day-events">
+                          {dayEvents.map((event) => (
+                            <div key={event.id} className={`schedule-event category-${event.category || '기타'}`}>
+                              {(event.start_time || event.end_time) && (
+                                <div className="schedule-event-time">
+                                  {event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}
+                                </div>
+                              )}
+                              <div className="schedule-event-title">{event.title}</div>
+                              {event.description && <div className="schedule-event-description">{event.description}</div>}
+                              {event.link_url && <a href={event.link_url} target="_blank" rel="noreferrer">관련 링크</a>}
+                            </div>
+                          ))}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
