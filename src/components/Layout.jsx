@@ -6,6 +6,7 @@ const links = [
   ['/mir', '미르'],
   ['/band', '청운밴드'],
   ['/history', '공연 이력'],
+  ['/schedule', '일정표'],
   ['/gallery', '갤러리'],
 ];
 
