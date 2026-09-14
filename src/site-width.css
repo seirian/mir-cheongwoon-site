@@ -1,0 +1,24 @@
+:root {
+  --max: 1320px;
+}
+
+@media (min-width: 1201px) {
+  .schedule-scroll {
+    overflow-x: hidden;
+  }
+
+  .sheet-calendar {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 1200px) {
+  .schedule-scroll {
+    overflow-x: auto;
+  }
+
+  .sheet-calendar {
+    min-width: 900px;
+  }
+}
