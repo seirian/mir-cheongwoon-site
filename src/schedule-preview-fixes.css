@@ -1,0 +1,31 @@
+/* Preview-only refinements for the schedule dashboard. */
+.memo-card {
+  display: block !important;
+  grid-template-columns: none !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.memo-card > div {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.memo-card span,
+.memo-card h3,
+.memo-card p {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+.memo-card h3 {
+  margin: 6px 0 0;
+}
+
+.memo-card p {
+  margin: 10px 0 0;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
