@@ -16,9 +16,9 @@ export const bandInfo = {
 };
 
 export const bandMembers = [
-  { id: 1, name: 'Ray', position: '기타', comment: '청운밴드 기타리스트 Ray입니다', image: '' },
-  { id: 2, name: 'SweetBerry', position: '베이스', comment: '청운밴드 베이시스트 SweetBerry입니다', image: '' },
-  { id: 3, name: '맹감자', position: '키보드', comment: '청운밴드 키보드 맹감자입니다', image: '' },
+  { id: 1, name: 'Ray', position: 'GUITAR', comment: '청운밴드 기타리스트 Ray입니다', image: '' },
+  { id: 2, name: 'SweetBerry', position: 'BASS', comment: '청운밴드 베이시스트 SweetBerry입니다', image: '' },
+  { id: 3, name: '맹감자', position: 'KEYBOARD', comment: '청운밴드 키보드 맹감자입니다', image: '' },
   { id: 4, name: '멤버 04', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
 ];
 
