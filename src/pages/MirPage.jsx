@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import PageHero from '../components/PageHero';
+import mirProfileImage from '../assets/mir-profile.webp';
 import { mirProfile } from '../data/siteData';
 
-const MIR_PROFILE_IMAGE = 'https://i.namu.wiki/i/AWJzDHVawT3NOixrIFVPVnLo0GowaVHBThdOQ8vm8BQOBiBDpy71II4UW5_WzUaGZ7IVpbKz_Pq-D0Y3-_yiAwAWLJXdR_b-JhqBIU5XvWsroDNPJOT12lnr_z_QpnJVaRgBsFXd2Yvr95YhiMVemQ.webp';
+const MIR_PROFILE_IMAGE = mirProfileImage;
 const MIR_SOOP_URL = 'https://play.sooplive.com/alice427';
 const LIVE_CHECK_INTERVAL = 60_000;
 
