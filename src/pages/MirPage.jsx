@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
 import PageHero from '../components/PageHero';
-import mirProfileImage from '../assets/mir-profile.webp';
+import mirProfileImage from '../assets/mirProfileData';
 import { mirProfile } from '../data/siteData';
 
 const MIR_PROFILE_IMAGE = mirProfileImage;
