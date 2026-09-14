@@ -3,7 +3,7 @@ import { Radio, Sparkles } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import { mirProfile } from '../data/siteData';
 
-const MIR_PROFILE_IMAGE = '/mir-profile-site.webp?v=20260914-1';
+const MIR_PROFILE_IMAGE = '/mir-profile-site-v2.webp';
 const MIR_SOOP_URL = 'https://play.sooplive.com/alice427';
 const LIVE_CHECK_INTERVAL = 60_000;
 
@@ -74,6 +74,7 @@ export default function MirPage() {
             alt="버추얼 스트리머 미르 프로필"
             width="640"
             height="360"
+            loading="eager"
             decoding="async"
           />
           <a
