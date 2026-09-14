@@ -7,7 +7,7 @@ const links = [
   ['/band', '청운밴드'],
   ['/history', '공연 이력'],
   ['/schedule', '일정표'],
-  ['/gallery', '갤러리'],
+  ['/gallery', '영상 및 갤러리'],
 ];
 
 export default function Layout() {
