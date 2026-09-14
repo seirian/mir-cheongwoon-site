@@ -12,13 +12,13 @@ export const bandInfo = {
   name: '청운밴드',
   tagline: '라이브 무대의 에너지를 함께 만드는 뮤지션 팀',
   description:
-    '청운밴드의 결성 배경, 음악적 색깔, 주요 활동과 미르님과의 협업 관계를 소개하는 영역입니다. 실제 소개 문구로 교체해서 사용하세요.',
+    '청운밴드는 단순한 세션이 아닌, 미르와 함께 여름을 노래하는 동료입니다.',
 };
 
 export const bandMembers = [
-  { id: 1, name: '멤버 01', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
-  { id: 2, name: '멤버 02', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
-  { id: 3, name: '멤버 03', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
+  { id: 1, name: 'Ray', position: '기타', comment: '청운밴드 기타리스트 Ray입니다', image: '' },
+  { id: 2, name: 'SweetBerry', position: '베이스', comment: '청운밴드 베이시스트 SweetBerry입니다', image: '' },
+  { id: 3, name: '맹감자', position: '키보드', comment: '청운밴드 키보드 맹감자입니다', image: '' },
   { id: 4, name: '멤버 04', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
 ];
 
