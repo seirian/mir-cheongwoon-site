@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Image as ImageIcon, StickyNote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
@@ -227,7 +227,6 @@ export default function SchedulePage() {
               </section>
 
               <section className="schedule-side-card schedule-note-card memo-card">
-                <div className="schedule-note-icon"><StickyNote size={19} /></div>
                 <div>
                   <span>MEMO</span>
                   <h3>메모</h3>
