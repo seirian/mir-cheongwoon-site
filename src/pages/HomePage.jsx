@@ -1,4 +1,4 @@
-import { ArrowRight, Camera, CalendarDays, Music2, Sparkles } from 'lucide-react';
+import { ArrowRight, CalendarDays, Music2, PlaySquare, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function HomePage() {
@@ -13,7 +13,7 @@ export default function HomePage() {
           <p>버튜버 미르와 청운밴드가 함께 만든 공연, 음악, 그리고 기억을 한곳에 기록합니다.</p>
           <div className="hero-actions">
             <Link to="/history" className="btn btn-primary">공연 이력 보기 <ArrowRight size={17} /></Link>
-            <Link to="/gallery" className="btn btn-ghost">갤러리 둘러보기</Link>
+            <Link to="/gallery" className="btn btn-ghost">영상 및 갤러리 둘러보기</Link>
           </div>
         </div>
         <div className="hero-stage" aria-hidden="true">
@@ -28,7 +28,7 @@ export default function HomePage() {
         <Link className="feature-card" to="/mir"><span className="feature-icon"><Sparkles /></span><small>VTUBER</small><h2>미르</h2><p>미르님의 방송과 음악 활동을 소개합니다.</p><ArrowRight /></Link>
         <Link className="feature-card" to="/band"><span className="feature-icon"><Music2 /></span><small>MUSICIAN</small><h2>청운밴드</h2><p>밴드 이야기와 멤버들을 만나보세요.</p><ArrowRight /></Link>
         <Link className="feature-card" to="/history"><span className="feature-icon"><CalendarDays /></span><small>HISTORY</small><h2>공연 이력</h2><p>함께한 무대의 발자취를 연도별로 기록합니다.</p><ArrowRight /></Link>
-        <Link className="feature-card" to="/gallery"><span className="feature-icon"><Camera /></span><small>GALLERY</small><h2>갤러리</h2><p>콘서트와 공연별 사진을 모아 볼 수 있습니다.</p><ArrowRight /></Link>
+        <Link className="feature-card" to="/gallery"><span className="feature-icon"><PlaySquare /></span><small>MEDIA</small><h2>영상 및 갤러리</h2><p>YouTube 영상과 공연별 사진을 함께 모아 볼 수 있습니다.</p><ArrowRight /></Link>
       </section>
     </>
   );
