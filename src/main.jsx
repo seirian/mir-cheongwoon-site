@@ -5,6 +5,7 @@ import App from './App';
 import './styles.css';
 import './feature-overrides.css';
 import './schedule-harmony.css';
+import './schedule-preview-fixes.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
