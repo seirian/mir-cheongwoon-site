@@ -19,7 +19,7 @@ export default function GalleryDetailPage() {
   }, [id]);
 
   if (loading) return <div className="section-wrap loading">불러오는 중...</div>;
-  if (!gallery) return <div className="section-wrap empty-state"><h2>갤러리를 찾을 수 없습니다.</h2><Link to="/gallery">목록으로</Link></div>;
+  if (!gallery) return <div className="section-wrap empty-state"><h2>갤러리를 찾을 수 없습니다.</h2><Link to="/gallery?view=gallery">목록으로</Link></div>;
 
   const images = [...(gallery.gallery_images || [])].sort((a,b) => a.sort_order - b.sort_order);
   const publicUrl = (path) => supabase.storage.from('gallery').getPublicUrl(path).data.publicUrl;
@@ -27,7 +27,7 @@ export default function GalleryDetailPage() {
   return (
     <>
       <section className="gallery-detail-head section-wrap">
-        <Link to="/gallery"><ArrowLeft size={16}/> 갤러리 목록</Link>
+        <Link to="/gallery?view=gallery"><ArrowLeft size={16}/> 갤러리 목록</Link>
         <span className="eyebrow">{gallery.event_date}</span><h1>{gallery.title}</h1><p>{gallery.description}</p>
       </section>
       <section className="section-wrap photo-masonry">
