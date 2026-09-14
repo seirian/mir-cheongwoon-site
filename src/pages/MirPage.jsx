@@ -57,6 +57,11 @@ export default function MirPage() {
     : liveStatus === 'offline'
       ? 'SOOP OFFLINE'
       : 'SOOP';
+  const statusDescription = isLive
+    ? `미르가 현재 SOOP에서 방송 중입니다${liveInfo?.title ? `: ${liveInfo.title}` : ''}`
+    : liveStatus === 'offline'
+      ? '미르는 현재 SOOP에서 방송 중이 아닙니다.'
+      : 'SOOP 방송 상태를 확인할 수 없습니다.';
 
   return (
     <>
@@ -69,11 +74,11 @@ export default function MirPage() {
             href={liveInfo?.watchUrl || MIR_SOOP_URL}
             target="_blank"
             rel="noreferrer"
-            aria-live="polite"
-            title={isLive && liveInfo?.title ? `현재 방송: ${liveInfo.title}` : '미르 SOOP 채널 열기'}
+            aria-label={statusDescription}
+            title={statusDescription}
           >
             <span className="live-signal" aria-hidden="true"><Radio size={16}/></span>
-            <span>{statusLabel}</span>
+            <span aria-live="polite">{statusLabel}</span>
           </a>
         </div>
         <div className="profile-copy">
