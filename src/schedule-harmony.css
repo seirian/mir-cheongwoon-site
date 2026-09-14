@@ -1,4 +1,4 @@
-/* Schedule visual harmony: keep the spreadsheet layout while matching the site's dark violet shell. */
+/* Schedule dashboard: reinterpret the source sheet's information layout with the site's dark visual system. */
 .schedule-section {
   padding-top: 56px;
 }
@@ -6,47 +6,70 @@
 .schedule-control-panel {
   position: relative;
   overflow: hidden;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
   padding: 26px 28px 22px;
   border: 1px solid var(--line);
   border-radius: 24px;
   background:
-    radial-gradient(circle at 50% -30%, rgba(157, 123, 255, .17), transparent 42%),
+    radial-gradient(circle at 50% -35%, rgba(157,123,255,.18), transparent 42%),
     linear-gradient(145deg, #191b27, #12131b);
-  box-shadow: 0 20px 55px rgba(0, 0, 0, .18);
+  box-shadow: 0 20px 55px rgba(0,0,0,.18);
 }
 
 .schedule-control-panel::before {
   content: '';
   position: absolute;
-  width: 180px;
-  height: 180px;
+  width: 190px;
+  height: 190px;
   right: -80px;
-  top: -110px;
+  top: -115px;
   border-radius: 50%;
-  background: rgba(255, 125, 182, .12);
-  filter: blur(42px);
+  background: rgba(255,125,182,.13);
+  filter: blur(44px);
   pointer-events: none;
 }
 
 .schedule-toolbar {
   position: relative;
   z-index: 1;
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  gap: 18px;
+  align-items: center;
+  max-width: 680px;
   margin: 0 auto 24px;
 }
 
-.schedule-heading small {
+.schedule-heading {
+  text-align: center;
+}
+
+.schedule-heading small,
+.schedule-panel-head span,
+.schedule-side-heading span,
+.schedule-note-card span {
   color: #b9a6ff;
+  font: 700 10px Outfit, sans-serif;
+  letter-spacing: .18em;
 }
 
 .schedule-heading h2 {
+  margin: 5px 0 0;
   color: #fff;
-  text-shadow: 0 8px 28px rgba(157, 123, 255, .14);
+  font-size: 30px;
+  letter-spacing: -.04em;
+  text-shadow: 0 8px 28px rgba(157,123,255,.14);
 }
 
 .schedule-nav-button {
-  background: rgba(31, 32, 45, .88);
-  border-color: #36394a;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #36394a;
+  border-radius: 12px;
+  background: rgba(31,32,45,.88);
+  color: white;
   transition: border-color .2s ease, background .2s ease, transform .2s ease;
 }
 
@@ -56,9 +79,14 @@
   transform: translateY(-1px);
 }
 
+.schedule-nav-button:disabled {
+  opacity: .28;
+  cursor: not-allowed;
+}
+
 .schedule-period-group {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0,1fr);
   gap: 12px;
   align-items: center;
   position: relative;
@@ -70,9 +98,9 @@
 }
 
 .schedule-period-label {
+  color: #777b8e;
   font: 700 10px Outfit, sans-serif;
   letter-spacing: .18em;
-  color: #777b8e;
 }
 
 .schedule-year-tabs,
@@ -93,11 +121,11 @@
 .schedule-year-tabs button,
 .schedule-month-tabs button {
   min-height: 36px;
-  border: 1px solid #303342;
-  color: #9fa3b4;
-  background: rgba(20, 22, 31, .86);
-  border-radius: 10px;
   padding: 7px 5px;
+  border: 1px solid #303342;
+  border-radius: 10px;
+  background: rgba(20,22,31,.86);
+  color: #9fa3b4;
   font-size: 12px;
   font-weight: 700;
   transition: border-color .2s ease, color .2s ease, background .2s ease, transform .2s ease;
@@ -113,9 +141,9 @@
 .schedule-year-tabs button.active,
 .schedule-month-tabs button.active {
   color: #fff;
-  border-color: rgba(185, 153, 255, .78);
-  background: linear-gradient(135deg, rgba(125, 95, 232, .88), rgba(185, 91, 150, .72));
-  box-shadow: 0 7px 22px rgba(125, 95, 232, .16);
+  border-color: rgba(185,153,255,.78);
+  background: linear-gradient(135deg, rgba(125,95,232,.88), rgba(185,91,150,.72));
+  box-shadow: 0 7px 22px rgba(125,95,232,.16);
 }
 
 .schedule-year-tabs button.active {
@@ -125,10 +153,13 @@
 .schedule-legend {
   position: relative;
   z-index: 1;
+  display: flex;
   justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
   margin: 18px 0 0;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, .07);
+  border-top: 1px solid rgba(255,255,255,.07);
 }
 
 .schedule-legend span {
@@ -136,10 +167,10 @@
   align-items: center;
   gap: 6px;
   padding: 6px 9px;
-  color: #b9bbc7;
-  background: rgba(18, 19, 27, .72);
   border: 1px solid #30323f;
   border-radius: 999px;
+  background: rgba(18,19,27,.72);
+  color: #b9bbc7;
   font-size: 11px;
   font-weight: 700;
 }
@@ -148,168 +179,406 @@
   width: 8px;
   height: 8px;
   flex: 0 0 8px;
-  display: inline-block;
-  border: 1px solid rgba(0, 0, 0, .08);
+  border: 0;
   border-radius: 50%;
 }
 
-.schedule-calendar-frame {
-  padding: 14px;
+.schedule-legend i.category-휴방 { background: #8d91a2 !important; }
+.schedule-legend i.category-합방 { background: #ffae76 !important; }
+.schedule-legend i.category-대회 { background: #77c9ff !important; }
+.schedule-legend i.category-정기 { background: #a98cff !important; }
+.schedule-legend i.category-특별 { background: #ff7db6 !important; }
+.schedule-legend i.category-기타 { background: #b9bdca !important; }
+
+.schedule-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(340px, .72fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.schedule-main-panel,
+.schedule-side-card,
+.schedule-note-card {
   border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(28,30,43,.96), rgba(18,19,28,.99));
+  box-shadow: 0 24px 64px rgba(0,0,0,.18);
+}
+
+.schedule-main-panel {
+  min-width: 0;
+  padding: 18px;
   border-radius: 24px;
-  background: linear-gradient(145deg, #181a25, #11131b);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, .24);
+}
+
+.schedule-panel-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 5px 5px 16px;
+}
+
+.schedule-panel-head h3,
+.schedule-side-heading h3,
+.schedule-note-card h3 {
+  margin: 6px 0 0;
+  color: #f6f6f8;
+  letter-spacing: -.035em;
+}
+
+.schedule-panel-head h3 {
+  font-size: 21px;
+}
+
+.schedule-panel-head small {
+  color: #7f8394;
+  font-size: 11px;
 }
 
 .schedule-scroll-hint {
   display: none;
-  padding: 1px 4px 11px;
+  padding: 0 4px 11px;
   color: #85899a;
   font-size: 11px;
   text-align: center;
 }
 
 .schedule-scroll {
-  border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, .08);
+  overflow-x: auto;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 16px;
+  background: #11131b;
   box-shadow: none;
-  background: #f7f6fa;
 }
 
 .sheet-calendar {
-  min-width: 980px;
-  overflow: hidden;
+  min-width: 900px;
   border: 0;
-  background: #f7f6fa;
-  color: #292733;
+  background: #151721;
+  color: #e8e8ee;
 }
 
 .schedule-weekdays {
-  background: #efedf5;
-  border-bottom: 1px solid #cbc7d6;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  background: #1c1e2b;
 }
 
 .schedule-weekdays > div {
   padding: 11px 10px;
-  border-right: 1px solid #d7d3df;
-  color: #666273;
+  border-right: 1px solid rgba(255,255,255,.055);
+  color: #8f93a4;
+  text-align: center;
+  font: 700 12px Outfit, sans-serif;
+  letter-spacing: .08em;
 }
 
-.schedule-weekdays .sunday {
-  color: #c95565;
-}
+.schedule-weekdays > div:last-child { border-right: 0; }
+.schedule-weekdays .sunday { color: #ff8f9f; }
+.schedule-weekdays .saturday { color: #86bfff; }
 
-.schedule-weekdays .saturday {
-  color: #5277b1;
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
 }
 
 .schedule-day {
-  min-height: 210px;
-  border-right-color: #d8d4e0;
-  border-bottom-color: #d8d4e0;
-  background: #f9f8fb;
+  min-height: 188px;
+  min-width: 0;
+  border-right: 1px solid rgba(255,255,255,.055);
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: rgba(21,23,33,.96);
+  transition: background .18s ease;
 }
 
-.schedule-day.outside-month {
-  background: #f1f0f4;
-  color: #b3afbb;
+.schedule-day:nth-child(7n) { border-right: 0; }
+.schedule-day:hover { background: #191b27; }
+.schedule-day.outside-month { opacity: .34; background: #11131a; }
+.schedule-day.today {
+  position: relative;
+  background: linear-gradient(145deg, rgba(157,123,255,.14), rgba(255,125,182,.045)), #171925;
+  box-shadow: inset 0 0 0 1px rgba(157,123,255,.68), 0 0 24px rgba(157,123,255,.06);
 }
 
 .schedule-date {
   height: 31px;
   padding: 6px 9px;
-  border-bottom-color: #e0dde6;
-  background: #f4f2f7;
-  color: #494653;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  background: rgba(255,255,255,.018);
+  color: #d9d9e2;
+  font-size: 12px;
+  font-weight: 800;
 }
 
-.schedule-day.today {
-  position: relative;
-  box-shadow: inset 0 0 0 2px rgba(125, 95, 232, .58);
-}
-
-.schedule-day.today .schedule-date {
-  background: #c5ddb9;
-  color: #273821;
-}
+.schedule-day:nth-child(7n+1) .schedule-date { color: #ff8f9f; }
+.schedule-day:nth-child(7n) .schedule-date { color: #86bfff; }
+.schedule-day.today .schedule-date { color: #d9d0ff; background: rgba(157,123,255,.10); }
 
 .schedule-day-events {
-  padding: 7px;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
+  max-height: 151px;
+  overflow: auto;
+  padding: 7px;
 }
 
 .schedule-event {
+  --event-color: #b9bdca;
+  padding: 7px 8px 7px 10px;
+  border: 1px solid rgba(255,255,255,.05) !important;
+  border-left: 3px solid var(--event-color) !important;
   border-radius: 8px;
-  padding: 7px 8px;
-  border-color: rgba(55, 49, 70, .08);
-  box-shadow: 0 1px 2px rgba(42, 36, 52, .035);
-  transition: box-shadow .18s ease, transform .18s ease;
+  background: rgba(255,255,255,.035) !important;
+  color: #e7e7ed !important;
+  font-size: 11px;
+  line-height: 1.45;
+  box-shadow: none;
+  transition: background .18s ease, transform .18s ease;
 }
 
-.schedule-event:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 5px 14px rgba(42, 36, 52, .09);
+.schedule-event:hover { transform: translateY(-1px); background: rgba(255,255,255,.06) !important; }
+.schedule-event.category-휴방 { --event-color: #8d91a2; }
+.schedule-event.category-합방 { --event-color: #ffae76; }
+.schedule-event.category-대회 { --event-color: #77c9ff; }
+.schedule-event.category-정기 { --event-color: #a98cff; }
+.schedule-event.category-특별 { --event-color: #ff7db6; }
+.schedule-event.category-기타 { --event-color: #b9bdca; }
+.schedule-event-time { margin-bottom: 3px; color: #c7bbf5; font-weight: 800; }
+.schedule-event-title { white-space: pre-wrap; overflow-wrap: anywhere; }
+.schedule-event-description { margin-top: 5px; color: #a6a8b4; white-space: pre-wrap; }
+.schedule-event a { display: inline-block; margin-top: 5px; color: #9fb8ff; text-decoration: underline; }
+
+.schedule-sidebar {
+  display: grid;
+  gap: 18px;
 }
 
-.category-기타 {
-  background: #fdfcff !important;
+.schedule-side-card {
+  border-radius: 22px;
+  padding: 20px;
 }
 
-.schedule-admin-meta b.category-기타 {
-  color: #343434;
+.schedule-side-heading {
+  margin-bottom: 16px;
+}
+
+.schedule-side-heading h3 {
+  font-size: 20px;
+}
+
+.day-summary-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #303342;
+  border-radius: 13px;
+  background: #11131b;
+}
+
+.day-summary-tabs button {
+  min-height: 35px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #898d9e;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.day-summary-tabs button.active {
+  color: #fff;
+  background: linear-gradient(135deg, #7157cf, #a65389);
+  box-shadow: 0 7px 20px rgba(113,87,207,.2);
+}
+
+.day-summary-date {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.day-summary-date strong { color: #fff; font-size: 15px; }
+.day-summary-date span { color: #85899a; font-size: 11px; }
+.day-summary-list { display: grid; gap: 8px; margin-top: 12px; max-height: 225px; overflow: auto; }
+
+.day-summary-event {
+  --event-color: #b9bdca;
+  position: relative;
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid rgba(255,255,255,.055) !important;
+  border-radius: 11px;
+  background: rgba(255,255,255,.025) !important;
+}
+
+.day-summary-event.category-휴방 { --event-color: #8d91a2; }
+.day-summary-event.category-합방 { --event-color: #ffae76; }
+.day-summary-event.category-대회 { --event-color: #77c9ff; }
+.day-summary-event.category-정기 { --event-color: #a98cff; }
+.day-summary-event.category-특별 { --event-color: #ff7db6; }
+.day-summary-event.category-기타 { --event-color: #b9bdca; }
+.day-summary-event > i { width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: var(--event-color); }
+.day-summary-event small { color: #aaa0d4; font-size: 10px; font-weight: 700; }
+.day-summary-event p { margin: 4px 0 0; color: #d9dae1; font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+.schedule-side-empty { margin: 0; padding: 18px 4px; color: #777b8c; font-size: 12px; }
+
+.fanart-card {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 90% 8%, rgba(255,125,182,.10), transparent 32%),
+    linear-gradient(145deg, rgba(28,30,43,.98), rgba(17,18,27,.99));
+}
+
+.fanart-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+}
+
+.fanart-heading small {
+  color: #777b8c;
+  font: 700 9px Outfit, sans-serif;
+  letter-spacing: .16em;
+}
+
+.fanart-visual {
+  width: 100%;
+  height: clamp(360px, 33vw, 500px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(157,123,255,.16), transparent 58%),
+    linear-gradient(145deg, #11131b, #171925);
+}
+
+.fanart-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fanart-placeholder {
+  max-width: 230px;
+  padding: 28px 18px;
+  text-align: center;
+  color: #777b8c;
+}
+
+.fanart-placeholder svg { margin: 0 auto 13px; color: #8f80c9; }
+.fanart-placeholder strong { display: block; color: #b9a6ff; font: 700 12px Outfit, sans-serif; letter-spacing: .16em; }
+.fanart-placeholder p { margin: 10px 0 0; color: #777b8c; font-size: 11px; line-height: 1.7; }
+
+.fanart-caption {
+  display: grid;
+  grid-template-columns: 1fr 34px 34px;
+  gap: 7px;
+  align-items: center;
+  margin-top: 13px;
+}
+
+.fanart-caption strong { display: block; color: #e9e9ee; font-size: 13px; }
+.fanart-caption span { display: block; margin-top: 3px; color: #888c9e; font-size: 11px; }
+.fanart-caption button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #343746;
+  border-radius: 9px;
+  background: #171925;
+  color: #b7abc9;
+}
+
+.fanart-dots { display: flex; justify-content: center; gap: 6px; margin-top: 13px; }
+.fanart-dots i { width: 5px; height: 5px; border-radius: 50%; background: #4b4e5c; }
+.fanart-dots i.active { width: 15px; border-radius: 99px; background: linear-gradient(90deg, #9d7bff, #ff7db6); }
+
+.schedule-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.schedule-note-card {
+  min-height: 150px;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 20px;
+}
+
+.schedule-note-card h3 { font-size: 19px; }
+.schedule-note-card p { max-width: 470px; margin: 10px 0 0; color: #85899a; font-size: 12px; line-height: 1.75; }
+.schedule-note-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #373a4a;
+  border-radius: 13px;
+  background: #202230;
+  color: #b8a7ff;
+}
+
+.doodle-card {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255,125,182,.10), transparent 35%),
+    linear-gradient(145deg, rgba(28,30,43,.96), rgba(18,19,28,.99));
+}
+
+@media (max-width: 1050px) {
+  .schedule-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-sidebar {
+    grid-template-columns: minmax(0, .78fr) minmax(360px, 1.22fr);
+  }
+
+  .fanart-visual {
+    height: 440px;
+  }
 }
 
 @media (max-width: 900px) {
-  .schedule-control-panel {
-    padding: 22px 20px 19px;
-  }
-
-  .schedule-period-group {
-    grid-template-columns: 1fr;
-    gap: 7px;
-  }
-
-  .schedule-year-tabs {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
-  .schedule-month-tabs {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
-  .schedule-legend {
-    justify-content: flex-start;
-  }
-
-  .schedule-scroll-hint {
-    display: block;
-  }
+  .schedule-control-panel { padding: 22px 20px 19px; }
+  .schedule-period-group { grid-template-columns: 1fr; gap: 7px; }
+  .schedule-year-tabs { grid-template-columns: repeat(6,1fr); }
+  .schedule-month-tabs { grid-template-columns: repeat(6,1fr); }
+  .schedule-legend { justify-content: flex-start; }
+  .schedule-scroll-hint { display: block; }
+  .schedule-sidebar { grid-template-columns: 1fr; }
+  .fanart-visual { height: clamp(400px, 65vw, 560px); }
 }
 
-@media (max-width: 600px) {
-  .schedule-control-panel {
-    padding: 18px 14px 16px;
-    border-radius: 20px;
-  }
-
-  .schedule-toolbar {
-    margin-bottom: 20px;
-  }
-
-  .schedule-year-tabs {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .schedule-month-tabs {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .schedule-calendar-frame {
-    padding: 9px;
-    border-radius: 18px;
-  }
-
-  .schedule-scroll {
-    border-radius: 11px;
-  }
+@media (max-width: 650px) {
+  .schedule-section { width: calc(100% - 24px); }
+  .schedule-control-panel { padding: 18px 14px 16px; border-radius: 20px; }
+  .schedule-toolbar { grid-template-columns: 40px 1fr 40px; gap: 8px; margin-bottom: 20px; }
+  .schedule-heading h2 { font-size: 24px; }
+  .schedule-year-tabs { grid-template-columns: repeat(3,1fr); }
+  .schedule-month-tabs { grid-template-columns: repeat(4,1fr); }
+  .schedule-main-panel { padding: 10px; border-radius: 18px; }
+  .schedule-panel-head { align-items: flex-start; flex-direction: column; gap: 4px; padding: 7px 7px 13px; }
+  .schedule-scroll { border-radius: 11px; }
+  .schedule-side-card { padding: 16px; border-radius: 18px; }
+  .fanart-visual { height: min(118vw, 520px); }
+  .schedule-bottom-grid { grid-template-columns: 1fr; }
+  .schedule-note-card { min-height: 130px; padding: 18px; }
 }
