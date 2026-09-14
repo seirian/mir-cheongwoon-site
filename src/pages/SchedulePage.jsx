@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Image as ImageIcon, PenLine, StickyNote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Image as ImageIcon, StickyNote } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
@@ -150,113 +150,83 @@ export default function SchedulePage() {
 
         {error && <div className="admin-message">{error}</div>}
         {loading ? <div className="loading">일정표를 불러오는 중...</div> : (
-          <>
-            <div className="schedule-dashboard">
-              <section className="schedule-main-panel">
-                <div className="schedule-panel-head">
-                  <div>
-                    <span>MONTHLY SCHEDULE</span>
-                    <h3>{year}년 {month + 1}월 일정</h3>
-                  </div>
-                  <small>월별 방송과 주요 일정을 확인하세요.</small>
+          <div className="schedule-dashboard">
+            <section className="schedule-main-panel">
+              <div className="schedule-panel-head">
+                <div>
+                  <span>MONTHLY SCHEDULE</span>
+                  <h3>{year}년 {month + 1}월 일정</h3>
                 </div>
-                <div className="schedule-scroll-hint">← 좌우로 밀어서 일정을 확인하세요 →</div>
-                <div className="schedule-scroll">
-                  <div className="sheet-calendar">
-                    <div className="schedule-weekdays">
-                      {DAY_LABELS.map((day, index) => <div key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</div>)}
-                    </div>
-                    <div className="schedule-grid">
-                      {days.map((date) => {
-                        const key = toDateKey(date);
-                        const dayEvents = eventsByDate[key] || [];
-                        const isCurrentMonth = date.getFullYear() === year && date.getMonth() === month;
-                        const isToday = key === todayKey;
-                        return (
-                          <article key={key} className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}`}>
-                            <div className="schedule-date">{date.getDate()}</div>
-                            <div className="schedule-day-events">
-                              {dayEvents.map((event) => (
-                                <div key={event.id} className={`schedule-event category-${event.category || '기타'}`}>
-                                  {(event.start_time || event.end_time) && (
-                                    <div className="schedule-event-time">
-                                      {event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}
-                                    </div>
-                                  )}
-                                  <div className="schedule-event-title">{event.title}</div>
-                                  {event.description && <div className="schedule-event-description">{event.description}</div>}
-                                  {event.link_url && <a href={event.link_url} target="_blank" rel="noreferrer">관련 링크</a>}
-                                </div>
-                              ))}
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
+                <small>월별 방송과 주요 일정을 확인하세요.</small>
+              </div>
+              <div className="schedule-scroll-hint">← 좌우로 밀어서 일정을 확인하세요 →</div>
+              <div className="schedule-scroll">
+                <div className="sheet-calendar">
+                  <div className="schedule-weekdays">
+                    {DAY_LABELS.map((day, index) => <div key={day} className={index === 0 ? 'sunday' : index === 6 ? 'saturday' : ''}>{day}</div>)}
                   </div>
+                  <div className="schedule-grid">
+                    {days.map((date) => {
+                      const key = toDateKey(date);
+                      const dayEvents = eventsByDate[key] || [];
+                      const isCurrentMonth = date.getFullYear() === year && date.getMonth() === month;
+                      const isToday = key === todayKey;
+                      return (
+                        <article key={key} className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}`}>
+                          <div className="schedule-date">{date.getDate()}</div>
+                          <div className="schedule-day-events">
+                            {dayEvents.map((event) => (
+                              <div key={event.id} className={`schedule-event category-${event.category || '기타'}`}>
+                                {(event.start_time || event.end_time) && (
+                                  <div className="schedule-event-time">
+                                    {event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}
+                                  </div>
+                                )}
+                                <div className="schedule-event-title">{event.title}</div>
+                                {event.description && <div className="schedule-event-description">{event.description}</div>}
+                                {event.link_url && <a href={event.link_url} target="_blank" rel="noreferrer">관련 링크</a>}
+                              </div>
+                            ))}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside className="schedule-sidebar">
+              <section className="schedule-side-card schedule-daily-card">
+                <div className="schedule-side-heading">
+                  <span>DAILY NOTE</span>
+                  <h3>어제 · 오늘 그리고 내일</h3>
+                </div>
+                <div className="day-summary-tabs" role="tablist" aria-label="일자별 일정 요약">
+                  {RELATIVE_DAYS.map((item) => (
+                    <button key={item.id} className={daySummary === item.id ? 'active' : ''} onClick={() => setDaySummary(item.id)}>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="day-summary-date">
+                  <strong>{selectedSideDay.label}</strong>
+                  <span>{formatSideDate(selectedSideDay.date)}</span>
+                </div>
+                <div className="day-summary-list">
+                  {selectedSideEvents.length ? selectedSideEvents.map((event) => (
+                    <div className={`day-summary-event category-${event.category || '기타'}`} key={event.id}>
+                      <i />
+                      <div>
+                        {(event.start_time || event.end_time) && <small>{event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}</small>}
+                        <p>{event.title}</p>
+                      </div>
+                    </div>
+                  )) : <p className="schedule-side-empty">등록된 일정이 없습니다.</p>}
                 </div>
               </section>
 
-              <aside className="schedule-sidebar">
-                <section className="schedule-side-card schedule-daily-card">
-                  <div className="schedule-side-heading">
-                    <span>DAILY NOTE</span>
-                    <h3>어제 · 오늘 · 내일</h3>
-                  </div>
-                  <div className="day-summary-tabs" role="tablist" aria-label="일자별 일정 요약">
-                    {RELATIVE_DAYS.map((item) => (
-                      <button key={item.id} className={daySummary === item.id ? 'active' : ''} onClick={() => setDaySummary(item.id)}>
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="day-summary-date">
-                    <strong>{selectedSideDay.label}</strong>
-                    <span>{formatSideDate(selectedSideDay.date)}</span>
-                  </div>
-                  <div className="day-summary-list">
-                    {selectedSideEvents.length ? selectedSideEvents.map((event) => (
-                      <div className={`day-summary-event category-${event.category || '기타'}`} key={event.id}>
-                        <i />
-                        <div>
-                          {(event.start_time || event.end_time) && <small>{event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}</small>}
-                          <p>{event.title}</p>
-                        </div>
-                      </div>
-                    )) : <p className="schedule-side-empty">등록된 일정이 없습니다.</p>}
-                  </div>
-                </section>
-
-                <section className="schedule-side-card fanart-card">
-                  <div className="schedule-side-heading fanart-heading">
-                    <div>
-                      <span>FAN ART</span>
-                      <h3>오늘의 팬아트</h3>
-                    </div>
-                    <small>FEATURED</small>
-                  </div>
-                  <div className="fanart-visual" role="img" aria-label="팬아트 이미지 영역 미리보기">
-                    <div className="fanart-placeholder">
-                      <ImageIcon size={42} />
-                      <strong>FAN ART</strong>
-                      <p>고정 영역 안에서 원본 비율을 유지해 크게 표시됩니다.</p>
-                    </div>
-                  </div>
-                  <div className="fanart-caption">
-                    <div>
-                      <strong>팬아트 제목 영역</strong>
-                      <span>@artist</span>
-                    </div>
-                    <button type="button" aria-label="이전 팬아트"><ChevronLeft size={17} /></button>
-                    <button type="button" aria-label="다음 팬아트"><ChevronRight size={17} /></button>
-                  </div>
-                  <div className="fanart-dots" aria-hidden="true"><i className="active" /><i /><i /></div>
-                </section>
-              </aside>
-            </div>
-
-            <div className="schedule-bottom-grid">
-              <section className="schedule-note-card memo-card">
+              <section className="schedule-side-card schedule-note-card memo-card">
                 <div className="schedule-note-icon"><StickyNote size={19} /></div>
                 <div>
                   <span>MEMO</span>
@@ -264,16 +234,34 @@ export default function SchedulePage() {
                   <p>월별로 남겨둘 공지, 체크할 내용이나 짧은 기록을 표시하는 영역입니다.</p>
                 </div>
               </section>
-              <section className="schedule-note-card doodle-card">
-                <div className="schedule-note-icon"><PenLine size={19} /></div>
-                <div>
-                  <span>DOODLE</span>
-                  <h3>낙서장</h3>
-                  <p>자유로운 한마디나 작은 이미지, 손글씨 느낌의 기록을 담는 영역입니다.</p>
+
+              <section className="schedule-side-card fanart-card">
+                <div className="schedule-side-heading fanart-heading">
+                  <div>
+                    <span>FAN ART</span>
+                    <h3>오늘의 팬아트</h3>
+                  </div>
+                  <small>FEATURED</small>
                 </div>
+                <div className="fanart-visual" role="img" aria-label="팬아트 이미지 영역 미리보기">
+                  <div className="fanart-placeholder">
+                    <ImageIcon size={42} />
+                    <strong>FAN ART</strong>
+                    <p>고정 영역 안에서 원본 비율을 유지해 크게 표시됩니다.</p>
+                  </div>
+                </div>
+                <div className="fanart-caption">
+                  <div>
+                    <strong>팬아트 제목 영역</strong>
+                    <span>@artist</span>
+                  </div>
+                  <button type="button" aria-label="이전 팬아트"><ChevronLeft size={17} /></button>
+                  <button type="button" aria-label="다음 팬아트"><ChevronRight size={17} /></button>
+                </div>
+                <div className="fanart-dots" aria-hidden="true"><i className="active" /><i /><i /></div>
               </section>
-            </div>
-          </>
+            </aside>
+          </div>
         )}
       </section>
     </>
