@@ -3,7 +3,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
-const YEAR = 2026;
+const MIN_YEAR = 2025;
+const MAX_YEAR = 2030;
+const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, index) => MIN_YEAR + index);
 const MONTHS = Array.from({ length: 12 }, (_, index) => index);
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const CATEGORIES = ['휴방', '합방', '대회', '정기', '특별'];
@@ -13,8 +15,10 @@ const toDateKey = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-$
 
 export default function SchedulePage() {
   const now = new Date();
-  const initialMonth = now.getFullYear() === YEAR ? now.getMonth() : 0;
-  const [month, setMonth] = useState(Math.min(11, Math.max(0, initialMonth)));
+  const initialYear = Math.min(MAX_YEAR, Math.max(MIN_YEAR, now.getFullYear()));
+  const initialMonth = now.getFullYear() >= MIN_YEAR && now.getFullYear() <= MAX_YEAR ? now.getMonth() : 0;
+  const [year, setYear] = useState(initialYear);
+  const [month, setMonth] = useState(initialMonth);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,8 +33,8 @@ export default function SchedulePage() {
       const { data, error: loadError } = await supabase
         .from('schedule_events')
         .select('*')
-        .gte('event_date', `${YEAR}-01-01`)
-        .lte('event_date', `${YEAR}-12-31`)
+        .gte('event_date', `${MIN_YEAR}-01-01`)
+        .lte('event_date', `${MAX_YEAR}-12-31`)
         .order('event_date', { ascending: true })
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
@@ -52,30 +56,49 @@ export default function SchedulePage() {
   }, [events]);
 
   const days = useMemo(() => {
-    const first = new Date(YEAR, month, 1);
+    const first = new Date(year, month, 1);
     const startOffset = first.getDay();
-    return Array.from({ length: 42 }, (_, index) => new Date(YEAR, month, 1 - startOffset + index));
-  }, [month]);
+    return Array.from({ length: 42 }, (_, index) => new Date(year, month, 1 - startOffset + index));
+  }, [year, month]);
 
+  const moveMonth = (offset) => {
+    const next = new Date(year, month + offset, 1);
+    const nextYear = next.getFullYear();
+    const nextMonth = next.getMonth();
+    if (nextYear < MIN_YEAR || nextYear > MAX_YEAR) return;
+    setYear(nextYear);
+    setMonth(nextMonth);
+  };
+
+  const isFirstMonth = year === MIN_YEAR && month === 0;
+  const isLastMonth = year === MAX_YEAR && month === 11;
   const todayKey = toDateKey(now);
 
   return (
     <>
-      <PageHero eyebrow="MIR SCHEDULE" title="일정표" description="기존 월별 시트의 기록을 그대로 이어가는 미르의 2026년 일정 아카이브입니다." />
+      <PageHero eyebrow="MIR SCHEDULE" title="일정표" description="기존 월별 시트의 기록을 이어가며 미르의 일정을 연도와 월별로 확인할 수 있습니다." />
       <section className="section-wrap schedule-section">
         {!isSupabaseConfigured && <div className="setup-banner">Supabase 연결이 필요합니다.</div>}
 
         <div className="schedule-toolbar">
-          <button className="schedule-nav-button" disabled={month === 0} onClick={() => setMonth((value) => Math.max(0, value - 1))} aria-label="이전 달">
+          <button className="schedule-nav-button" disabled={isFirstMonth} onClick={() => moveMonth(-1)} aria-label="이전 달">
             <ChevronLeft size={20} />
           </button>
           <div className="schedule-heading">
             <small>MIR MONTHLY SCHEDULE</small>
-            <h2>✨ {YEAR}년 {month + 1}월</h2>
+            <h2>✨ {year}년 {month + 1}월</h2>
           </div>
-          <button className="schedule-nav-button" disabled={month === 11} onClick={() => setMonth((value) => Math.min(11, value + 1))} aria-label="다음 달">
+          <button className="schedule-nav-button" disabled={isLastMonth} onClick={() => moveMonth(1)} aria-label="다음 달">
             <ChevronRight size={20} />
           </button>
+        </div>
+
+        <div className="schedule-month-tabs" aria-label="연도 선택">
+          {YEARS.map((item) => (
+            <button key={item} className={item === year ? 'active' : ''} onClick={() => setYear(item)}>
+              {item}년
+            </button>
+          ))}
         </div>
 
         <div className="schedule-month-tabs" aria-label="월 선택">
@@ -102,7 +125,7 @@ export default function SchedulePage() {
                 {days.map((date) => {
                   const key = toDateKey(date);
                   const dayEvents = eventsByDate[key] || [];
-                  const isCurrentMonth = date.getFullYear() === YEAR && date.getMonth() === month;
+                  const isCurrentMonth = date.getFullYear() === year && date.getMonth() === month;
                   const isToday = key === todayKey;
                   return (
                     <article key={key} className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}`}>
@@ -128,7 +151,6 @@ export default function SchedulePage() {
             </div>
           </div>
         )}
-        <p className="schedule-note">일정 기록이 없는 달도 2026년 12월까지 확인할 수 있습니다. 기존 2026년 1~9월 기록은 Google Sheet 내용을 기준으로 이관했습니다.</p>
       </section>
     </>
   );
