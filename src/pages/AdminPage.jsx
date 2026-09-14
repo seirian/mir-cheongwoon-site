@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, ImagePlus, Images, LogIn, LogOut, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, ImagePlus, Images, LogIn, LogOut, PlaySquare, Plus, Trash2 } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import ScheduleManager from '../components/ScheduleManager';
+import VideoManager from '../components/VideoManager';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export default function AdminPage() {
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState('gallery');
+  const [activeTab, setActiveTab] = useState('video');
   const [galleries, setGalleries] = useState([]);
   const [message, setMessage] = useState('');
   const [login, setLogin] = useState({ email: '', password: '' });
@@ -74,7 +75,7 @@ export default function AdminPage() {
     setMessage(error ? error.message : '사진을 삭제했습니다.'); loadGalleries();
   };
 
-  if (!isSupabaseConfigured) return <><PageHero eyebrow="ADMIN" title="관리자" description="갤러리와 일정표를 관리하는 전용 화면입니다."/><section className="section-wrap"><div className="setup-banner">먼저 <code>.env</code>에 Supabase URL과 Anon Key를 설정해야 관리자 기능을 사용할 수 있습니다.</div></section></>;
+  if (!isSupabaseConfigured) return <><PageHero eyebrow="ADMIN" title="관리자" description="영상, 갤러리와 일정표를 관리하는 전용 화면입니다."/><section className="section-wrap"><div className="setup-banner">먼저 <code>.env</code>에 Supabase URL과 Anon Key를 설정해야 관리자 기능을 사용할 수 있습니다.</div></section></>;
 
   if (!session) return (
     <><PageHero eyebrow="ADMIN" title="관리자 로그인" description="허가된 관리자 계정만 콘텐츠를 수정할 수 있습니다." />
@@ -85,10 +86,11 @@ export default function AdminPage() {
 
   return (
     <>
-      <PageHero eyebrow="ADMIN" title="콘텐츠 관리" description="공연 갤러리와 2026년 월별 일정을 관리합니다."/>
+      <PageHero eyebrow="ADMIN" title="콘텐츠 관리" description="영상, 공연 갤러리와 월별 일정을 관리합니다."/>
       <section className="section-wrap admin-content-wrap">
         <div className="admin-management-bar">
           <div className="admin-tabs">
+            <button className={activeTab === 'video' ? 'active' : ''} onClick={() => { setActiveTab('video'); setMessage(''); }}><PlaySquare size={17}/> 영상 관리</button>
             <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => { setActiveTab('gallery'); setMessage(''); }}><Images size={17}/> 갤러리 관리</button>
             <button className={activeTab === 'schedule' ? 'active' : ''} onClick={() => { setActiveTab('schedule'); setMessage(''); }}><CalendarDays size={17}/> 일정표 관리</button>
           </div>
@@ -96,7 +98,9 @@ export default function AdminPage() {
         </div>
         {message && <div className="admin-message">{message}</div>}
 
-        {activeTab === 'gallery' ? (
+        {activeTab === 'video' ? (
+          <VideoManager onMessage={setMessage} />
+        ) : activeTab === 'gallery' ? (
           <div className="admin-layout admin-tab-panel">
             <form className="admin-card" onSubmit={createGallery}><div className="admin-card-title"><Plus/> 새 갤러리</div><label>공연/콘서트명<input value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} required/></label><label>공연일<input type="date" value={form.event_date} onChange={(e)=>setForm({...form,event_date:e.target.value})}/></label><label>설명<textarea rows="4" value={form.description} onChange={(e)=>setForm({...form,description:e.target.value})}/></label><button className="btn btn-primary">갤러리 생성</button></form>
             <div className="admin-list"><div className="admin-topbar"><h2>등록된 갤러리</h2></div>
