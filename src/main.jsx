@@ -8,6 +8,7 @@ import './schedule-harmony.css';
 import './schedule-preview-fixes.css';
 import './site-width.css';
 import './fanart-live.css';
+import './schedule-quick-add.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

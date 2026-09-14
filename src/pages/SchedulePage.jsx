@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import PageHero from '../components/PageHero';
+import ScheduleQuickAddModal from '../components/ScheduleQuickAddModal';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const MIN_YEAR = 2025;
@@ -23,6 +24,11 @@ const formatFanartDate = (dateKey) => {
   const [, month, day] = dateKey.split('-');
   return `${Number(month)}월 ${Number(day)}일`;
 };
+const sortScheduleEvents = (left, right) => (
+  String(left.event_date || '').localeCompare(String(right.event_date || ''))
+  || (Number(left.sort_order) || 0) - (Number(right.sort_order) || 0)
+  || String(left.created_at || '').localeCompare(String(right.created_at || ''))
+);
 
 export default function SchedulePage() {
   const now = new Date();
@@ -37,6 +43,8 @@ export default function SchedulePage() {
   const [fanart, setFanart] = useState(null);
   const [fanartLoading, setFanartLoading] = useState(true);
   const [fanartError, setFanartError] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [quickAddDate, setQuickAddDate] = useState('');
 
   useEffect(() => {
     async function loadSchedule() {
@@ -60,6 +68,35 @@ export default function SchedulePage() {
     }
 
     loadSchedule();
+  }, []);
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    let active = true;
+
+    const resolveAdmin = async (session) => {
+      if (!session?.user) {
+        if (active) setIsAdmin(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (active) setIsAdmin(Boolean(data));
+    };
+
+    supabase.auth.getSession().then(({ data }) => resolveAdmin(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => resolveAdmin(session));
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -135,6 +172,15 @@ export default function SchedulePage() {
     setMonth(nextMonth);
   };
 
+  const handleQuickAddSaved = (newEvent) => {
+    setEvents((current) => [...current, newEvent].sort(sortScheduleEvents));
+    const [savedYear, savedMonth] = newEvent.event_date.split('-').map(Number);
+    if (savedYear >= MIN_YEAR && savedYear <= MAX_YEAR) {
+      setYear(savedYear);
+      setMonth(savedMonth - 1);
+    }
+  };
+
   const isFirstMonth = year === MIN_YEAR && month === 0;
   const isLastMonth = year === MAX_YEAR && month === 11;
   const todayKey = toDateKey(now);
@@ -202,6 +248,7 @@ export default function SchedulePage() {
                 </div>
                 <small>월별 방송과 주요 일정을 확인하세요.</small>
               </div>
+              {isAdmin && <div className="schedule-admin-mode-hint">관리자 모드 · 날짜 칸을 클릭하면 해당 날짜로 일정을 바로 등록할 수 있습니다.</div>}
               <div className="schedule-scroll-hint">← 좌우로 밀어서 일정을 확인하세요 →</div>
               <div className="schedule-scroll">
                 <div className="sheet-calendar">
@@ -214,9 +261,31 @@ export default function SchedulePage() {
                       const dayEvents = eventsByDate[key] || [];
                       const isCurrentMonth = date.getFullYear() === year && date.getMonth() === month;
                       const isToday = key === todayKey;
+                      const canQuickAdd = isAdmin && date.getFullYear() >= MIN_YEAR && date.getFullYear() <= MAX_YEAR;
+                      const openQuickAdd = () => {
+                        if (canQuickAdd) setQuickAddDate(key);
+                      };
+
                       return (
-                        <article key={key} className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}`}>
-                          <div className="schedule-date">{date.getDate()}</div>
+                        <article
+                          key={key}
+                          className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}${canQuickAdd ? ' admin-clickable' : ''}`}
+                          onClick={(event) => {
+                            if (event.target.closest('a, button')) return;
+                            openQuickAdd();
+                          }}
+                          onKeyDown={(event) => {
+                            if (!canQuickAdd || (event.key !== 'Enter' && event.key !== ' ')) return;
+                            event.preventDefault();
+                            openQuickAdd();
+                          }}
+                          tabIndex={canQuickAdd ? 0 : undefined}
+                          aria-label={canQuickAdd ? `${key} 일정 추가` : undefined}
+                        >
+                          <div className="schedule-date">
+                            <span>{date.getDate()}</span>
+                            {canQuickAdd && <span className="schedule-quick-add-chip">+ 일정</span>}
+                          </div>
                           <div className="schedule-day-events">
                             {dayEvents.map((event) => (
                               <div key={event.id} className={`schedule-event category-${event.category || '기타'}`}>
@@ -332,6 +401,14 @@ export default function SchedulePage() {
           </div>
         )}
       </section>
+
+      {quickAddDate && isAdmin && (
+        <ScheduleQuickAddModal
+          date={quickAddDate}
+          onClose={() => setQuickAddDate('')}
+          onSaved={handleQuickAddSaved}
+        />
+      )}
     </>
   );
 }

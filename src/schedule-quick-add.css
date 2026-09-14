@@ -1,0 +1,205 @@
+.schedule-admin-mode-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 6px 12px;
+  padding: 9px 12px;
+  border: 1px solid rgba(157,123,255,.28);
+  border-radius: 11px;
+  background: rgba(157,123,255,.08);
+  color: #cfc6ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.schedule-day.admin-clickable {
+  cursor: pointer;
+}
+
+.schedule-day.admin-clickable:hover {
+  background: linear-gradient(145deg, rgba(157,123,255,.12), rgba(255,125,182,.035)), #191b27;
+  box-shadow: inset 0 0 0 1px rgba(157,123,255,.28);
+}
+
+.schedule-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.schedule-quick-add-chip {
+  padding: 2px 6px;
+  border: 1px solid rgba(157,123,255,.28);
+  border-radius: 999px;
+  background: rgba(157,123,255,.08);
+  color: #bfb2ff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.3;
+  opacity: .68;
+  transition: opacity .16s ease, background .16s ease;
+}
+
+.schedule-day.admin-clickable:hover .schedule-quick-add-chip,
+.schedule-day.admin-clickable:focus-visible .schedule-quick-add-chip {
+  opacity: 1;
+  background: rgba(157,123,255,.16);
+}
+
+.schedule-day.admin-clickable:focus-visible {
+  outline: 2px solid rgba(157,123,255,.8);
+  outline-offset: -2px;
+}
+
+.schedule-quick-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4,5,9,.78);
+  backdrop-filter: blur(8px);
+}
+
+.schedule-quick-modal {
+  width: min(680px, 100%);
+  max-height: min(900px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 92% 6%, rgba(255,125,182,.10), transparent 30%),
+    linear-gradient(145deg, #1c1e2b, #12141d 78%);
+  box-shadow: 0 28px 90px rgba(0,0,0,.48);
+}
+
+.schedule-quick-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.schedule-quick-modal-head span {
+  color: #9d7bff;
+  font: 700 10px Outfit, sans-serif;
+  letter-spacing: .15em;
+}
+
+.schedule-quick-modal-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 5px 0 0;
+  color: #fff;
+  font-size: 23px;
+}
+
+.schedule-quick-modal-head p {
+  margin: 8px 0 0;
+  color: #8f93a4;
+  font-size: 12px;
+}
+
+.schedule-quick-close {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid #343746;
+  border-radius: 11px;
+  background: #171925;
+  color: #b7abc9;
+}
+
+.schedule-quick-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 22px 24px 24px;
+}
+
+.schedule-quick-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.schedule-quick-form label > span {
+  color: #aaaebe;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.schedule-quick-form input,
+.schedule-quick-form select,
+.schedule-quick-form textarea {
+  width: 100%;
+  border: 1px solid #343746;
+  border-radius: 11px;
+  background: #11131b;
+  color: #f4f4f7;
+  outline: none;
+}
+
+.schedule-quick-form input,
+.schedule-quick-form select {
+  min-height: 42px;
+  padding: 0 11px;
+}
+
+.schedule-quick-form textarea {
+  padding: 11px 12px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.schedule-quick-form input:focus,
+.schedule-quick-form select:focus,
+.schedule-quick-form textarea:focus {
+  border-color: rgba(157,123,255,.8);
+  box-shadow: 0 0 0 3px rgba(157,123,255,.09);
+}
+
+.schedule-quick-time-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.schedule-quick-wide {
+  grid-column: 1 / -1;
+}
+
+.schedule-quick-message {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,125,182,.25);
+  border-radius: 10px;
+  background: rgba(255,125,182,.07);
+  color: #ffc3dc;
+  font-size: 12px;
+}
+
+.schedule-quick-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 4px;
+}
+
+@media (max-width: 650px) {
+  .schedule-quick-modal-backdrop { padding: 12px; }
+  .schedule-quick-modal { max-height: calc(100vh - 24px); border-radius: 19px; }
+  .schedule-quick-modal-head { padding: 20px 18px 15px; }
+  .schedule-quick-form { grid-template-columns: 1fr; padding: 18px; }
+  .schedule-quick-time-grid { grid-template-columns: 1fr 1fr; }
+  .schedule-quick-wide, .schedule-quick-time-grid, .schedule-quick-message, .schedule-quick-actions { grid-column: 1; }
+  .schedule-quick-add-chip { padding: 2px 5px; font-size: 8px; }
+}
