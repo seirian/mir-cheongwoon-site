@@ -2,10 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarPlus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
+const MIN_YEAR = 2025;
+const MAX_YEAR = 2030;
 const CATEGORIES = ['기타', '휴방', '합방', '대회', '정기', '특별'];
+const pad = (value) => String(value).padStart(2, '0');
+const now = new Date();
+const initialYear = Math.min(MAX_YEAR, Math.max(MIN_YEAR, now.getFullYear()));
+const initialMonth = now.getFullYear() >= MIN_YEAR && now.getFullYear() <= MAX_YEAR ? now.getMonth() + 1 : 1;
+const initialMonthKey = `${initialYear}-${pad(initialMonth)}`;
 const emptyForm = {
   id: null,
-  event_date: '2026-09-01',
+  event_date: `${initialMonthKey}-01`,
   title: '',
   category: '기타',
   start_time: '',
@@ -17,7 +24,7 @@ const emptyForm = {
 
 export default function ScheduleManager({ onMessage }) {
   const [events, setEvents] = useState([]);
-  const [month, setMonth] = useState('2026-09');
+  const [month, setMonth] = useState(initialMonthKey);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
@@ -25,8 +32,8 @@ export default function ScheduleManager({ onMessage }) {
     const { data, error } = await supabase
       .from('schedule_events')
       .select('*')
-      .gte('event_date', '2026-01-01')
-      .lte('event_date', '2026-12-31')
+      .gte('event_date', `${MIN_YEAR}-01-01`)
+      .lte('event_date', `${MAX_YEAR}-12-31`)
       .order('event_date', { ascending: true })
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true });
@@ -103,7 +110,7 @@ export default function ScheduleManager({ onMessage }) {
     <div className="schedule-admin-layout">
       <form className="admin-card schedule-form" onSubmit={saveEvent}>
         <div className="admin-card-title"><CalendarPlus /> {form.id ? '일정 수정' : '새 일정'}</div>
-        <label>날짜<input type="date" min="2026-01-01" max="2026-12-31" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} required /></label>
+        <label>날짜<input type="date" min={`${MIN_YEAR}-01-01`} max={`${MAX_YEAR}-12-31`} value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} required /></label>
         <label>분류<select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>{CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
         <div className="schedule-time-fields">
           <label>시작 시간<input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></label>
@@ -119,8 +126,8 @@ export default function ScheduleManager({ onMessage }) {
 
       <div className="admin-list">
         <div className="admin-topbar schedule-admin-topbar">
-          <div><h2>일정 목록</h2><p>2026년 월별 일정 관리</p></div>
-          <input type="month" min="2026-01" max="2026-12" value={month} onChange={(e) => { setMonth(e.target.value); setForm((current) => current.id ? current : { ...current, event_date: `${e.target.value}-01` }); }} />
+          <div><h2>일정 목록</h2><p>{MIN_YEAR}~{MAX_YEAR}년 월별 일정 관리</p></div>
+          <input type="month" min={`${MIN_YEAR}-01`} max={`${MAX_YEAR}-12`} value={month} onChange={(e) => { setMonth(e.target.value); setForm((current) => current.id ? current : { ...current, event_date: `${e.target.value}-01` }); }} />
         </div>
         {visibleEvents.length === 0 ? <div className="empty-state schedule-admin-empty"><p>이 달에는 등록된 일정이 없습니다.</p></div> : visibleEvents.map((event) => (
           <article className="admin-gallery schedule-admin-event" key={event.id}>
