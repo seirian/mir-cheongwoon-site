@@ -20,6 +20,10 @@ export const bandMembers = [
   { id: 2, name: 'SweetBerry', position: 'BASS', comment: '청운밴드 베이시스트 SweetBerry입니다', image: '' },
   { id: 3, name: '맹감자', position: 'KEYBOARD', comment: '청운밴드 키보드 맹감자입니다', image: '' },
   { id: 4, name: '멤버 04', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
+  { id: 5, name: '멤버 05', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
+  { id: 6, name: '멤버 06', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
+  { id: 7, name: '멤버 07', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
+  { id: 8, name: '멤버 08', position: 'Position', comment: '멤버 소개와 한 줄 코멘트를 입력하세요.', image: '' },
 ];
 
 export const performanceHistory = [

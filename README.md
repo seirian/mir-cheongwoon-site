@@ -105,3 +105,18 @@ Supabase 무료 프로젝트는 장기간 요청이 없으면 일시 중지될 �
 - YouTube/SOOP 공연 영상 링크
 - SNS 공유용 OG 이미지 및 SEO 메타 태그
 - 실제 로고 및 공식 컬러 적용
+
+## 10. SOOP LIVE 상태 표시
+
+`/mir` 페이지는 `netlify/functions/soop-live.mjs`를 통해 미르 SOOP 채널(`alice427`)의 현재 방송 상태를 확인합니다.
+
+- LIVE: 프로필 이미지 테두리와 Glow가 빨간색으로 변경되고 `LIVE ON SOOP` 배지에 전파 애니메이션이 표시됩니다.
+- OFFLINE: `SOOP OFFLINE`으로 표시됩니다.
+- UNKNOWN: SOOP 조회 장애나 응답 형식 변경 시 `SOOP`으로 표시하며 오프라인으로 단정하지 않습니다.
+- LIVE 배지를 클릭하면 미르 SOOP 방송 페이지를 새 창으로 엽니다.
+- 프런트에서는 60초마다 상태를 다시 확인합니다.
+- Netlify CDN에는 30초 durable cache를 적용해 SOOP 및 Function 호출 횟수를 줄입니다.
+
+일반 `npm run dev`는 Netlify Function을 에뮬레이션하지 않기 때문에 LIVE 상태 기능까지 로컬에서 확인하려면 Netlify CLI 또는 Netlify 로컬 개발 환경을 사용해야 합니다.
+
+현재 구현은 SOOP의 공식 공개 개발자용 Live Status API가 아니라 웹 플레이어에서 사용하는 응답을 확인하는 방식이므로, SOOP 측 구조가 변경되면 `netlify/functions/soop-live.mjs` 수정이 필요할 수 있습니다.
