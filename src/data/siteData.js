@@ -24,16 +24,60 @@ export const bandMembers = [
 
 export const performanceHistory = [
   {
-    year: 2026,
+    year: 2025,
     events: [
-      { date: '2026.00.00', title: '공연명 / 콘서트명', type: 'OFFLINE', description: '공연 장소와 주요 내용을 입력하세요.' },
-      { date: '2026.00.00', title: '온라인 라이브 공연', type: 'ONLINE', description: '온라인 공연 또는 합동 방송 내용을 입력하세요.' },
+      {
+        date: '2025.08.09',
+        title: 'MIR The 1st Offline Concert : BLUED',
+        type: 'OFFLINE',
+        description: '서울 마곡 NSP홀에서 열린 미르의 첫 오프라인 단독 콘서트. 청운밴드와 함께 1부와 2부로 무대를 진행했습니다.',
+      },
+      {
+        date: '2025.04.05',
+        title: '크레비쥬 콘서트',
+        type: 'ONLINE',
+        description: '크레비쥬 주최 콘서트에 참여해 모션캡처와 보컬, 밴드 세션을 라이브로 선보였습니다.',
+      },
+      {
+        date: '2025.04.02',
+        title: '산불 이재민 돕기 릴레이 콘서트',
+        type: 'ONLINE',
+        description: '산불 이재민 지원을 위한 기부 독려 릴레이 콘서트에 참여해 「어디에도」를 불렀습니다.',
+      },
+      {
+        date: '2025.03.03',
+        title: '젠레스 존 제로 OST 콘서트',
+        type: 'ONLINE',
+        description: '호요버스 광고 프로젝트로 진행된 젠레스 존 제로 OST 콘서트에 참여해 다양한 합동 무대를 선보였습니다.',
+      },
     ],
   },
   {
-    year: 2025,
+    year: 2024,
     events: [
-      { date: '2025.00.00', title: '공연명 / 콘서트명', type: 'OFFLINE', description: '지난 공연 이력을 연도별로 추가할 수 있습니다.' },
+      {
+        date: '2024.11.15',
+        title: '숲Vㅓ스타',
+        type: 'OFFLINE',
+        description: '지스타 2024 SOOP 부스에서 진행된 VR 콘서트에 참여해 「Legends Never Die」와 「私は最強」 무대를 선보였습니다.',
+      },
+      {
+        date: '2024.09.22',
+        title: 'We all stars',
+        type: 'ONLINE',
+        description: '싱크룸을 통해 세션과 보컬을 실시간으로 맞춘 합동 콘서트로, 미르를 포함한 여러 버추얼 아티스트가 함께했습니다.',
+      },
+    ],
+  },
+  {
+    year: 2023,
+    events: [
+      {
+        date: '2023.12.31',
+        title: '성장소설(成長小說)',
+        type: 'ONLINE',
+        description: '2023년 마지막 날 진행한 미르의 연말 단독 콘서트. 자정에는 2024년의 시작과 함께 오리지널 아바타를 공개했습니다.',
+      },
     ],
   },
 ];
