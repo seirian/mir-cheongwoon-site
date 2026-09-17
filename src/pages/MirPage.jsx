@@ -101,21 +101,37 @@ export default function MirPage() {
 
       <section className="section-wrap mir-intro-section">
         <div className="mir-intro-heading">
-          <span className="eyebrow">WHO IS MIR?</span>
-          <h2>미르(MIR)</h2>
-        </div>
-        <div className="mir-intro-panel">
-          <div className="mir-intro-copy">
-            {mirProfile.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          <div>
+            <span className="eyebrow">WHO IS MIR?</span>
+            <p>프로필과 활동 채널을 한눈에 정리했습니다.</p>
           </div>
-          <div className="mir-activity-grid">
-            {mirProfile.activityCards.map((item) => (
-              <article className="mir-activity-card" key={item.label}>
+        </div>
+        <div className="mir-profile-panel">
+          <div className="mir-facts-grid">
+            {mirProfile.profileFacts.map((item) => (
+              <div className="mir-fact-row" key={item.label}>
                 <span>{item.label}</span>
-                <strong>{item.value}</strong>
-              </article>
+                <div>
+                  <strong>{item.value}</strong>
+                  {item.note && <small>{item.note}</small>}
+                </div>
+              </div>
             ))}
           </div>
+          <aside className="mir-profile-aside">
+            <div className="mir-intro-copy">
+              {mirProfile.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+            </div>
+            <div className="mir-channel-list">
+              {mirProfile.channels.map((item) => (
+                <a key={item.label} href={item.url} target="_blank" rel="noreferrer">
+                  <span>{item.label}</span>
+                  <strong>{item.name}</strong>
+                  <em>바로가기 ↗</em>
+                </a>
+              ))}
+            </div>
+          </aside>
         </div>
       </section>
     </>
