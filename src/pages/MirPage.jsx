@@ -7,6 +7,19 @@ const MIR_PROFILE_IMAGE = import.meta.env.BASE_URL + 'mir-profile-site-v2.webp';
 const MIR_SOOP_URL = 'https://play.sooplive.com/alice427';
 const LIVE_CHECK_INTERVAL = 60_000;
 
+function ChannelBrandMark({ label }) {
+  if (label === 'YouTube') {
+    return <svg viewBox="0 0 64 48" focusable="false"><rect x="4" y="8" width="56" height="32" rx="10"/><path d="M27 17.5 42 24 27 30.5Z" className="channel-brand-cutout"/></svg>;
+  }
+  if (label === 'X') {
+    return <svg viewBox="0 0 64 64" focusable="false"><path d="M15 13 50 51M49 13 15 51"/></svg>;
+  }
+  if (label === '커뮤니티') {
+    return <span className="channel-brand-naver"><b>N</b><small>cafe</small></span>;
+  }
+  return <span className="channel-brand-soop">SOOP</span>;
+}
+
 export default function MirPage() {
   const [liveStatus, setLiveStatus] = useState('unknown');
   const [liveInfo, setLiveInfo] = useState(null);
@@ -124,10 +137,13 @@ export default function MirPage() {
             </div>
             <div className="mir-channel-list">
               {mirProfile.channels.map((item) => (
-                <a key={item.label} href={item.url} target="_blank" rel="noreferrer">
-                  <span>{item.label}</span>
-                  <strong>{item.name}</strong>
-                  <em>바로가기 ↗</em>
+                <a className="mir-channel-card" data-channel={item.label} key={item.label} href={item.url} target="_blank" rel="noreferrer">
+                  <span className="mir-channel-copy">
+                    <span className="mir-channel-label">{item.label}</span>
+                    <strong>{item.name}</strong>
+                    <em>바로가기 ↗</em>
+                  </span>
+                  <span className="mir-channel-mark" aria-hidden="true"><ChannelBrandMark label={item.label} /></span>
                 </a>
               ))}
             </div>
