@@ -3,7 +3,7 @@ import { Radio, Sparkles } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import { mirProfile } from '../data/siteData';
 
-const MIR_PROFILE_IMAGE = '/mir-profile-site-v2.webp';
+const MIR_PROFILE_IMAGE = import.meta.env.BASE_URL + 'mir-profile-site-v2.webp';
 const MIR_SOOP_URL = 'https://play.sooplive.com/alice427';
 const LIVE_CHECK_INTERVAL = 60_000;
 
@@ -15,8 +15,9 @@ export default function MirPage() {
     let active = true;
 
     const checkLiveStatus = async () => {
+      if (document.hidden) return;
       try {
-        const response = await fetch('/.netlify/functions/soop-live', {
+        const response = await fetch(import.meta.env.BASE_URL + 'api/soop-live.php', {
           headers: { Accept: 'application/json' },
         });
 
