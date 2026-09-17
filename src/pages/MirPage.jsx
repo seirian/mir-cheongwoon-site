@@ -66,7 +66,7 @@ export default function MirPage() {
 
   return (
     <>
-      <PageHero eyebrow="ABOUT MIR" title="미르" description="방송에서 무대까지, 미르님의 이야기를 소개합니다." />
+      <PageHero eyebrow="ABOUT MIR" title="미르(MIR)" description="방송에서 무대까지, 미르님의 이야기를 소개합니다." />
       <section className="section-wrap profile-layout">
         <div className={`profile-photo-wrap${isLive ? ' is-live' : ''}`}>
           <img
@@ -96,6 +96,26 @@ export default function MirPage() {
           <p>{mirProfile.description}</p>
           <div className="tag-row">{mirProfile.highlights.map((item) => <span key={item}>#{item}</span>)}</div>
           <div className="quote-card"><Sparkles size={19}/><p>여러분과 함께라면, 저는 최강입니다!</p></div>
+        </div>
+      </section>
+
+      <section className="section-wrap mir-intro-section">
+        <div className="mir-intro-heading">
+          <span className="eyebrow">WHO IS MIR?</span>
+          <h2>미르(MIR)</h2>
+        </div>
+        <div className="mir-intro-panel">
+          <div className="mir-intro-copy">
+            {mirProfile.intro.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          </div>
+          <div className="mir-activity-grid">
+            {mirProfile.activityCards.map((item) => (
+              <article className="mir-activity-card" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
     </>
