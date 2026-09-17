@@ -63,7 +63,7 @@ export default function AdminPage() {
       const path = `${galleryId}/${crypto.randomUUID()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from('gallery').upload(path, file, { cacheControl: '3600', upsert: false });
       if (uploadError) { setMessage(uploadError.message); return; }
-      const { error: dbError } = await supabase.from('gallery_images').insert({ gallery_id: galleryId, file_path: path, caption: file.name });
+      const { error: dbError } = await supabase.from('gallery_images').insert({ gallery_id: galleryId, file_path: path, caption: null });
       if (dbError) { setMessage(dbError.message); return; }
     }
     setMessage('사진 업로드가 완료되었습니다.'); loadGalleries();
