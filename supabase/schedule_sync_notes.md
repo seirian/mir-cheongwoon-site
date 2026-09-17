@@ -25,3 +25,6 @@ Google gviz CSV를 행 단위로 읽고 날짜 행이 예상 달력과 일치하
 - 실행 결과는 `schedule_sync_runs`에 기록
 
 Cron 호출은 DB 내부 전용 토큰으로 인증하며 Supabase API 키를 새로 만들지 않습니다.
+
+- 내부 설정 테이블은 anon/authenticated 클라이언트에 명시적으로 항상 거부됩니다.
+- Cron의 pg_net 응답 timeout은 Google Sheet 조회 시간을 고려해 15초입니다.
