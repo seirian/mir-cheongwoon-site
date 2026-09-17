@@ -1,0 +1,72 @@
+.memo-card-content {
+  width: 100%;
+  min-width: 0;
+}
+
+.memo-readonly-content {
+  white-space: pre-wrap;
+}
+
+.memo-editor {
+  margin-top: 12px;
+}
+
+.memo-editor-textarea {
+  width: 100%;
+  min-height: 132px;
+  resize: vertical;
+  box-sizing: border-box;
+  border: 1px solid #373a4a;
+  border-radius: 12px;
+  background: #171925;
+  color: #ececf3;
+  padding: 12px 13px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.65;
+  outline: none;
+}
+
+.memo-editor-textarea:focus {
+  border-color: #9d7bff;
+  box-shadow: 0 0 0 3px rgba(157, 123, 255, 0.12);
+}
+.memo-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 9px;
+}
+
+.memo-editor-actions small {
+  color: #6f7384;
+  font-size: 11px;
+}
+
+.memo-editor-actions button {
+  border: 1px solid rgba(157, 123, 255, 0.55);
+  border-radius: 10px;
+  background: rgba(157, 123, 255, 0.14);
+  color: #dcd4ff;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.memo-editor-actions button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.memo-save-status {
+  margin-top: 9px !important;
+  color: #ff9fae !important;
+  font-size: 11px !important;
+}
+
+.memo-save-status.success {
+  color: #8fd7b0 !important;
+}

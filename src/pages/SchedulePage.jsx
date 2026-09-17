@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import ScheduleQuickAddModal from '../components/ScheduleQuickAddModal';
+import ScheduleMemoCard from '../components/ScheduleMemoCard';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const MIN_YEAR = 2025;
@@ -340,13 +341,7 @@ export default function SchedulePage() {
                 </div>
               </section>
 
-              <section className="schedule-side-card schedule-note-card memo-card">
-                <div>
-                  <span>MEMO</span>
-                  <h3>메모</h3>
-                  <p>월별로 남겨둘 공지, 체크할 내용이나 짧은 기록을 표시하는 영역입니다.</p>
-                </div>
-              </section>
+              <ScheduleMemoCard isAdmin={isAdmin} />
 
               <section className="schedule-side-card fanart-card">
                 <div className="schedule-side-heading fanart-heading">
