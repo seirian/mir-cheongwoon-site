@@ -14,7 +14,7 @@ import './media-gallery.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={window.location.pathname.startsWith(import.meta.env.BASE_URL) ? import.meta.env.BASE_URL.replace(/\/$/, '') : '/'}>
       <App />
     </BrowserRouter>
   </React.StrictMode>,

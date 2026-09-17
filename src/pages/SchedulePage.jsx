@@ -43,6 +43,7 @@ export default function SchedulePage() {
   const [fanart, setFanart] = useState(null);
   const [fanartLoading, setFanartLoading] = useState(true);
   const [fanartError, setFanartError] = useState(false);
+  const [fanartReason, setFanartReason] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [quickAddDate, setQuickAddDate] = useState('');
 
@@ -104,11 +105,12 @@ export default function SchedulePage() {
 
     async function loadFeaturedFanart() {
       try {
-        const response = await fetch('/.netlify/functions/naver-fanart?v=2', {
+        const response = await fetch(import.meta.env.BASE_URL + 'api/naver-fanart.php', {
           headers: { Accept: 'application/json' },
         });
         const data = await response.json();
         if (cancelled) return;
+        setFanartReason(data?.reason || '');
 
         if (response.ok && data?.status === 'ok' && data.imageUrl && data.articleUrl) {
           setFanart(data);
@@ -380,7 +382,8 @@ export default function SchedulePage() {
                     <div className="fanart-placeholder">
                       <ImageIcon size={42} />
                       <strong>FAN ART</strong>
-                      <p>{fanartError ? '팬아트를 불러오지 못했습니다. 잠시 후 다시 확인해 주세요.' : '표시할 팬아트가 없습니다.'}</p>
+                      <p>{fanartReason === 'upstream_access_restricted' ? '네이버에서 자동 조회가 허용되지 않아 팬아트를 표시할 수 없습니다.' : fanartReason === 'upstream_rate_limited' ? '네이버 요청 제한으로 자동 조회를 잠시 멈췄습니다.' : fanartError ? '팬아트를 불러오지 못했습니다. 다른 메뉴는 정상 이용할 수 있습니다.' : '표시할 팬아트가 없습니다.'}</p>
+                      <a href="https://cafe.naver.com/f-e/cafes/31003156/menus/10?viewType=I" target="_blank" rel="noreferrer">팬아트 게시판에서 보기</a>
                     </div>
                   </div>
                 )}
