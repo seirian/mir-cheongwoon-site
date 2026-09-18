@@ -86,8 +86,8 @@ export default function MirPage() {
             className="mir-profile-image"
             src={MIR_PROFILE_IMAGE}
             alt="버추얼 스트리머 미르 프로필"
-            width="640"
-            height="360"
+            width="548"
+            height="574"
             loading="eager"
             decoding="async"
           />

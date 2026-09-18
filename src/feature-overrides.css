@@ -36,8 +36,9 @@
 
 .mir-profile-image {
   width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
   object-position: center top;
   border-radius: 28px;
   border: 1px solid #343648;
