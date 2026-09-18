@@ -24,6 +24,12 @@ API_FILES = [
     "api/soop-live.php",
 ]
 ROOT_PRESERVE = ["index.html", "index.php", "standard_index.html", "robots.txt", "favicon.ico"]
+CACHE_PREFIX = b"<?php http_response_code(404); exit; __halt_compiler();\n"
+FANART_FALLBACK_META = "api/_cache/fanart-fallback.json"
+FANART_FALLBACK_IMAGE = "api/_cache/fanart-fallback.bin"
+FANART_BOARD = "https://cafe.naver.com/f-e/cafes/31003156/menus/10?viewType=I"
+FANART_ARTICLE_RE = re.compile(r"https://cafe\.naver\.com/f-e/cafes/31003156/articles/[0-9]+")
+FANART_IMAGE_MIMES = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"}
 
 class Stop(RuntimeError):
     pass
@@ -191,6 +197,74 @@ def server_payload(rid: str):
         server_files[rel] = {"sha256": sha(data), "size": len(data)}
     return payload, release_htaccess, server_files
 
+def parse_cache_value(raw: bytes | None):
+    if not raw or not raw.startswith(CACHE_PREFIX):
+        return None
+    try:
+        state = json.loads(raw[len(CACHE_PREFIX):])
+    except Exception:
+        return None
+    value = state.get("value") if isinstance(state, dict) else None
+    return value if isinstance(value, dict) else None
+
+def allowed_fanart_source(url: str) -> bool:
+    try:
+        parsed = urllib.parse.urlsplit(url)
+    except Exception:
+        return False
+    host = (parsed.hostname or "").lower()
+    allowed = host == "pstatic.net" or host.endswith(".pstatic.net") or host == "naver.net" or host.endswith(".naver.net") or host == "naver.com" or host.endswith(".naver.com")
+    return parsed.scheme == "https" and allowed and not parsed.username and not parsed.password and parsed.port in (None, 443)
+
+def find_fanart_snapshot(r):
+    base = WEB + PREFIX.rstrip("/")
+    try:
+        entries = r.s.listdir_attr(base)
+    except OSError:
+        return None
+    releases = []
+    for entry in entries:
+        if RID_RE.fullmatch(entry.filename) and stat.S_ISDIR(entry.st_mode) and entry.st_uid == OWNER_UID:
+            releases.append(entry.filename)
+    for release in sorted(releases, reverse=True)[:60]:
+        release_dir = base + "/" + release
+        fanart = parse_cache_value(r.read(release_dir + "/api/_cache/fanart.state.php", 4 * 1024 * 1024))
+        if not fanart:
+            continue
+        public = fanart.get("public")
+        source = fanart.get("source")
+        if not isinstance(public, dict) or public.get("status") != "ok" or not isinstance(source, str) or not allowed_fanart_source(source):
+            continue
+        article_url = public.get("articleUrl")
+        if not isinstance(article_url, str) or not FANART_ARTICLE_RE.fullmatch(article_url):
+            continue
+        image = parse_cache_value(r.read(release_dir + "/api/_cache/image.state.php", 12 * 1024 * 1024))
+        if not image or image.get("id") != hashlib.sha256(source.encode()).hexdigest():
+            continue
+        mime = image.get("mime")
+        encoded = image.get("data")
+        if mime not in FANART_IMAGE_MIMES or not isinstance(encoded, str):
+            continue
+        try:
+            image_bytes = base64.b64decode(encoded, validate=True)
+        except Exception:
+            continue
+        if not image_bytes or len(image_bytes) > 6 * 1024 * 1024:
+            continue
+        fallback_id = sha(image_bytes)
+        metadata = {
+            "id": fallback_id,
+            "mime": mime,
+            "boardUrl": FANART_BOARD,
+            "articleId": int(public.get("articleId") or 0),
+            "title": str(public.get("title") or "오늘의 팬아트")[:500],
+            "author": str(public.get("author") or "작성자")[:200],
+            "articleUrl": article_url,
+            "sourceDate": str(public.get("sourceDate") or "")[:10],
+        }
+        return {"source_release": release, "metadata": metadata, "image": image_bytes}
+    return None
+
 def smoke(rid: str, local_files: dict):
     base = ORIGIN + PREFIX + rid + "/"
     results = {}
@@ -209,7 +283,7 @@ def smoke(rid: str, local_files: dict):
     if code != 200 or health.get("status") != "ready" or health.get("release") != rid or not health.get("cache_read_write"):
         raise Stop("PHP/cache health failed")
     results["health"] = health
-    for path in ["api/config.php", "api/_core.php", "api/_cache/health.state.php"]:
+    for path in ["api/config.php", "api/_core.php", "api/_cache/health.state.php", FANART_FALLBACK_META, FANART_FALLBACK_IMAGE]:
         code, _, _ = http(base + path)
         if code not in (403, 404):
             raise Stop("Internal file is web-accessible: " + path)
@@ -278,6 +352,12 @@ def main():
         if r.info(new_dir) is not None:
             raise Stop("New release path already exists")
 
+        fanart_snapshot = find_fanart_snapshot(r)
+        report["fanart_fallback"] = {
+            "found": fanart_snapshot is not None,
+            "source_release": fanart_snapshot["source_release"] if fanart_snapshot else None,
+        }
+
         preserved = {}
         for name in ROOT_PRESERVE:
             data = r.read(WEB + "/" + name)
@@ -305,6 +385,10 @@ def main():
         r.new_file(new_dir + "/.htaccess", release_htaccess)
         for rel, data in sorted(api_payload.items()):
             r.new_file(new_dir + "/" + rel, data)
+        if fanart_snapshot:
+            fallback_meta = json.dumps(fanart_snapshot["metadata"], ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            r.new_file(new_dir + "/" + FANART_FALLBACK_META, fallback_meta, 0o600)
+            r.new_file(new_dir + "/" + FANART_FALLBACK_IMAGE, fanart_snapshot["image"], 0o600)
         for rel in sorted(manifest):
             r.new_file(new_dir + "/" + rel, (dist / rel).read_bytes())
 
@@ -325,9 +409,16 @@ def main():
                 payload = json.loads(body)
             except Exception:
                 payload = {}
-            features[name] = {"status_code": code, "status": payload.get("status"), "reason": payload.get("reason") or payload.get("error")}
+            features[name] = {
+                "status_code": code,
+                "status": payload.get("status"),
+                "reason": payload.get("reason") or payload.get("error"),
+                "fallback": bool(payload.get("fallback")),
+            }
         if features["soop-live"]["status_code"] != 200:
             raise Stop("SOOP endpoint failed")
+        if fanart_snapshot and features["naver-fanart"]["status"] != "ok":
+            raise Stop("Fanart fallback snapshot was not served")
         report["features"] = features
         report["phase"] = "staged"
 

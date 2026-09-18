@@ -1,6 +1,28 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/_entry.php';
+
+$fallback=$_GET['fallback']??'';
+if (is_string($fallback) && $fallback!=='') {
+    if (!preg_match('/^[a-f0-9]{64}$/D',$fallback)) \YeopMigration\sendJson(['error'=>'invalid_fallback_id'],400);
+    $metaPath=__DIR__.'/_cache/fanart-fallback.json';
+    $imagePath=__DIR__.'/_cache/fanart-fallback.bin';
+    if (!is_file($metaPath) || is_link($metaPath) || !is_file($imagePath) || is_link($imagePath)) \YeopMigration\sendJson(['error'=>'fallback_unavailable'],404);
+    $raw=@file_get_contents($metaPath);
+    $meta=is_string($raw)?json_decode($raw,true):null;
+    if (!is_array($meta) || !is_string($meta['id']??null) || !hash_equals($meta['id'],$fallback)) \YeopMigration\sendJson(['error'=>'fallback_invalid'],404);
+    $size=@filesize($imagePath);
+    if ($size===false || $size<1 || $size>6*1024*1024) \YeopMigration\sendJson(['error'=>'fallback_invalid'],404);
+    $body=@file_get_contents($imagePath);
+    if (!is_string($body) || !hash_equals(hash('sha256',$body),$fallback)) \YeopMigration\sendJson(['error'=>'fallback_invalid'],404);
+    $mime=(new \finfo(FILEINFO_MIME_TYPE))->buffer($body);
+    $allowed=['image/jpeg','image/png','image/gif','image/webp','image/avif'];
+    if (!in_array($mime,$allowed,true)) \YeopMigration\sendJson(['error'=>'fallback_invalid'],404);
+    header('Content-Type: '.$mime); header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: public, max-age=3600'); header("Content-Security-Policy: default-src 'none'; sandbox");
+    echo $body; exit;
+}
+
 $id=$_GET['id']??'';
 if (!is_string($id) || !preg_match('/^[a-f0-9]{64}$/D',$id)) \YeopMigration\sendJson(['error'=>'invalid_image_id'],400);
 try {
