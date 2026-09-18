@@ -11,7 +11,10 @@ on:
       - 'package-lock.json'
       - 'index.html'
       - 'vite.config.js'
-      - 'deploy/trigger.txt'
+      - 'server/**'
+      - 'scripts/yeop_deploy_ci.py'
+      - '.github/workflows/deploy-yeop.yml'
+      - 'deploy/**'
   workflow_dispatch:
 
 permissions:
@@ -27,6 +30,8 @@ jobs:
     timeout-minutes: 20
     env:
       YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
     steps:
       - name: Check out main
@@ -58,9 +63,42 @@ jobs:
           echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
           echo "Release: $rid"
 
-      - name: Recover verified public Supabase build config
+      - name: Prepare verified public Supabase build config
         shell: bash
         run: |
+          if [ -n "${VITE_SUPABASE_URL:-}" ] || [ -n "${VITE_SUPABASE_ANON_KEY:-}" ]; then
+            if [ -z "${VITE_SUPABASE_URL:-}" ] || [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
+              echo "::error::Both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY secrets must be configured together."
+              exit 1
+            fi
+            python - <<'PY'
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          expected_ref = "nohboljeugjmtwnvtayu"
+          url = os.environ["VITE_SUPABASE_URL"].strip().rstrip("/")
+          key = os.environ["VITE_SUPABASE_ANON_KEY"].strip()
+          host = urllib.parse.urlsplit(url).hostname or ""
+          if host != expected_ref + ".supabase.co":
+              raise SystemExit("Configured Supabase URL does not match the production project")
+          request = urllib.request.Request(
+              url + "/rest/v1/schedule_events?select=id&limit=0",
+              headers={"User-Agent": "YeopGitHubDeploy/1.0", "apikey": key, "Accept": "application/json"},
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              body = response.read(1024 * 1024)
+              if response.status != 200 or not isinstance(json.loads(body), list):
+                  raise SystemExit("Configured public Supabase settings failed read-only verification")
+          with open(".env.local", "w", encoding="utf-8") as handle:
+              handle.write("VITE_SUPABASE_URL=" + url + "\n")
+              handle.write("VITE_SUPABASE_ANON_KEY=" + key + "\n")
+          print("GitHub Supabase secrets verified without printing key material")
+          PY
+            exit 0
+          fi
+
           python - <<'PY'
           import base64
           import json
@@ -185,6 +223,7 @@ jobs:
         env:
           ACTIVATE: 'true'
           DIST_DIR: dist
+          SERVER_SOURCE_DIR: server
         run: python scripts/yeop_deploy_ci.py
 
       - name: Upload deployment report and rollback material

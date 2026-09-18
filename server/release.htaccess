@@ -1,0 +1,7 @@
+# YEOP RELEASE v0.2 - scoped to this release only
+DirectoryIndex index.html
+RewriteEngine On
+RewriteRule ^api/(?:_.*|config\.php)(?:/|$) - [F,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(?:mir|band|history|schedule|gallery(?:/[^/]+)?|admin)/?$ index.html [L]

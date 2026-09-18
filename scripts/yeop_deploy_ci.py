@@ -11,6 +11,7 @@ ORIGIN = "https://yeop.net"
 PREFIX = "/_yeop_releases/"
 OWNER_UID = 5048
 RID_RE = re.compile(r"r[0-9]{14}_[a-f0-9]{8}")
+SERVER_SOURCE = Path(os.environ.get("SERVER_SOURCE_DIR", "server")).resolve()
 API_FILES = [
     "api/_cache/.htaccess",
     "api/_cache.php",
@@ -167,6 +168,29 @@ def local_manifest(dist: Path):
             out[rel] = {"sha256": sha(fp.read_bytes()), "size": fp.stat().st_size}
     return out
 
+def server_payload(rid: str):
+    release_path = SERVER_SOURCE / "release.htaccess"
+    if not release_path.is_file() or release_path.is_symlink():
+        raise Stop("server/release.htaccess is missing or invalid")
+    release_htaccess = release_path.read_bytes()
+    payload = {}
+    server_files = {".htaccess": {"sha256": sha(release_htaccess), "size": len(release_htaccess)}}
+    for rel in API_FILES:
+        path = SERVER_SOURCE / rel
+        if not path.is_file() or path.is_symlink():
+            raise Stop("Server source file is missing or invalid: " + rel)
+        data = path.read_bytes()
+        if rel == "api/config.php":
+            if data.count(b"RELEASE_ID") != 1 or data.count(b"RELEASE_BASE") != 1:
+                raise Stop("Server config template placeholders are invalid")
+            data = data.replace(b"RELEASE_ID", rid.encode())
+            data = data.replace(b"RELEASE_BASE", (PREFIX + rid + "/").encode())
+        elif b"RELEASE_ID" in data or b"RELEASE_BASE" in data:
+            raise Stop("Unexpected release placeholder in server source: " + rel)
+        payload[rel] = data
+        server_files[rel] = {"sha256": sha(data), "size": len(data)}
+    return payload, release_htaccess, server_files
+
 def smoke(rid: str, local_files: dict):
     base = ORIGIN + PREFIX + rid + "/"
     results = {}
@@ -231,11 +255,13 @@ def main():
     if not (dist / "index.html").is_file():
         raise Stop("dist/index.html missing")
     manifest = local_manifest(dist)
+    api_payload, release_htaccess, server_files = server_payload(rid)
     report = {
         "release": rid,
         "source_commit": os.environ.get("GITHUB_SHA", ""),
         "phase": "starting",
         "files": manifest,
+        "server_files": server_files,
     }
     report_path = Path("deploy_report.json")
     backup_dir = Path("deployment-backup")
@@ -248,7 +274,6 @@ def main():
         oldrid = root_release(root)
         if oldrid == rid:
             raise Stop("Release is already active")
-        active_dir = WEB + PREFIX + oldrid
         new_dir = WEB + PREFIX + rid
         if r.info(new_dir) is not None:
             raise Stop("New release path already exists")
@@ -265,20 +290,6 @@ def main():
             "root_sha256": sha(root),
             "preserved_root_hashes": preserved,
         }, indent=2) + "\n", encoding="utf-8")
-
-        api_payload = {}
-        for rel in API_FILES:
-            data = r.read(active_dir + "/" + rel)
-            if data is None:
-                raise Stop("Active release API file missing: " + rel)
-            api_payload[rel] = data
-        cfg = api_payload["api/config.php"]
-        if oldrid.encode() not in cfg:
-            raise Stop("Active API config does not identify current release")
-        api_payload["api/config.php"] = cfg.replace(oldrid.encode(), rid.encode())
-        release_htaccess = r.read(active_dir + "/.htaccess")
-        if release_htaccess is None:
-            raise Stop("Active release .htaccess missing")
 
         r.mkdir(WEB + PREFIX.rstrip("/"), existing=True)
         r.mkdir(new_dir)
