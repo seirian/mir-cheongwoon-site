@@ -1,0 +1,208 @@
+name: Deploy yeop.net
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'index.html'
+      - 'vite.config.js'
+      - 'deploy/trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yeop-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Require deployment secret
+        shell: bash
+        run: |
+          if [ -z "${YEOP_SFTP_PASSWORD:-}" ]; then
+            echo "::error::Repository secret YEOP_SFTP_PASSWORD is not configured."
+            exit 1
+          fi
+
+      - name: Generate release ID
+        shell: bash
+        run: |
+          rid="r$(date -u +%Y%m%d%H%M%S)_${GITHUB_SHA:0:8}"
+          echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
+          echo "Release: $rid"
+
+      - name: Recover verified public Supabase build config
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import re
+          import urllib.parse
+          import urllib.request
+
+          def get(url, headers=None):
+              request = urllib.request.Request(
+                  url,
+                  headers={"User-Agent": "YeopGitHubDeploy/1.0", **(headers or {})},
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return response.status, response.read(20 * 1024 * 1024)
+
+          _, html = get("https://yeop.net/")
+          text = html.decode("utf-8")
+          match = re.search(r'<script[^>]+src="([^"]+assets/[^"]+\.js)"', text)
+          if not match:
+              raise SystemExit("Could not locate current production JS bundle")
+          bundle_url = urllib.parse.urljoin("https://yeop.net/", match.group(1))
+          _, bundle = get(bundle_url)
+          source = bundle.decode("utf-8", "ignore")
+
+          urls = list(dict.fromkeys(re.findall(r"https://[a-z0-9]{10,40}\.supabase\.co", source)))
+          raw_keys = re.findall(
+              r"sb_publishable_[A-Za-z0-9_-]{15,250}|"
+              r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
+              source,
+          )
+
+          def jwt_matches(key, project_ref):
+              if not key.startswith("eyJ"):
+                  return True
+              try:
+                  payload = key.split(".")[1]
+                  payload += "=" * (-len(payload) % 4)
+                  data = json.loads(base64.urlsafe_b64decode(payload))
+              except Exception:
+                  return False
+              return data.get("role") == "anon" and (not data.get("ref") or data.get("ref") == project_ref)
+
+          chosen = None
+          for url in urls:
+              project_ref = urllib.parse.urlsplit(url).hostname.split(".")[0]
+              for key in raw_keys:
+                  if not jwt_matches(key, project_ref):
+                      continue
+                  try:
+                      status, body = get(
+                          url + "/rest/v1/schedule_events?select=id&limit=0",
+                          {"apikey": key, "Accept": "application/json"},
+                      )
+                      if status == 200 and isinstance(json.loads(body), list):
+                          chosen = (url, key)
+                          break
+                  except Exception:
+                      continue
+              if chosen:
+                  break
+
+          if not chosen:
+              raise SystemExit("Could not recover and verify existing public Supabase config")
+
+          url, key = chosen
+          with open(".env.local", "w", encoding="utf-8") as handle:
+              handle.write("VITE_SUPABASE_URL=" + url + "\n")
+              handle.write("VITE_SUPABASE_ANON_KEY=" + key + "\n")
+          print("Existing public Supabase config recovered and verified without printing key material")
+          PY
+
+      - name: Install frontend dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Stamp release marker
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          rid = os.environ["RELEASE_ID"]
+          path = Path("index.html")
+          text = path.read_text(encoding="utf-8")
+          marker = f'<meta name="yeop-release" content="{rid}" />'
+          if marker not in text:
+              if text.count("</head>") != 1:
+                  raise SystemExit("Unexpected index.html structure")
+              text = text.replace("</head>", marker + "\n</head>")
+              path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Build release
+        shell: bash
+        run: |
+          npx vite build --base "/_yeop_releases/${RELEASE_ID}/"
+
+      - name: Verify build contents
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          dist = Path("dist")
+          if not (dist / "index.html").is_file():
+              raise SystemExit("dist/index.html is missing")
+          gif = dist / "mir-profile-live.gif"
+          if not gif.is_file():
+              raise SystemExit("mir-profile-live.gif is missing from build")
+          if gif.read_bytes()[:6] not in (b"GIF87a", b"GIF89a"):
+              raise SystemExit("mir-profile-live.gif has invalid GIF header")
+          for path in dist.rglob("*"):
+              if path.is_file() and b"/.netlify/functions/" in path.read_bytes():
+                  raise SystemExit(f"Netlify function reference remains in {path}")
+          print("Build verification passed")
+          PY
+
+      - name: Install SFTP dependency
+        run: python -m pip install --disable-pip-version-check --no-input "paramiko==5.0.0"
+
+      - name: Deploy, verify and activate
+        env:
+          ACTIVATE: 'true'
+          DIST_DIR: dist
+        run: python scripts/yeop_deploy_ci.py
+
+      - name: Upload deployment report and rollback material
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yeop-deploy-${{ github.run_id }}
+          path: |
+            deploy_report.json
+            deployment-backup/
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Deployment summary
+        if: success()
+        shell: bash
+        run: |
+          echo "### yeop.net production deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release: \`${RELEASE_ID}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Production routes and PHP health verified after atomic cutover." >> "$GITHUB_STEP_SUMMARY"
