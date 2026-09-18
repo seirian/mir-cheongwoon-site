@@ -30,8 +30,6 @@ jobs:
     timeout-minutes: 20
     env:
       YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
-      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
     steps:
       - name: Check out main
@@ -65,9 +63,12 @@ jobs:
 
       - name: Prepare verified public Supabase build config
         shell: bash
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "${VITE_SUPABASE_URL:-}" ] || [ -n "${VITE_SUPABASE_ANON_KEY:-}" ]; then
-            if [ -z "${VITE_SUPABASE_URL:-}" ] || [ -z "${VITE_SUPABASE_ANON_KEY:-}" ]; then
+          if [ -n "${SUPABASE_URL_SECRET:-}" ] || [ -n "${SUPABASE_ANON_KEY_SECRET:-}" ]; then
+            if [ -z "${SUPABASE_URL_SECRET:-}" ] || [ -z "${SUPABASE_ANON_KEY_SECRET:-}" ]; then
               echo "::error::Both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY secrets must be configured together."
               exit 1
             fi
@@ -78,8 +79,8 @@ jobs:
           import urllib.request
 
           expected_ref = "nohboljeugjmtwnvtayu"
-          url = os.environ["VITE_SUPABASE_URL"].strip().rstrip("/")
-          key = os.environ["VITE_SUPABASE_ANON_KEY"].strip()
+          url = os.environ["SUPABASE_URL_SECRET"].strip().rstrip("/")
+          key = os.environ["SUPABASE_ANON_KEY_SECRET"].strip()
           host = urllib.parse.urlsplit(url).hostname or ""
           if host != expected_ref + ".supabase.co":
               raise SystemExit("Configured Supabase URL does not match the production project")
@@ -210,9 +211,18 @@ jobs:
               raise SystemExit("mir-profile-live.gif is missing from build")
           if gif.read_bytes()[:6] not in (b"GIF87a", b"GIF89a"):
               raise SystemExit("mir-profile-live.gif has invalid GIF header")
+          expected_supabase = b"https://nohboljeugjmtwnvtayu.supabase.co"
+          bundle_has_supabase = False
           for path in dist.rglob("*"):
-              if path.is_file() and b"/.netlify/functions/" in path.read_bytes():
+              if not path.is_file():
+                  continue
+              data = path.read_bytes()
+              if b"/.netlify/functions/" in data:
                   raise SystemExit(f"Netlify function reference remains in {path}")
+              if path.suffix == ".js" and expected_supabase in data:
+                  bundle_has_supabase = True
+          if not bundle_has_supabase:
+              raise SystemExit("Production Supabase config is missing from the built JS bundle")
           print("Build verification passed")
           PY
 
