@@ -115,22 +115,6 @@ jobs:
               with urllib.request.urlopen(request, timeout=30) as response:
                   return response.status, response.read(20 * 1024 * 1024)
 
-          _, html = get("https://yeop.net/")
-          text = html.decode("utf-8")
-          match = re.search(r'<script[^>]+src="([^"]+assets/[^"]+\.js)"', text)
-          if not match:
-              raise SystemExit("Could not locate current production JS bundle")
-          bundle_url = urllib.parse.urljoin("https://yeop.net/", match.group(1))
-          _, bundle = get(bundle_url)
-          source = bundle.decode("utf-8", "ignore")
-
-          urls = list(dict.fromkeys(re.findall(r"https://[a-z0-9]{10,40}\.supabase\.co", source)))
-          raw_keys = re.findall(
-              r"sb_publishable_[A-Za-z0-9_-]{15,250}|"
-              r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
-              source,
-          )
-
           def jwt_matches(key, project_ref):
               if not key.startswith("eyJ"):
                   return True
@@ -143,22 +127,48 @@ jobs:
               return data.get("role") == "anon" and (not data.get("ref") or data.get("ref") == project_ref)
 
           chosen = None
-          for url in urls:
-              project_ref = urllib.parse.urlsplit(url).hostname.split(".")[0]
-              for key in raw_keys:
-                  if not jwt_matches(key, project_ref):
+          sources = [
+              ("current-production", "https://yeop.net/"),
+              ("verified-bootstrap", "https://yeop.net/_yeop_releases/r20260918122234_a3d61d15/index.html"),
+          ]
+          for label, index_url in sources:
+              try:
+                  _, html = get(index_url)
+                  text = html.decode("utf-8")
+                  match = re.search(r'<script[^>]+src="([^"]+assets/[^"]+\.js)"', text)
+                  if not match:
                       continue
-                  try:
-                      status, body = get(
-                          url + "/rest/v1/schedule_events?select=id&limit=0",
-                          {"apikey": key, "Accept": "application/json"},
-                      )
-                      if status == 200 and isinstance(json.loads(body), list):
-                          chosen = (url, key)
-                          break
-                  except Exception:
-                      continue
+                  bundle_url = urllib.parse.urljoin(index_url, match.group(1))
+                  _, bundle = get(bundle_url)
+                  source = bundle.decode("utf-8", "ignore")
+              except Exception:
+                  continue
+
+              urls = list(dict.fromkeys(re.findall(r"https://[a-z0-9]{10,40}\.supabase\.co", source)))
+              raw_keys = re.findall(
+                  r"sb_publishable_[A-Za-z0-9_-]{15,250}|"
+                  r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
+                  source,
+              )
+              for url in urls:
+                  project_ref = urllib.parse.urlsplit(url).hostname.split(".")[0]
+                  for key in raw_keys:
+                      if not jwt_matches(key, project_ref):
+                          continue
+                      try:
+                          status, body = get(
+                              url + "/rest/v1/schedule_events?select=id&limit=0",
+                              {"apikey": key, "Accept": "application/json"},
+                          )
+                          if status == 200 and isinstance(json.loads(body), list):
+                              chosen = (url, key)
+                              break
+                      except Exception:
+                          continue
+                  if chosen:
+                      break
               if chosen:
+                  print("Existing public Supabase config recovered from " + label + " without printing key material")
                   break
 
           if not chosen:
