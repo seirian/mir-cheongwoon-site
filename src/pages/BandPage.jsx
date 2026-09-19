@@ -2,7 +2,12 @@ import { useMemo } from 'react';
 import PageHero from '../components/PageHero';
 import { bandInfo, bandMembers } from '../data/siteData';
 import CHEONGWOON_HERO_IMAGE from '../data/cheongwoonHeroImage';
-import { BAND_MEMBER_ILLUSTRATIONS } from '../data/bandMemberIllustrations';
+import {
+  MAENGGAMJA_ILLUSTRATION,
+  RANDOM_MEMBER_ILLUSTRATIONS,
+  RAY_ILLUSTRATION,
+  SWEETBERRY_ILLUSTRATION,
+} from '../data/bandMemberIllustrations';
 import '../band-page.css';
 
 const PUBLIC_BASE = import.meta.env.BASE_URL || '/';
@@ -22,8 +27,19 @@ export default function BandPage() {
   const [taglineBefore, taglineAfter] = bandInfo.tagline.split(BAND_TAGLINE_HIGHLIGHT);
 
   const memberVisuals = useMemo(() => {
-    const shuffled = shuffleIllustrations(BAND_MEMBER_ILLUSTRATIONS);
-    return bandMembers.map((member, index) => member.image || shuffled[index % shuffled.length]);
+    const shuffled = shuffleIllustrations(RANDOM_MEMBER_ILLUSTRATIONS);
+    let randomIndex = 0;
+
+    return bandMembers.map((member) => {
+      if (member.image) return member.image;
+      if (member.name === 'Ray') return RAY_ILLUSTRATION;
+      if (member.name === 'SweetBerry') return SWEETBERRY_ILLUSTRATION;
+      if (member.name === '맹감자') return MAENGGAMJA_ILLUSTRATION;
+
+      const illustration = shuffled[randomIndex % shuffled.length];
+      randomIndex += 1;
+      return illustration;
+    });
   }, []);
 
   const handleMemberImageError = (event) => {
