@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const BRAND_ICON = import.meta.env.BASE_URL + 'icon_img.png';
 
@@ -14,6 +15,36 @@ const links = [
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState(null);
+  const [authReady, setAuthReady] = useState(!supabase);
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setSession(data.session);
+      setAuthReady(true);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active) return;
+      setSession(nextSession);
+      setAuthReady(true);
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    setOpen(false);
+    if (!supabase) return;
+    await supabase.auth.signOut();
+  };
 
   return (
     <div className="site-shell">
@@ -31,6 +62,11 @@ export default function Layout() {
               {label}
             </NavLink>
           ))}
+          {authReady && session && (
+            <NavLink to="/account" onClick={() => setOpen(false)} className={({ isActive }) => (isActive ? 'active' : '')}>
+              내 정보
+            </NavLink>
+          )}
         </nav>
       </header>
 
@@ -42,7 +78,11 @@ export default function Layout() {
           <p>미르님과 청운밴드가 같이 만들어간 추억을 오래 남기기 위한 비공식 사이트 초안입니다.</p>
         </div>
         <div className="footer-account-links">
-          <Link to="/account" className="footer-admin">로그인 / 회원가입</Link>
+          {authReady && session ? (
+            <button type="button" className="footer-admin footer-logout" onClick={handleLogout}>로그아웃</button>
+          ) : (
+            <Link to="/account" className="footer-admin">로그인 / 회원가입</Link>
+          )}
           <Link to="/admin" className="footer-admin">관리자</Link>
         </div>
       </footer>
