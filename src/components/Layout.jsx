@@ -16,22 +16,40 @@ const links = [
 export default function Layout() {
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authReady, setAuthReady] = useState(!supabase);
 
   useEffect(() => {
     if (!supabase) return undefined;
 
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
+
+    const resolveSession = async (nextSession) => {
       if (!active) return;
-      setSession(data.session);
+
+      setSession(nextSession);
+
+      if (!nextSession?.user) {
+        setIsAdmin(false);
+        setAuthReady(true);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', nextSession.user.id)
+        .maybeSingle();
+
+      if (!active) return;
+      setIsAdmin(Boolean(data));
       setAuthReady(true);
-    });
+    };
+
+    supabase.auth.getSession().then(({ data }) => resolveSession(data.session));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!active) return;
-      setSession(nextSession);
-      setAuthReady(true);
+      resolveSession(nextSession);
     });
 
     return () => {
@@ -83,7 +101,7 @@ export default function Layout() {
           ) : (
             <Link to="/account" className="footer-admin">로그인 / 회원가입</Link>
           )}
-          <Link to="/admin" className="footer-admin">관리자</Link>
+          {authReady && session && isAdmin && <Link to="/admin" className="footer-admin">관리자</Link>}
         </div>
       </footer>
     </div>
