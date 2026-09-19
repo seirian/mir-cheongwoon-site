@@ -1,2 +1,2 @@
-Trigger yeop.net deployment for schedule interaction upgrade.
+Trigger yeop.net deployment for account navigation/logout update.
 Requested: 2026-09-19 KST
