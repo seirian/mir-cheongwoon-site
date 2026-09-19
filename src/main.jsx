@@ -13,6 +13,7 @@ import './schedule-quick-add.css';
 import './schedule-memo.css';
 import './media-gallery.css';
 import './site-final-polish.css';
+import './member-auth.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
