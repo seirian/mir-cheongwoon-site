@@ -10,28 +10,28 @@ const BAND_TAGLINE_HIGHLIGHT = '미르와 함께 여름을 노래하는 동료';
 
 const BAND_HERO_VISUALS = [
   {
-    src: 'https://images.unsplash.com/photo-1769971817303-dd633b077da8?auto=format&fit=crop&w=2400&q=88',
+    src: 'https://images.pexels.com/photos/18271795/pexels-photo-18271795.jpeg?auto=compress&cs=tinysrgb&w=1800',
     alt: '여성 보컬이 무대 조명 아래 노래하는 라이브 공연 이미지',
     label: 'VOCAL · LIVE',
-    objectPosition: '50% 45%',
+    objectPosition: '50% 42%',
   },
   {
-    src: 'https://images.unsplash.com/photo-1761959168878-ffbf71e12859?auto=format&fit=crop&w=2400&q=88',
+    src: 'https://images.pexels.com/photos/7715664/pexels-photo-7715664.jpeg?auto=compress&cs=tinysrgb&w=1800',
     alt: '남성 드러머가 콘서트 무대에서 연주하는 라이브 공연 이미지',
     label: 'DRUMS · LIVE',
-    objectPosition: '50% 50%',
+    objectPosition: '50% 48%',
   },
   {
-    src: 'https://images.unsplash.com/photo-1777455314134-f8216adab74e?auto=format&fit=crop&w=2400&q=88',
+    src: 'https://images.pexels.com/photos/28978302/pexels-photo-28978302.jpeg?auto=compress&cs=tinysrgb&w=1800',
     alt: '여성 베이시스트가 무대에서 연주하는 라이브 공연 이미지',
     label: 'BASS · LIVE',
     objectPosition: '50% 45%',
   },
   {
-    src: 'https://images.unsplash.com/photo-1774488004483-8b9080e011d7?auto=format&fit=crop&w=2400&q=88',
+    src: 'https://images.pexels.com/photos/8044067/pexels-photo-8044067.jpeg?auto=compress&cs=tinysrgb&w=1800',
     alt: '여성 보컬과 밴드가 함께 공연하는 라이브 무대 이미지',
     label: 'BAND · LIVE',
-    objectPosition: '50% 52%',
+    objectPosition: '50% 50%',
   },
 ];
 
@@ -67,6 +67,7 @@ export default function BandPage() {
             style={{ objectPosition: heroVisual.objectPosition }}
             onError={handleHeroImageError}
             decoding="async"
+            referrerPolicy="no-referrer"
           />
           <figcaption>
             <span>{heroVisual.label}</span>
