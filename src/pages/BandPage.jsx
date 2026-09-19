@@ -1,24 +1,75 @@
+import { useState } from 'react';
 import PageHero from '../components/PageHero';
 import { bandInfo, bandMembers } from '../data/siteData';
 import '../band-page.css';
 
 const PUBLIC_BASE = import.meta.env.BASE_URL || '/';
-const BAND_PERFORMANCE_IMAGE = `${PUBLIC_BASE}images/cheongwoon-band-performance.webp`;
+const FALLBACK_BAND_IMAGE = `${PUBLIC_BASE}images/cheongwoon-band-performance.webp`;
 const DEFAULT_MEMBER_IMAGE = `${PUBLIC_BASE}images/cheongwoon-member-default.webp`;
+const BAND_TAGLINE_HIGHLIGHT = '미르와 함께 여름을 노래하는 동료';
+
+const BAND_HERO_VISUALS = [
+  {
+    src: 'https://images.unsplash.com/photo-1769971817303-dd633b077da8?auto=format&fit=crop&w=2400&q=88',
+    alt: '여성 보컬이 무대 조명 아래 노래하는 라이브 공연 이미지',
+    label: 'VOCAL · LIVE',
+    objectPosition: '50% 45%',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1761959168878-ffbf71e12859?auto=format&fit=crop&w=2400&q=88',
+    alt: '남성 드러머가 콘서트 무대에서 연주하는 라이브 공연 이미지',
+    label: 'DRUMS · LIVE',
+    objectPosition: '50% 50%',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1777455314134-f8216adab74e?auto=format&fit=crop&w=2400&q=88',
+    alt: '여성 베이시스트가 무대에서 연주하는 라이브 공연 이미지',
+    label: 'BASS · LIVE',
+    objectPosition: '50% 45%',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1774488004483-8b9080e011d7?auto=format&fit=crop&w=2400&q=88',
+    alt: '여성 보컬과 밴드가 함께 공연하는 라이브 무대 이미지',
+    label: 'BAND · LIVE',
+    objectPosition: '50% 52%',
+  },
+];
 
 export default function BandPage() {
+  const [heroVisual] = useState(
+    () => BAND_HERO_VISUALS[Math.floor(Math.random() * BAND_HERO_VISUALS.length)],
+  );
+  const [taglineBefore, taglineAfter] = bandInfo.tagline.split(BAND_TAGLINE_HIGHLIGHT);
+
+  const handleHeroImageError = (event) => {
+    if (event.currentTarget.dataset.fallbackApplied === 'true') return;
+    event.currentTarget.dataset.fallbackApplied = 'true';
+    event.currentTarget.src = FALLBACK_BAND_IMAGE;
+    event.currentTarget.style.objectPosition = 'center';
+  };
+
   return (
     <>
       <PageHero eyebrow="ABOUT BAND" title="청운밴드" description="미르와 함께 무대의 사운드를 완성해 온 청운밴드를 소개합니다." />
       <section className="section-wrap band-intro">
         <div className="band-intro-copy">
           <span className="soft-label">CHEONGWOON BAND</span>
-          <h2>{bandInfo.tagline}</h2>
+          <h2>
+            {taglineBefore}
+            <strong>{BAND_TAGLINE_HIGHLIGHT}</strong>
+            {taglineAfter}
+          </h2>
         </div>
         <figure className="band-intro-visual">
-          <img src={BAND_PERFORMANCE_IMAGE} alt="미르와 청운밴드가 함께 공연하는 모습" />
+          <img
+            src={heroVisual.src}
+            alt={heroVisual.alt}
+            style={{ objectPosition: heroVisual.objectPosition }}
+            onError={handleHeroImageError}
+            decoding="async"
+          />
           <figcaption>
-            <span>MIR × CHEONGWOON BAND</span>
+            <span>{heroVisual.label}</span>
             <strong>함께 여름을 노래하는 무대</strong>
           </figcaption>
         </figure>

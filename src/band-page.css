@@ -5,6 +5,11 @@
 .band-intro-copy h2 {
   margin-bottom: 0;
   word-break: keep-all;
+  font-weight: 400;
+}
+
+.band-intro-copy h2 strong {
+  font-weight: 800;
 }
 
 .band-intro-visual {
@@ -30,6 +35,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: saturate(1.04) contrast(1.03);
 }
 
 .band-intro-visual figcaption {
