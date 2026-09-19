@@ -66,6 +66,7 @@ export default function ScheduleManager({ onMessage }) {
       description: form.description.trim() || null,
       link_url: form.link_url.trim() || null,
       sort_order: Number(form.sort_order) || 0,
+      manual_override: Boolean(form.id),
       source_type: form.id ? undefined : 'manual',
     };
     if (payload.source_type === undefined) delete payload.source_type;
