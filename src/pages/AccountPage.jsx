@@ -25,6 +25,7 @@ export default function AccountPage() {
   const [signup, setSignup] = useState({ username: '', email: '', password: '', passwordConfirm: '' });
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [recoveryAuthorized, setRecoveryAuthorized] = useState(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     return hash.get('type') === 'recovery';
@@ -213,6 +214,10 @@ export default function AccountPage() {
       setMessage('새 비밀번호는 8~128자로 입력해 주세요.');
       return;
     }
+    if (newPassword !== newPasswordConfirm) {
+      setMessage('새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.');
+      return;
+    }
 
     setBusy(true);
     setMessage('');
@@ -226,6 +231,7 @@ export default function AccountPage() {
 
     await supabase.auth.signOut();
     setNewPassword('');
+    setNewPasswordConfirm('');
     switchMode('login');
     setMessage('비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.');
   };
@@ -306,6 +312,7 @@ export default function AccountPage() {
               <div className="account-auth-title"><KeyRound size={20}/><strong>새 비밀번호 설정</strong></div>
               <p className="account-auth-note">이메일 인증 링크가 확인되었습니다. 새 비밀번호를 설정해 주세요.</p>
               <label>새 비밀번호<input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
+              <label>새 비밀번호 확인<input type="password" value={newPasswordConfirm} onChange={(e) => setNewPasswordConfirm(e.target.value)} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
               <button className="btn btn-primary" disabled={busy}>{busy ? '변경 중...' : '비밀번호 변경'}</button>
             </form>
           ) : (
