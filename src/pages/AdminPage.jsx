@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { CalendarDays, ImagePlus, Images, LogIn, LogOut, PlaySquare, Plus, Trash2 } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
+import { CalendarDays, ImagePlus, Images, LogOut, PlaySquare, Plus, Trash2 } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import ScheduleManager from '../components/ScheduleManager';
 import VideoManager from '../components/VideoManager';
@@ -8,10 +9,10 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 export default function AdminPage() {
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [activeTab, setActiveTab] = useState('video');
   const [galleries, setGalleries] = useState([]);
   const [message, setMessage] = useState('');
-  const [login, setLogin] = useState({ email: '', password: '' });
   const [form, setForm] = useState({ title: '', event_date: '', description: '' });
 
   const loadGalleries = async () => {
@@ -28,17 +29,19 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); checkAdmin(data.session); });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => { setSession(next); checkAdmin(next); });
+    supabase.auth.getSession().then(async ({ data }) => {
+      setSession(data.session);
+      await checkAdmin(data.session);
+      setAuthReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, next) => {
+      setSession(next);
+      await checkAdmin(next);
+      setAuthReady(true);
+    });
     loadGalleries();
     return () => listener.subscription.unsubscribe();
   }, []);
-
-  const signIn = async (e) => {
-    e.preventDefault(); setMessage('');
-    const { error } = await supabase.auth.signInWithPassword(login);
-    setMessage(error ? error.message : '로그인했습니다.');
-  };
 
   const createGallery = async (e) => {
     e.preventDefault(); setMessage('');
@@ -77,10 +80,8 @@ export default function AdminPage() {
 
   if (!isSupabaseConfigured) return <><PageHero eyebrow="ADMIN" title="관리자" description="영상, 갤러리와 일정표를 관리하는 전용 화면입니다."/><section className="section-wrap"><div className="setup-banner">먼저 <code>.env</code>에 Supabase URL과 Anon Key를 설정해야 관리자 기능을 사용할 수 있습니다.</div></section></>;
 
-  if (!session) return (
-    <><PageHero eyebrow="ADMIN" title="관리자 로그인" description="허가된 관리자 계정만 콘텐츠를 수정할 수 있습니다." />
-    <section className="section-wrap admin-narrow"><form className="admin-card login-form" onSubmit={signIn}><label>이메일<input type="email" value={login.email} onChange={(e)=>setLogin({...login,email:e.target.value})} required/></label><label>비밀번호<input type="password" value={login.password} onChange={(e)=>setLogin({...login,password:e.target.value})} required/></label><button className="btn btn-primary"><LogIn size={17}/> 로그인</button>{message && <p className="admin-message">{message}</p>}</form></section></>
-  );
+  if (!authReady) return <><PageHero eyebrow="ADMIN" title="관리자" description="관리자 권한을 확인하고 있습니다."/><section className="section-wrap"><div className="loading">로그인 상태 확인 중...</div></section></>;
+  if (!session) return <Navigate to="/account?next=/admin" replace />;
 
   if (!isAdmin) return <><PageHero eyebrow="ADMIN" title="접근 권한 없음" description="로그인은 되었지만 관리자 목록에 등록되지 않은 계정입니다."/><section className="section-wrap admin-narrow"><div className="admin-card"><p>Supabase의 <code>admins</code> 테이블에 현재 사용자 ID를 등록해 주세요.</p><button className="btn btn-ghost" onClick={()=>supabase.auth.signOut()}><LogOut size={17}/> 로그아웃</button></div></section></>;
 
