@@ -582,3 +582,67 @@
   .schedule-bottom-grid { grid-template-columns: 1fr; }
   .schedule-note-card { min-height: 130px; padding: 18px; }
 }
+
+
+/* Calendar interaction upgrades */
+@media (min-width: 1201px) {
+  .schedule-section {
+    width: min(1640px, calc(100% - 40px));
+    max-width: none;
+  }
+
+  .schedule-dashboard {
+    grid-template-columns: minmax(0, 2.45fr) minmax(320px, .62fr);
+  }
+}
+
+.schedule-legend button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 31px;
+  padding: 6px 10px;
+  border: 1px solid #30323f;
+  border-radius: 999px;
+  background: rgba(18,19,27,.72);
+  color: #b9bbc7;
+  font-size: 11px;
+  font-weight: 700;
+  transition: border-color .18s ease, background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.schedule-legend button i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.schedule-legend button b {
+  color: #777b8e;
+  font-size: 10px;
+}
+
+.schedule-legend button:hover {
+  transform: translateY(-1px);
+  border-color: #56506d;
+  color: #fff;
+}
+
+.schedule-legend button.active {
+  border-color: color-mix(in srgb, var(--filter-color, #9d7bff) 70%, white 10%);
+  background: color-mix(in srgb, var(--filter-color, #9d7bff) 16%, #171925);
+  color: #fff;
+}
+
+.schedule-event.admin-editable {
+  cursor: grab;
+}
+
+.schedule-event.admin-editable:active {
+  cursor: grabbing;
+}
+
+.schedule-day.drag-target {
+  background: linear-gradient(145deg, rgba(157,123,255,.22), rgba(255,125,182,.08)), #191b27;
+  box-shadow: inset 0 0 0 2px rgba(157,123,255,.72);
+}
