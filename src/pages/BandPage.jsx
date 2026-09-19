@@ -2,8 +2,9 @@ import PageHero from '../components/PageHero';
 import { bandInfo, bandMembers } from '../data/siteData';
 import '../band-page.css';
 
-const BAND_PERFORMANCE_IMAGE = '/images/cheongwoon-band-performance.webp';
-const DEFAULT_MEMBER_IMAGE = '/images/cheongwoon-member-default.webp';
+const PUBLIC_BASE = import.meta.env.BASE_URL || '/';
+const BAND_PERFORMANCE_IMAGE = `${PUBLIC_BASE}images/cheongwoon-band-performance.webp`;
+const DEFAULT_MEMBER_IMAGE = `${PUBLIC_BASE}images/cheongwoon-member-default.webp`;
 
 export default function BandPage() {
   return (
