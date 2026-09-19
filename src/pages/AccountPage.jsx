@@ -242,7 +242,7 @@ export default function AccountPage() {
   if (session && mode !== 'reset') {
     return (
       <>
-        <PageHero eyebrow="ACCOUNT" title="내 계정" description="현재 로그인된 회원 정보를 확인합니다." />
+        <PageHero eyebrow="ACCOUNT" title="내 정보" description="현재 로그인된 회원 정보를 확인합니다." />
         <section className="section-wrap account-auth-wrap">
           <div className="account-auth-card account-profile-card">
             <ShieldCheck size={34} />
