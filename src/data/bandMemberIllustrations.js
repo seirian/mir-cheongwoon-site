@@ -55,9 +55,18 @@ function buildIllustration({ id, role, accent, accent2, hair, skin, feminine, po
   const sideHair = feminine
     ? '<path d="M126 153 C113 183 116 233 132 269 C144 254 153 234 157 211 L155 165Z" fill="' + hair + '"/><path d="M317 150 C333 182 332 230 316 270 C301 254 293 232 290 208 L292 163Z" fill="' + hair + '"/>'
     : '<path d="M128 151 C121 174 123 204 134 229 C144 214 150 194 150 174Z" fill="' + hair + '"/><path d="M316 148 C326 171 325 201 315 228 C304 212 298 193 298 171Z" fill="' + hair + '"/>';
+  const faceShape = feminine
+    ? '<ellipse cx="222" cy="190" rx="94" ry="104" fill="' + skin + '" stroke="#17356f" stroke-width="8"/>'
+    : '<path d="M142 151 C147 110 180 85 221 83 C265 81 299 106 306 149 L304 205 C300 243 273 273 223 286 C176 278 146 246 141 207Z" fill="' + skin + '" stroke="#17356f" stroke-width="8"/>';
+  const eyes = feminine
+    ? '<ellipse cx="185" cy="195" rx="24" ry="30" fill="#fff" stroke="#17356f" stroke-width="7"/><ellipse cx="259" cy="195" rx="24" ry="30" fill="#fff" stroke="#17356f" stroke-width="7"/><ellipse cx="188" cy="201" rx="11" ry="16" fill="#1a9ee8"/><ellipse cx="262" cy="201" rx="11" ry="16" fill="#1a9ee8"/><circle cx="192" cy="195" r="4" fill="#fff"/><circle cx="266" cy="195" r="4" fill="#fff"/>'
+    : '<ellipse cx="184" cy="194" rx="20" ry="24" fill="#fff" stroke="#17356f" stroke-width="7"/><ellipse cx="260" cy="194" rx="20" ry="24" fill="#fff" stroke="#17356f" stroke-width="7"/><ellipse cx="187" cy="199" rx="9" ry="13" fill="#1a9ee8"/><ellipse cx="263" cy="199" rx="9" ry="13" fill="#1a9ee8"/><circle cx="190" cy="194" r="3.5" fill="#fff"/><circle cx="266" cy="194" r="3.5" fill="#fff"/>';
+  const brows = feminine
+    ? ''
+    : '<path d="M160 165 Q181 153 201 163 M243 163 Q263 152 284 164" fill="none" stroke="' + hair + '" stroke-width="9" stroke-linecap="round"/><path d="M218 210 Q223 216 228 210" fill="none" stroke="#b67d70" stroke-width="4" stroke-linecap="round"/>';
   const mouth = feminine
     ? '<path d="M205 229 Q224 245 244 228" fill="none" stroke="#8d3b67" stroke-width="7" stroke-linecap="round"/>'
-    : '<path d="M207 231 Q225 239 241 229" fill="none" stroke="#8d3b67" stroke-width="6" stroke-linecap="round"/>';
+    : '<path d="M207 234 Q224 240 241 233" fill="none" stroke="#7b4854" stroke-width="6" stroke-linecap="round"/>';
   return svgDataUri(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 600">
       <defs>
@@ -78,13 +87,11 @@ function buildIllustration({ id, role, accent, accent2, hair, skin, feminine, po
       </g>
       <g filter="url(#shadow${id})">
         ${hairBack}
-        <ellipse cx="222" cy="190" rx="94" ry="104" fill="${skin}" stroke="#17356f" stroke-width="8"/>
+        ${faceShape}
         ${hairFront}
         ${sideHair}
-        <ellipse cx="185" cy="195" rx="24" ry="30" fill="#fff" stroke="#17356f" stroke-width="7"/>
-        <ellipse cx="259" cy="195" rx="24" ry="30" fill="#fff" stroke="#17356f" stroke-width="7"/>
-        <ellipse cx="188" cy="201" rx="11" ry="16" fill="#1a9ee8"/><ellipse cx="262" cy="201" rx="11" ry="16" fill="#1a9ee8"/>
-        <circle cx="192" cy="195" r="4" fill="#fff"/><circle cx="266" cy="195" r="4" fill="#fff"/>
+        ${eyes}
+        ${brows}
         ${mouth}
         <path d="M153 300 C183 278 260 277 298 302 L333 486 H108 L142 322Z" fill="#f7fbff" stroke="#17356f" stroke-width="9"/>
         <path d="M177 296 L222 350 L270 295 L291 488 H148Z" fill="#26335e"/>
