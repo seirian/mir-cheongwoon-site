@@ -43,11 +43,18 @@ const roleArtwork = {
 
 function buildIllustration({ id, role, accent, accent2, hair, skin, feminine, pose = 0 }) {
   const hairBack = feminine
-    ? '<path d="M114 172 C108 72 208 34 294 82 C350 114 361 213 325 306 C303 360 264 379 236 350 C179 391 116 340 111 271Z" fill="' + hair + '"/>'
-    : '<path d="M121 179 C121 91 192 53 277 82 C325 99 345 154 325 219 C301 196 284 157 260 135 C223 167 177 174 134 163Z" fill="' + hair + '"/>';
-  const fringe = pose % 2 === 0
-    ? '<path d="M139 155 C165 85 264 82 309 141 C273 131 248 125 222 105 C197 136 171 151 139 155Z" fill="' + hair + '"/>'
-    : '<path d="M137 153 C177 83 271 88 310 146 C276 126 251 115 235 101 C218 132 181 154 137 153Z" fill="' + hair + '"/>';
+    ? '<path d="M112 186 C104 104 144 52 210 42 C281 31 340 74 343 155 L337 278 C332 334 301 376 258 384 L232 344 C210 384 161 375 131 331 C111 301 105 242 112 186Z" fill="' + hair + '"/>'
+    : '<path d="M119 178 C114 111 151 65 212 54 C272 43 324 72 337 126 C343 151 337 181 326 207 C313 188 302 171 288 154 C274 168 258 178 239 184 C213 191 180 187 147 176Z" fill="' + hair + '"/>';
+  const hairFront = feminine
+    ? (pose % 2 === 0
+        ? '<path d="M128 171 C129 103 169 67 220 64 C274 61 314 94 320 153 C292 145 273 132 253 111 C244 141 230 163 210 181 C201 158 187 143 169 131 C162 154 148 169 128 184Z" fill="' + hair + '"/>'
+        : '<path d="M127 169 C132 102 172 68 222 65 C278 62 315 96 319 153 C291 139 273 125 258 106 C247 137 229 162 207 181 C197 160 182 145 164 135 C158 155 145 170 127 182Z" fill="' + hair + '"/>')
+    : (pose % 2 === 0
+        ? '<path d="M128 166 C135 108 171 76 218 70 C266 64 307 88 324 132 C303 128 286 119 270 107 C262 128 248 145 229 159 C217 144 204 133 188 125 C179 144 158 159 128 174Z" fill="' + hair + '"/>'
+        : '<path d="M129 165 C138 106 176 74 221 69 C269 64 309 89 324 135 C300 129 281 119 265 104 C257 129 241 148 220 162 C210 145 197 134 181 126 C171 145 153 159 129 173Z" fill="' + hair + '"/>');
+  const sideHair = feminine
+    ? '<path d="M126 153 C113 183 116 233 132 269 C144 254 153 234 157 211 L155 165Z" fill="' + hair + '"/><path d="M317 150 C333 182 332 230 316 270 C301 254 293 232 290 208 L292 163Z" fill="' + hair + '"/>'
+    : '<path d="M128 151 C121 174 123 204 134 229 C144 214 150 194 150 174Z" fill="' + hair + '"/><path d="M316 148 C326 171 325 201 315 228 C304 212 298 193 298 171Z" fill="' + hair + '"/>';
   const mouth = feminine
     ? '<path d="M205 229 Q224 245 244 228" fill="none" stroke="#8d3b67" stroke-width="7" stroke-linecap="round"/>'
     : '<path d="M207 231 Q225 239 241 229" fill="none" stroke="#8d3b67" stroke-width="6" stroke-linecap="round"/>';
@@ -72,7 +79,8 @@ function buildIllustration({ id, role, accent, accent2, hair, skin, feminine, po
       <g filter="url(#shadow${id})">
         ${hairBack}
         <ellipse cx="222" cy="190" rx="94" ry="104" fill="${skin}" stroke="#17356f" stroke-width="8"/>
-        ${fringe}
+        ${hairFront}
+        ${sideHair}
         <ellipse cx="185" cy="195" rx="24" ry="30" fill="#fff" stroke="#17356f" stroke-width="7"/>
         <ellipse cx="259" cy="195" rx="24" ry="30" fill="#fff" stroke="#17356f" stroke-width="7"/>
         <ellipse cx="188" cy="201" rx="11" ry="16" fill="#1a9ee8"/><ellipse cx="262" cy="201" rx="11" ry="16" fill="#1a9ee8"/>
@@ -107,3 +115,10 @@ export const BAND_MEMBER_ILLUSTRATIONS = [
   buildIllustration({ id: 7, role: 'BASS', accent: '#69d3ff', accent2: '#4d65d6', hair: '#343052', skin: '#f2d5c7', feminine: false, pose: 0 }),
   buildIllustration({ id: 8, role: 'KEYBOARD', accent: '#55c8ff', accent2: '#705ee7', hair: '#242949', skin: '#ffe3d8', feminine: true, pose: 1 }),
 ];
+
+export const RAY_ILLUSTRATION = BAND_MEMBER_ILLUSTRATIONS[3];
+export const SWEETBERRY_ILLUSTRATION = BAND_MEMBER_ILLUSTRATIONS[6];
+export const MAENGGAMJA_ILLUSTRATION = BAND_MEMBER_ILLUSTRATIONS[4];
+export const RANDOM_MEMBER_ILLUSTRATIONS = BAND_MEMBER_ILLUSTRATIONS.filter(
+  (_, index) => ![3, 6, 4].includes(index),
+);
