@@ -1,51 +1,35 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import PageHero from '../components/PageHero';
 import { bandInfo, bandMembers } from '../data/siteData';
+import CHEONGWOON_HERO_IMAGE from '../data/cheongwoonHeroImage';
+import { BAND_MEMBER_ILLUSTRATIONS } from '../data/bandMemberIllustrations';
 import '../band-page.css';
 
 const PUBLIC_BASE = import.meta.env.BASE_URL || '/';
-const FALLBACK_BAND_IMAGE = `${PUBLIC_BASE}images/cheongwoon-band-performance.webp`;
 const DEFAULT_MEMBER_IMAGE = `${PUBLIC_BASE}images/cheongwoon-member-default.webp`;
 const BAND_TAGLINE_HIGHLIGHT = '미르와 함께 여름을 노래하는 동료';
 
-const BAND_HERO_VISUALS = [
-  {
-    src: 'https://images.pexels.com/photos/18271795/pexels-photo-18271795.jpeg?auto=compress&cs=tinysrgb&w=1800',
-    alt: '여성 보컬이 무대 조명 아래 노래하는 라이브 공연 이미지',
-    label: 'VOCAL · LIVE',
-    objectPosition: '50% 42%',
-  },
-  {
-    src: 'https://images.pexels.com/photos/7715664/pexels-photo-7715664.jpeg?auto=compress&cs=tinysrgb&w=1800',
-    alt: '남성 드러머가 콘서트 무대에서 연주하는 라이브 공연 이미지',
-    label: 'DRUMS · LIVE',
-    objectPosition: '50% 48%',
-  },
-  {
-    src: 'https://images.pexels.com/photos/28978302/pexels-photo-28978302.jpeg?auto=compress&cs=tinysrgb&w=1800',
-    alt: '여성 베이시스트가 무대에서 연주하는 라이브 공연 이미지',
-    label: 'BASS · LIVE',
-    objectPosition: '50% 45%',
-  },
-  {
-    src: 'https://images.pexels.com/photos/8044067/pexels-photo-8044067.jpeg?auto=compress&cs=tinysrgb&w=1800',
-    alt: '여성 보컬과 밴드가 함께 공연하는 라이브 무대 이미지',
-    label: 'BAND · LIVE',
-    objectPosition: '50% 50%',
-  },
-];
+function shuffleIllustrations(items) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
 
 export default function BandPage() {
-  const [heroVisual] = useState(
-    () => BAND_HERO_VISUALS[Math.floor(Math.random() * BAND_HERO_VISUALS.length)],
-  );
   const [taglineBefore, taglineAfter] = bandInfo.tagline.split(BAND_TAGLINE_HIGHLIGHT);
 
-  const handleHeroImageError = (event) => {
+  const memberVisuals = useMemo(() => {
+    const shuffled = shuffleIllustrations(BAND_MEMBER_ILLUSTRATIONS);
+    return bandMembers.map((member, index) => member.image || shuffled[index % shuffled.length]);
+  }, []);
+
+  const handleMemberImageError = (event) => {
     if (event.currentTarget.dataset.fallbackApplied === 'true') return;
     event.currentTarget.dataset.fallbackApplied = 'true';
-    event.currentTarget.src = FALLBACK_BAND_IMAGE;
-    event.currentTarget.style.objectPosition = 'center';
+    event.currentTarget.src = DEFAULT_MEMBER_IMAGE;
   };
 
   return (
@@ -62,32 +46,25 @@ export default function BandPage() {
         </div>
         <figure className="band-intro-visual">
           <img
-            src={heroVisual.src}
-            alt={heroVisual.alt}
-            style={{ objectPosition: heroVisual.objectPosition }}
-            onError={handleHeroImageError}
+            src={CHEONGWOON_HERO_IMAGE}
+            alt="청운밴드 대표 일러스트"
             decoding="async"
-            referrerPolicy="no-referrer"
           />
-          <figcaption>
-            <span>{heroVisual.label}</span>
-            <strong>함께 여름을 노래하는 무대</strong>
-          </figcaption>
         </figure>
       </section>
       <section className="section-wrap member-section">
         <div className="section-title"><span>MEMBERS</span><h2>밴드 멤버</h2><p>사진, 포지션, 한 줄 코멘트로 각 멤버를 소개합니다.</p></div>
         <div className="member-grid">
-          {bandMembers.map((member) => (
+          {bandMembers.map((member, index) => (
             <article className="member-card" key={member.id}>
-              <div className={`member-photo-wrap${member.image ? '' : ' is-default'}`}>
+              <div className={`member-photo-wrap${member.image ? '' : ' is-illustration'}`}>
                 <img
                   className="member-photo"
-                  src={member.image || DEFAULT_MEMBER_IMAGE}
-                  alt={member.image ? member.name : `${member.name} 기본 밴드 프로필 이미지`}
+                  src={memberVisuals[index]}
+                  alt={member.image ? member.name : `${member.name} 밴드 멤버 일러스트`}
                   loading="lazy"
+                  onError={handleMemberImageError}
                 />
-                {!member.image && <span className="member-photo-badge">CHEONGWOON BAND</span>}
               </div>
               <div className="member-copy"><span>{member.position}</span><h3>{member.name}</h3><p>{member.comment}</p></div>
             </article>
