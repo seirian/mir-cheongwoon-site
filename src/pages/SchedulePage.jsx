@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Image as ImageIcon, Palette } from 'lucide-react';
 import PageHero from '../components/PageHero';
 import ScheduleQuickAddModal from '../components/ScheduleQuickAddModal';
 import ScheduleMemoCard from '../components/ScheduleMemoCard';
@@ -10,7 +10,15 @@ const MAX_YEAR = 2030;
 const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, index) => MIN_YEAR + index);
 const MONTHS = Array.from({ length: 12 }, (_, index) => index);
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-const CATEGORIES = ['휴방', '합방', '대회', '정기', '특별'];
+const CATEGORIES = ['기타', '휴방', '합방', '대회', '정기', '특별'];
+const DEFAULT_CATEGORY_COLORS = {
+  기타: '#b9bdca',
+  휴방: '#8d91a2',
+  합방: '#ffae76',
+  대회: '#77c9ff',
+  정기: '#a98cff',
+  특별: '#ff7db6',
+};
 const RELATIVE_DAYS = [
   { id: 'yesterday', label: '어제', offset: -1 },
   { id: 'today', label: '오늘', offset: 0 },
@@ -47,6 +55,13 @@ export default function SchedulePage() {
   const [fanartReason, setFanartReason] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [quickAddDate, setQuickAddDate] = useState('');
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [categoryColors, setCategoryColors] = useState(DEFAULT_CATEGORY_COLORS);
+  const [colorDraft, setColorDraft] = useState(DEFAULT_CATEGORY_COLORS);
+  const [colorEditorOpen, setColorEditorOpen] = useState(false);
+  const [savingColors, setSavingColors] = useState(false);
+  const [dragOverDate, setDragOverDate] = useState('');
 
   useEffect(() => {
     async function loadSchedule() {
@@ -102,6 +117,19 @@ export default function SchedulePage() {
   }, []);
 
   useEffect(() => {
+    if (!supabase) return;
+    let active = true;
+    supabase.from('schedule_category_settings').select('category,color').then(({ data }) => {
+      if (!active || !data) return;
+      const next = { ...DEFAULT_CATEGORY_COLORS };
+      data.forEach((item) => { if (CATEGORIES.includes(item.category) && /^#[0-9a-f]{6}$/i.test(item.color)) next[item.category] = item.color; });
+      setCategoryColors(next);
+      setColorDraft(next);
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadFeaturedFanart() {
@@ -137,13 +165,18 @@ export default function SchedulePage() {
     };
   }, []);
 
+  const filteredEvents = useMemo(
+    () => activeCategory === 'all' ? events : events.filter((event) => (event.category || '기타') === activeCategory),
+    [events, activeCategory],
+  );
+
   const eventsByDate = useMemo(() => {
-    return events.reduce((map, event) => {
+    return filteredEvents.reduce((map, event) => {
       if (!map[event.event_date]) map[event.event_date] = [];
       map[event.event_date].push(event);
       return map;
     }, {});
-  }, [events]);
+  }, [filteredEvents]);
 
   const days = useMemo(() => {
     const first = new Date(year, month, 1);
@@ -176,12 +209,63 @@ export default function SchedulePage() {
   };
 
   const handleQuickAddSaved = (newEvent) => {
-    setEvents((current) => [...current, newEvent].sort(sortScheduleEvents));
+    setEvents((current) => {
+      const exists = current.some((item) => item.id === newEvent.id);
+      const next = exists ? current.map((item) => item.id === newEvent.id ? newEvent : item) : [...current, newEvent];
+      return next.sort(sortScheduleEvents);
+    });
+    setEditingEvent(null);
     const [savedYear, savedMonth] = newEvent.event_date.split('-').map(Number);
     if (savedYear >= MIN_YEAR && savedYear <= MAX_YEAR) {
       setYear(savedYear);
       setMonth(savedMonth - 1);
     }
+  };
+
+  const monthEvents = useMemo(
+    () => events.filter((event) => event.event_date?.startsWith(`${year}-${pad(month + 1)}`)),
+    [events, year, month],
+  );
+  const categoryCounts = useMemo(() => CATEGORIES.reduce((map, category) => {
+    map[category] = monthEvents.filter((event) => (event.category || '기타') === category).length;
+    return map;
+  }, {}), [monthEvents]);
+
+  const moveEventToDate = async (event, targetDate) => {
+    if (!isAdmin || !supabase || !event?.id || event.event_date === targetDate) return;
+    setError('');
+    const { data, error: moveError } = await supabase
+      .from('schedule_events')
+      .update({ event_date: targetDate, manual_override: true, updated_at: new Date().toISOString() })
+      .eq('id', event.id)
+      .select('*')
+      .single();
+    setDragOverDate('');
+    if (moveError) {
+      setError('일정 이동에 실패했습니다: ' + moveError.message);
+      return;
+    }
+    setEvents((current) => current.map((item) => item.id === data.id ? data : item).sort(sortScheduleEvents));
+  };
+
+  const saveCategoryColors = async () => {
+    if (!isAdmin || !supabase) return;
+    setSavingColors(true);
+    setError('');
+    for (const category of CATEGORIES) {
+      const { error: colorError } = await supabase
+        .from('schedule_category_settings')
+        .update({ color: colorDraft[category], updated_at: new Date().toISOString() })
+        .eq('category', category);
+      if (colorError) {
+        setSavingColors(false);
+        setError('카테고리 색상 저장에 실패했습니다: ' + colorError.message);
+        return;
+      }
+    }
+    setCategoryColors({ ...colorDraft });
+    setSavingColors(false);
+    setColorEditorOpen(false);
   };
 
   const isFirstMonth = year === MIN_YEAR && month === 0;
@@ -231,13 +315,43 @@ export default function SchedulePage() {
           </div>
 
           <div className="schedule-legend">
+            <button type="button" className={activeCategory === 'all' ? 'active' : ''} onClick={() => setActiveCategory('all')}>
+              전체 <b>{monthEvents.length}</b>
+            </button>
             {CATEGORIES.map((category) => (
-              <span key={category}>
-                <i className={`category-${category}`} />{category}
-              </span>
+              <button
+                type="button"
+                key={category}
+                className={activeCategory === category ? 'active' : ''}
+                onClick={() => setActiveCategory(category)}
+                style={{ '--filter-color': categoryColors[category] }}
+              >
+                <i style={{ background: categoryColors[category] }} />{category} <b>{categoryCounts[category] || 0}</b>
+              </button>
             ))}
-            <span><i className="category-기타" />기타 일정</span>
+            {isAdmin && (
+              <button type="button" className="schedule-color-settings-button" onClick={() => {
+                if (colorEditorOpen) setColorDraft({ ...categoryColors });
+                setColorEditorOpen((open) => !open);
+              }}>
+                <Palette size={14}/> 색상 설정
+              </button>
+            )}
           </div>
+          {isAdmin && colorEditorOpen && (
+            <div className="schedule-color-editor">
+              {CATEGORIES.map((category) => (
+                <label key={category}>
+                  <span>{category}</span>
+                  <input type="color" value={colorDraft[category]} onChange={(event) => setColorDraft((current) => ({ ...current, [category]: event.target.value }))} />
+                  <code>{colorDraft[category]}</code>
+                </label>
+              ))}
+              <button type="button" className="btn btn-primary" disabled={savingColors} onClick={saveCategoryColors}>
+                {savingColors ? '저장 중...' : '색상 저장'}
+              </button>
+            </div>
+          )}
         </div>
 
         {error && <div className="admin-message">{error}</div>}
@@ -251,7 +365,7 @@ export default function SchedulePage() {
                 </div>
                 <small>월별 방송과 주요 일정을 확인하세요.</small>
               </div>
-              {isAdmin && <div className="schedule-admin-mode-hint">관리자 모드 · 날짜 칸을 클릭하면 해당 날짜로 일정을 바로 등록할 수 있습니다.</div>}
+              {isAdmin && <div className="schedule-admin-mode-hint">관리자 모드 · 빈 날짜 칸 클릭: 일정 추가 · 일정 클릭: 수정 · 일정 드래그: 날짜 이동</div>}
               <div className="schedule-scroll-hint">← 좌우로 밀어서 일정을 확인하세요 →</div>
               <div className="schedule-scroll">
                 <div className="sheet-calendar">
@@ -272,9 +386,25 @@ export default function SchedulePage() {
                       return (
                         <article
                           key={key}
-                          className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}${canQuickAdd ? ' admin-clickable' : ''}`}
+                          className={`schedule-day${isCurrentMonth ? '' : ' outside-month'}${isToday ? ' today' : ''}${canQuickAdd ? ' admin-clickable' : ''}${dragOverDate === key ? ' drag-target' : ''}`}
+                          onDragOver={(event) => {
+                            if (!isAdmin) return;
+                            event.preventDefault();
+                            setDragOverDate(key);
+                          }}
+                          onDragLeave={(event) => {
+                            if (event.currentTarget.contains(event.relatedTarget)) return;
+                            if (dragOverDate === key) setDragOverDate('');
+                          }}
+                          onDrop={(event) => {
+                            if (!isAdmin) return;
+                            event.preventDefault();
+                            const eventId = event.dataTransfer.getData('text/schedule-event-id');
+                            const movingEvent = events.find((item) => item.id === eventId);
+                            if (movingEvent) moveEventToDate(movingEvent, key);
+                          }}
                           onClick={(event) => {
-                            if (event.target.closest('a, button')) return;
+                            if (event.target.closest('.schedule-event, a, button')) return;
                             openQuickAdd();
                           }}
                           onKeyDown={(event) => {
@@ -291,7 +421,23 @@ export default function SchedulePage() {
                           </div>
                           <div className="schedule-day-events">
                             {dayEvents.map((event) => (
-                              <div key={event.id} className={`schedule-event category-${event.category || '기타'}`}>
+                              <div
+                                key={event.id}
+                                className={`schedule-event category-${event.category || '기타'}${isAdmin ? ' admin-editable' : ''}`}
+                                style={{ '--event-color': categoryColors[event.category || '기타'] || categoryColors.기타 }}
+                                draggable={isAdmin}
+                                onDragStart={(dragEvent) => {
+                                  if (!isAdmin) return;
+                                  dragEvent.dataTransfer.effectAllowed = 'move';
+                                  dragEvent.dataTransfer.setData('text/schedule-event-id', event.id);
+                                }}
+                                onDragEnd={() => setDragOverDate('')}
+                                onClick={(clickEvent) => {
+                                  if (!isAdmin || clickEvent.target.closest('a')) return;
+                                  clickEvent.stopPropagation();
+                                  setEditingEvent(event);
+                                }}
+                              >
                                 {(event.start_time || event.end_time) && (
                                   <div className="schedule-event-time">
                                     {event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}
@@ -330,7 +476,7 @@ export default function SchedulePage() {
                 </div>
                 <div className="day-summary-list">
                   {selectedSideEvents.length ? selectedSideEvents.map((event) => (
-                    <div className={`day-summary-event category-${event.category || '기타'}`} key={event.id}>
+                    <div className={`day-summary-event category-${event.category || '기타'}`} style={{ '--event-color': categoryColors[event.category || '기타'] || categoryColors.기타 }} key={event.id}>
                       <i />
                       <div>
                         {(event.start_time || event.end_time) && <small>{event.start_time?.slice(0, 5)}{event.end_time ? ` ~ ${event.end_time.slice(0, 5)}` : ''}</small>}
@@ -400,10 +546,14 @@ export default function SchedulePage() {
         )}
       </section>
 
-      {quickAddDate && isAdmin && (
+      {(quickAddDate || editingEvent) && isAdmin && (
         <ScheduleQuickAddModal
-          date={quickAddDate}
-          onClose={() => setQuickAddDate('')}
+          date={editingEvent?.event_date || quickAddDate}
+          editingEvent={editingEvent}
+          onClose={() => {
+            setQuickAddDate('');
+            setEditingEvent(null);
+          }}
           onSaved={handleQuickAddSaved}
         />
       )}
