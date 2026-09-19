@@ -41,7 +41,10 @@ export default function Layout() {
           <strong>미르 × 청운밴드 Archive</strong>
           <p>미르님과 청운밴드가 같이 만들어간 추억을 오래 남기기 위한 비공식 사이트 초안입니다.</p>
         </div>
-        <Link to="/admin" className="footer-admin">관리자</Link>
+        <div className="footer-account-links">
+          <Link to="/account" className="footer-admin">로그인 / 회원가입</Link>
+          <Link to="/admin" className="footer-admin">관리자</Link>
+        </div>
       </footer>
     </div>
   );
