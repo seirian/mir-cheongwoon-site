@@ -22,7 +22,7 @@ export default function AccountPage() {
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [login, setLogin] = useState({ identifier: '', password: '' });
-  const [signup, setSignup] = useState({ username: '', email: '', password: '' });
+  const [signup, setSignup] = useState({ username: '', email: '', password: '', passwordConfirm: '' });
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [recoveryAuthorized, setRecoveryAuthorized] = useState(() => {
@@ -137,6 +137,10 @@ export default function AccountPage() {
       setMessage('비밀번호는 8~128자로 입력해 주세요.');
       return;
     }
+    if (signup.password !== signup.passwordConfirm) {
+      setMessage('비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+      return;
+    }
 
     setBusy(true);
     setMessage('');
@@ -177,7 +181,7 @@ export default function AccountPage() {
       return;
     }
 
-    setSignup({ username: '', email: '', password: '' });
+    setSignup({ username: '', email: '', password: '', passwordConfirm: '' });
     setMessage('회원가입 요청이 완료되었습니다. 입력한 이메일로 전송된 인증 링크를 눌러 가입을 완료해 주세요.');
     setMode('login');
   };
@@ -281,8 +285,8 @@ export default function AccountPage() {
             <div className="account-auth-title"><UserPlus size={20}/><strong>회원가입</strong></div>
             <label>아이디<input value={signup.username} onChange={(e) => setSignup({ ...signup, username: e.target.value })} autoComplete="username" placeholder="영문 소문자, 숫자, _, -, ." minLength="4" maxLength="24" required /></label>
             <label>비밀번호<input type="password" value={signup.password} onChange={(e) => setSignup({ ...signup, password: e.target.value })} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
+            <label>비밀번호 확인<input type="password" value={signup.passwordConfirm} onChange={(e) => setSignup({ ...signup, passwordConfirm: e.target.value })} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
             <label>이메일<input type="email" value={signup.email} onChange={(e) => setSignup({ ...signup, email: e.target.value })} autoComplete="email" required /></label>
-            <p className="account-auth-note">비밀번호는 사이트 DB에 평문으로 저장하지 않으며 Supabase Auth가 안전하게 관리합니다.</p>
             <button className="btn btn-primary" disabled={busy}>{busy ? '가입 처리 중...' : '회원가입'}</button>
           </form>
         )}
