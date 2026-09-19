@@ -215,7 +215,7 @@ export default {
       const lastBound = monthBounds(lastItem.year, lastItem.month)[1];
       const { data: existingData, error: existingError } = await admin
         .from("schedule_events")
-        .select("id,event_date,title,category,source_type,source_key")
+        .select("id,event_date,title,category,source_type,source_key,manual_override")
         .eq("source_type", "google_sheet")
         .gte("event_date", firstBound)
         .lte("event_date", lastBound);
@@ -233,16 +233,18 @@ export default {
       for (const row of incoming) {
         const old = existingMap.get(row.source_key);
         if (!old) inserts.push(row);
+        else if (old.manual_override) continue;
         else if (!sameManagedFields(old, row)) updates.push(row);
       }
       const deleteKeys = existing
-        .filter((row: any) => row.source_key && !incomingMap.has(row.source_key))
+        .filter((row: any) => !row.manual_override && row.source_key && !incomingMap.has(row.source_key))
         .map((row: any) => row.source_key as string);
       const changeCount = inserts.length + updates.length + deleteKeys.length;
       const details = {
         trigger, dry_run: dryRun,
         found_months: syncedMonths,
         missing_months: loaded.filter((item) => !item.exists).map((item) => item.key),
+        manual_overrides: existing.filter((row: any) => row.manual_override).length,
         change_count: changeCount,
       };
       if (changeCount > config.max_changes || deleteKeys.length > config.max_deletes) {
