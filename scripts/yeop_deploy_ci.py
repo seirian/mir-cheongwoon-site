@@ -268,7 +268,7 @@ def find_fanart_snapshot(r):
 def smoke(rid: str, local_files: dict):
     base = ORIGIN + PREFIX + rid + "/"
     results = {}
-    for route in ["", "mir", "schedule", "gallery", "admin"]:
+    for route in ["", "mir", "schedule", "gallery", "account", "admin"]:
         url = base + route
         code, body, _ = http(url)
         ok = code == 200 and rid.encode() in body
@@ -312,7 +312,7 @@ def smoke(rid: str, local_files: dict):
 
 def production_smoke(rid: str):
     results = {}
-    for route in ["", "mir", "schedule", "gallery", "admin"]:
+    for route in ["", "mir", "schedule", "gallery", "account", "admin"]:
         url = ORIGIN + "/" + route
         code, body, _ = http(url)
         ok = code == 200 and rid.encode() in body
@@ -427,7 +427,14 @@ def main():
             print("STAGED ONLY:", rid)
             return
 
-        new_root = root.replace(oldrid.encode(), rid.encode())
+        old_routes = b"(?:mir|band|history|schedule|gallery(?:/[^/]+)?|admin)"
+        new_routes = b"(?:mir|band|history|schedule|gallery(?:/[^/]+)?|account|admin)"
+        root_template = root
+        if new_routes not in root_template:
+            if root_template.count(old_routes) != 1:
+                raise Stop("Root route pattern is not recognized")
+            root_template = root_template.replace(old_routes, new_routes)
+        new_root = root_template.replace(oldrid.encode(), rid.encode())
         if new_root == root or new_root.count(rid.encode()) < 2:
             raise Stop("Root rewrite generation failed")
 
