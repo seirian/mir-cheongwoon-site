@@ -8,6 +8,7 @@ import SchedulePage from './pages/SchedulePage';
 import GalleryPage from './pages/GalleryPage';
 import GalleryDetailPage from './pages/GalleryDetailPage';
 import AdminPage from './pages/AdminPage';
+import AccountPage from './pages/AccountPage';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="/gallery/:id" element={<GalleryDetailPage />} />
+        <Route path="/account" element={<AccountPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
