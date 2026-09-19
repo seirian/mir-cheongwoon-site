@@ -1,0 +1,125 @@
+.band-intro {
+  align-items: center;
+}
+
+.band-intro-copy h2 {
+  margin-bottom: 0;
+  word-break: keep-all;
+}
+
+.band-intro-visual {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #171923;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, .22);
+}
+
+.band-intro-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 48%, rgba(8, 9, 14, .72) 100%);
+  pointer-events: none;
+}
+
+.band-intro-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.band-intro-visual figcaption {
+  position: absolute;
+  z-index: 1;
+  left: 20px;
+  right: 20px;
+  bottom: 17px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.band-intro-visual figcaption span {
+  color: #d9d0ff;
+  font: 700 10px Outfit, sans-serif;
+  letter-spacing: .14em;
+}
+
+.band-intro-visual figcaption strong {
+  color: #fff;
+  font-size: 13px;
+  text-align: right;
+}
+
+.member-photo-wrap {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: linear-gradient(145deg, #252637, #171925);
+}
+
+.member-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.member-photo-wrap.is-default .member-photo {
+  transform: scale(1.02);
+  filter: saturate(.88) brightness(.9);
+}
+
+.member-photo-wrap.is-default::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(10, 11, 17, .6) 100%);
+  pointer-events: none;
+}
+
+.member-photo-badge {
+  position: absolute;
+  z-index: 1;
+  left: 12px;
+  bottom: 12px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 999px;
+  background: rgba(9, 10, 15, .68);
+  color: #d4ccf2;
+  font: 700 9px Outfit, sans-serif;
+  letter-spacing: .12em;
+  backdrop-filter: blur(7px);
+}
+
+@media (max-width: 900px) {
+  .band-intro-visual {
+    width: min(100%, 720px);
+  }
+}
+
+@media (max-width: 650px) {
+  .band-intro-copy h2 {
+    font-size: 31px;
+    line-height: 1.42;
+  }
+
+  .band-intro-visual {
+    border-radius: 18px;
+  }
+
+  .band-intro-visual figcaption {
+    left: 14px;
+    right: 14px;
+    bottom: 13px;
+  }
+
+  .band-intro-visual figcaption strong {
+    font-size: 11px;
+  }
+}
