@@ -25,6 +25,10 @@ export default function AccountPage() {
   const [signup, setSignup] = useState({ username: '', email: '', password: '' });
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [recoveryAuthorized, setRecoveryAuthorized] = useState(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    return hash.get('type') === 'recovery';
+  });
   const [message, setMessage] = useState(searchParams.get('verified') === '1' ? '이메일 인증이 완료되었습니다. 로그인해 주세요.' : '');
   const [busy, setBusy] = useState(false);
 
@@ -55,6 +59,7 @@ export default function AccountPage() {
     supabase.auth.getSession().then(({ data }) => loadProfile(data.session));
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryAuthorized(true);
         setMode('reset');
         const next = new URLSearchParams(searchParams);
         next.set('mode', 'recovery');
@@ -199,7 +204,7 @@ export default function AccountPage() {
 
   const handleResetPassword = async (event) => {
     event.preventDefault();
-    if (!supabase || busy) return;
+    if (!supabase || busy || !recoveryAuthorized) return;
     if (!validPassword(newPassword)) {
       setMessage('새 비밀번호는 8~128자로 입력해 주세요.');
       return;
@@ -292,12 +297,20 @@ export default function AccountPage() {
         )}
 
         {mode === 'reset' && (
-          <form className="account-auth-card" onSubmit={handleResetPassword}>
-            <div className="account-auth-title"><KeyRound size={20}/><strong>새 비밀번호 설정</strong></div>
-            <p className="account-auth-note">이 화면은 이메일의 비밀번호 재설정 인증 링크를 통해 들어온 경우에만 정상 처리됩니다.</p>
-            <label>새 비밀번호<input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
-            <button className="btn btn-primary" disabled={busy}>{busy ? '변경 중...' : '비밀번호 변경'}</button>
-          </form>
+          recoveryAuthorized ? (
+            <form className="account-auth-card" onSubmit={handleResetPassword}>
+              <div className="account-auth-title"><KeyRound size={20}/><strong>새 비밀번호 설정</strong></div>
+              <p className="account-auth-note">이메일 인증 링크가 확인되었습니다. 새 비밀번호를 설정해 주세요.</p>
+              <label>새 비밀번호<input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
+              <button className="btn btn-primary" disabled={busy}>{busy ? '변경 중...' : '비밀번호 변경'}</button>
+            </form>
+          ) : (
+            <div className="account-auth-card">
+              <div className="account-auth-title"><KeyRound size={20}/><strong>이메일 인증 필요</strong></div>
+              <p className="account-auth-note">비밀번호는 등록 이메일로 받은 재설정 링크를 통해서만 변경할 수 있습니다. 비밀번호 찾기에서 인증 메일을 다시 요청해 주세요.</p>
+              <button type="button" className="btn btn-primary" onClick={() => switchMode('forgot')}>비밀번호 찾기로 이동</button>
+            </div>
+          )
         )}
 
         {message && <div className="account-auth-message">{message}</div>}
