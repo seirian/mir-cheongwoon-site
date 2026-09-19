@@ -37,7 +37,7 @@ export const mirProfile = {
 
 export const bandInfo = {
   name: '청운밴드',
-  tagline: '라이브 무대의 에너지를 함께 만드는 뮤지션 팀',
+  tagline: "청운밴드는 단순한 세션이 아닌, '미르와 함께 여름을 노래하는 동료'입니다.",
   description:
     '청운밴드는 단순한 세션이 아닌, 미르와 함께 여름을 노래하는 동료입니다.',
 };
