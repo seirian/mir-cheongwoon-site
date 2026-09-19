@@ -203,3 +203,71 @@
   .schedule-quick-wide, .schedule-quick-time-grid, .schedule-quick-message, .schedule-quick-actions { grid-column: 1; }
   .schedule-quick-add-chip { padding: 2px 5px; font-size: 8px; }
 }
+
+
+.schedule-color-settings-button {
+  margin-left: 2px;
+  color: #cfc6ff !important;
+}
+
+.schedule-color-editor {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(110px, 1fr)) auto;
+  gap: 8px;
+  align-items: end;
+  margin-top: 12px;
+  padding: 13px;
+  border: 1px solid rgba(157,123,255,.22);
+  border-radius: 14px;
+  background: rgba(13,14,21,.72);
+}
+
+.schedule-color-editor label {
+  display: grid;
+  grid-template-columns: auto 34px;
+  gap: 6px 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #303342;
+  border-radius: 10px;
+  background: #151721;
+}
+
+.schedule-color-editor label > span {
+  color: #ddd9eb;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.schedule-color-editor input[type="color"] {
+  width: 34px;
+  height: 28px;
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.schedule-color-editor code {
+  color: #777b8e;
+  font-size: 9px;
+}
+
+.schedule-color-editor .btn {
+  min-height: 46px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .schedule-color-editor {
+    grid-template-columns: repeat(3, minmax(120px,1fr));
+  }
+  .schedule-color-editor .btn { grid-column: 1 / -1; }
+}
+
+@media (max-width: 650px) {
+  .schedule-color-editor {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+}
