@@ -57,7 +57,7 @@ function buildIllustration({ id, role, accent, accent2, hair, skin, feminine, po
     : '<ellipse cx="184" cy="194" rx="20" ry="24" fill="#fff" stroke="#17356f" stroke-width="7"/><ellipse cx="260" cy="194" rx="20" ry="24" fill="#fff" stroke="#17356f" stroke-width="7"/><ellipse cx="187" cy="199" rx="9" ry="13" fill="#1a9ee8"/><ellipse cx="263" cy="199" rx="9" ry="13" fill="#1a9ee8"/><circle cx="190" cy="194" r="3.5" fill="#fff"/><circle cx="266" cy="194" r="3.5" fill="#fff"/>';
   const brows = feminine
     ? ''
-    : '<path d="M160 165 Q181 153 201 163 M243 163 Q263 152 284 164" fill="none" stroke="' + hair + '" stroke-width="9" stroke-linecap="round"/><path d="M218 210 Q223 216 228 210" fill="none" stroke="#b67d70" stroke-width="4" stroke-linecap="round"/>';
+    : '<path d="M160 165 Q181 153 201 163 M243 163 Q263 152 284 164" fill="none" stroke="' + hair + '" stroke-width="9" stroke-linecap="round"/>';
   const mouth = feminine
     ? '<path d="M205 229 Q224 245 244 228" fill="none" stroke="#8d3b67" stroke-width="7" stroke-linecap="round"/>'
     : '<path d="M207 234 Q224 240 241 233" fill="none" stroke="#7b4854" stroke-width="6" stroke-linecap="round"/>';
