@@ -333,6 +333,13 @@ function sameManagedFields(left: any, right: SyncEvent): boolean {
     && left.source_type === "google_sheet";
 }
 
+function isDeletableSheetRow(row: any): boolean {
+  const sourceKey = String(row?.source_key || "");
+  return row?.source_type === "google_sheet"
+    && row?.manual_override !== true
+    && /^sheet-\d{4}-\d{2}-\d{2}$/.test(sourceKey);
+}
+
 function jsonResponse(payload: Record<string, unknown>, status = 200): Response {
   return Response.json(payload, { status, headers: { "Cache-Control": "no-store" } });
 }
@@ -418,7 +425,7 @@ export default {
         else if (!sameManagedFields(old, row)) updates.push(row);
       }
       const deleteKeys = existing
-        .filter((row: any) => !row.manual_override && row.source_key && !incomingMap.has(row.source_key))
+        .filter((row: any) => isDeletableSheetRow(row) && !incomingMap.has(row.source_key))
         .map((row: any) => row.source_key as string);
       const changeCount = inserts.length + updates.length + deleteKeys.length;
       const details: Record<string, any> = {
@@ -449,7 +456,11 @@ export default {
         }
         if (deleteKeys.length) {
           const { error } = await admin.from("schedule_events")
-            .delete().eq("source_type", "google_sheet").in("source_key", deleteKeys);
+            .delete()
+            .eq("source_type", "google_sheet")
+            .eq("manual_override", false)
+            .like("source_key", "sheet-%")
+            .in("source_key", deleteKeys);
           if (error) throw new SyncError("schedule_delete_failed", 503);
         }
 
