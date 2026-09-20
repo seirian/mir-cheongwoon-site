@@ -1,29 +1,37 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Images, PlaySquare } from 'lucide-react';
+import { ArrowRight, ExternalLink, Images, PlaySquare } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PageHero from '../components/PageHero';
 import EmptyVisual from '../components/EmptyVisual';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { getYouTubeEmbedUrl } from '../lib/youtube';
 
+const MIR_YOUTUBE_VIDEOS_URL = 'https://www.youtube.com/@%EB%AF%B8%EB%A5%B4MIR/videos';
+
 export default function GalleryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [galleries, setGalleries] = useState([]);
-  const [videos, setVideos] = useState([]);
+  const [coverVideos, setCoverVideos] = useState([]);
+  const [recentVideos, setRecentVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const activeView = searchParams.get('view') === 'gallery' ? 'gallery' : 'video';
 
   useEffect(() => {
     async function load() {
-      if (!supabase) { setLoading(false); return; }
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
 
-      const [galleryResult, videoResult] = await Promise.all([
+      const [galleryResult, coverVideoResult, recentVideoResult] = await Promise.all([
         supabase.from('galleries').select('*, gallery_images(id, file_path, sort_order)').order('event_date', { ascending: false }),
         supabase.from('videos').select('*').order('created_at', { ascending: false }),
+        supabase.from('recent_videos').select('video_id,title,youtube_url,position,synced_at').order('position', { ascending: true }).limit(2),
       ]);
 
       setGalleries(galleryResult.data || []);
-      setVideos(videoResult.data || []);
+      setCoverVideos(coverVideoResult.data || []);
+      setRecentVideos(recentVideoResult.data || []);
       setLoading(false);
     }
 
@@ -32,6 +40,32 @@ export default function GalleryPage() {
 
   const publicUrl = (path) => supabase.storage.from('gallery').getPublicUrl(path).data.publicUrl;
   const selectView = (view) => setSearchParams(view === 'gallery' ? { view: 'gallery' } : {});
+
+  const renderVideoCard = (video, key) => {
+    const embedUrl = getYouTubeEmbedUrl(video.youtube_url);
+    return (
+      <article className="video-gallery-card" key={key}>
+        <div className="video-gallery-frame">
+          {embedUrl ? (
+            <iframe
+              src={embedUrl}
+              title={video.title}
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          ) : (
+            <div className="video-invalid"><PlaySquare size={38} /><span>영상을 불러올 수 없습니다.</span></div>
+          )}
+        </div>
+        <div className="video-gallery-caption">
+          <span>YOUTUBE</span>
+          <h2>{video.title}</h2>
+        </div>
+      </article>
+    );
+  };
 
   return (
     <>
@@ -49,37 +83,44 @@ export default function GalleryPage() {
         </div>
 
         {loading ? <div className="loading">콘텐츠를 불러오는 중...</div> : activeView === 'video' ? (
-          videos.length ? (
-            <div className="video-gallery-grid">
-              {videos.map((video) => {
-                const embedUrl = getYouTubeEmbedUrl(video.youtube_url);
-                return (
-                  <article className="video-gallery-card" key={video.id}>
-                    <div className="video-gallery-frame">
-                      {embedUrl ? (
-                        <iframe
-                          src={embedUrl}
-                          title={video.title}
-                          loading="lazy"
-                          referrerPolicy="strict-origin-when-cross-origin"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        />
-                      ) : (
-                        <div className="video-invalid"><PlaySquare size={38} /><span>영상을 불러올 수 없습니다.</span></div>
-                      )}
-                    </div>
-                    <div className="video-gallery-caption">
-                      <span>YOUTUBE</span>
-                      <h2>{video.title}</h2>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="empty-state"><PlaySquare size={42}/><h2>등록된 영상이 없습니다.</h2><p>관리자 페이지에서 YouTube 영상을 등록할 수 있습니다.</p></div>
-          )
+          <div className="video-archive-groups">
+            <section className="video-archive-group" aria-labelledby="recent-videos-heading">
+              <div className="video-archive-group-head">
+                <div>
+                  <span className="video-archive-kicker" id="recent-videos-heading">Recent Videos</span>
+                  <p>미르님 공식 채널의 최신 동영상 2개를 매일 자정 기준으로 확인합니다.</p>
+                </div>
+                <a className="video-channel-link" href={MIR_YOUTUBE_VIDEOS_URL} target="_blank" rel="noreferrer">
+                  미르님 채널 영상 <ExternalLink size={14} />
+                </a>
+              </div>
+
+              {recentVideos.length ? (
+                <div className="video-gallery-grid">
+                  {recentVideos.map((video) => renderVideoCard(video, `recent-${video.video_id}`))}
+                </div>
+              ) : (
+                <div className="video-section-empty"><PlaySquare size={28}/><span>최신 채널 영상을 불러오는 중입니다.</span></div>
+              )}
+            </section>
+
+            <section className="video-archive-group" aria-labelledby="cover-videos-heading">
+              <div className="video-archive-group-head">
+                <div>
+                  <span className="video-archive-kicker" id="cover-videos-heading">Cover Videos</span>
+                  <p>기존에 등록된 미르님의 커버 영상을 모아봅니다.</p>
+                </div>
+              </div>
+
+              {coverVideos.length ? (
+                <div className="video-gallery-grid">
+                  {coverVideos.map((video) => renderVideoCard(video, `cover-${video.id}`))}
+                </div>
+              ) : (
+                <div className="empty-state"><PlaySquare size={42}/><h2>등록된 영상이 없습니다.</h2><p>관리자 페이지에서 YouTube 영상을 등록할 수 있습니다.</p></div>
+              )}
+            </section>
+          </div>
         ) : galleries.length ? (
           <div className="gallery-grid">
             {galleries.map((gallery) => {
