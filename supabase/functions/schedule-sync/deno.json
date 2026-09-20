@@ -1,5 +1,6 @@
 {
   "imports": {
-    "@supabase/server": "npm:@supabase/server@1.6.1"
+    "@supabase/server": "npm:@supabase/server@1.6.1",
+    "fflate": "npm:fflate@0.8.2"
   }
 }
