@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "npm:@supabase/server@1.6.1";
+import { strFromU8, unzipSync } from "fflate";
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const MAX_CELL_LENGTH = 6000;
@@ -110,6 +111,177 @@ async function fetchCsv(sheetId: string, sheetName: string, range: string): Prom
   } finally { clearTimeout(timeout); }
 }
 
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)))
+    .replace(/&#([0-9]+);/g, (_match, code) => String.fromCodePoint(Number.parseInt(code, 10)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
+function xmlAttr(tag: string, name: string): string {
+  const marker = name + '="';
+  const start = tag.indexOf(marker);
+  if (start < 0) return "";
+  const valueStart = start + marker.length;
+  const valueEnd = tag.indexOf('"', valueStart);
+  if (valueEnd < 0) return "";
+  return decodeXmlEntities(tag.slice(valueStart, valueEnd));
+}
+
+function normalizeZipPath(value: string): string {
+  const parts: string[] = [];
+  for (const rawPart of value.replace(/^\/+/, "").split("/")) {
+    const part = rawPart.trim();
+    if (!part || part === ".") continue;
+    if (part === "..") parts.pop();
+    else parts.push(part);
+  }
+  return parts.join("/");
+}
+
+function directoryName(value: string): string {
+  const index = value.lastIndexOf("/");
+  return index >= 0 ? value.slice(0, index) : "";
+}
+
+function baseName(value: string): string {
+  const index = value.lastIndexOf("/");
+  return index >= 0 ? value.slice(index + 1) : value;
+}
+
+function commentText(commentsXml: string, ref: string): string {
+  const commentTags = commentsXml.match(/<comment\b[^>]*>[\s\S]*?<\/comment>/g) || [];
+  const target = commentTags.find((tag) => {
+    const opening = tag.match(/<comment\b[^>]*>/)?.[0] || "";
+    return xmlAttr(opening, "ref") === ref;
+  });
+  if (!target) return "";
+
+  const pieces = Array.from(target.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g))
+    .map((match) => decodeXmlEntities(String(match[1] || "").replace(/<[^>]+>/g, "")));
+  return normalizeCell(pieces.join(""));
+}
+
+async function fetchWorkbookArchive(sheetId: string): Promise<Record<string, Uint8Array>> {
+  const url = "https://docs.google.com/spreadsheets/d/" + sheetId + "/export?format=xlsx";
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "Accept": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "User-Agent": "Mozilla/5.0 (compatible; yeop.net schedule sync)",
+      },
+    });
+    if (!response.ok) throw new SyncError("memo_export_http_" + response.status, 502);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength < 1000) throw new SyncError("memo_export_too_small", 502);
+    if (bytes.byteLength > 30 * 1024 * 1024) throw new SyncError("memo_export_too_large", 502);
+    return unzipSync(bytes);
+  } catch (error) {
+    if (error instanceof SyncError) throw error;
+    if (error instanceof DOMException && error.name === "AbortError") throw new SyncError("memo_export_timeout", 504);
+    throw new SyncError("memo_export_failed", 502);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function extractSheetComments(
+  archive: Record<string, Uint8Array>,
+  sheetName: string,
+): { waktaverseHistory: string; vrMocapHistory: string } {
+  const workbookBytes = archive["xl/workbook.xml"];
+  const workbookRelsBytes = archive["xl/_rels/workbook.xml.rels"];
+  if (!workbookBytes || !workbookRelsBytes) throw new SyncError("memo_workbook_metadata_missing", 502);
+
+  const workbookXml = strFromU8(workbookBytes);
+  const workbookRelsXml = strFromU8(workbookRelsBytes);
+  const sheetTags = workbookXml.match(/<sheet\b[^>]*\/?\s*>/g) || [];
+  const sheetTag = sheetTags.find((tag) => xmlAttr(tag, "name") === sheetName);
+  if (!sheetTag) throw new SyncError("memo_sheet_missing", 422);
+
+  const relationId = xmlAttr(sheetTag, "r:id");
+  if (!relationId) throw new SyncError("memo_sheet_relation_missing", 502);
+
+  const relationshipTags = workbookRelsXml.match(/<Relationship\b[^>]*\/?\s*>/g) || [];
+  const sheetRelationship = relationshipTags.find((tag) => xmlAttr(tag, "Id") === relationId);
+  const sheetTarget = sheetRelationship ? xmlAttr(sheetRelationship, "Target") : "";
+  if (!sheetTarget) throw new SyncError("memo_sheet_target_missing", 502);
+
+  const sheetPath = normalizeZipPath(sheetTarget.startsWith("xl/") ? sheetTarget : "xl/" + sheetTarget);
+  const sheetRelsPath = normalizeZipPath(
+    directoryName(sheetPath) + "/_rels/" + baseName(sheetPath) + ".rels",
+  );
+  const sheetRelsBytes = archive[sheetRelsPath];
+  if (!sheetRelsBytes) throw new SyncError("memo_sheet_rels_missing", 502);
+
+  const sheetRelsXml = strFromU8(sheetRelsBytes);
+  const sheetRelationshipTags = sheetRelsXml.match(/<Relationship\b[^>]*\/?\s*>/g) || [];
+  const commentsRelationship = sheetRelationshipTags.find((tag) => xmlAttr(tag, "Type").endsWith("/comments"));
+  const commentsTarget = commentsRelationship ? xmlAttr(commentsRelationship, "Target") : "";
+  if (!commentsTarget) throw new SyncError("memo_comments_relation_missing", 502);
+
+  const commentsPath = normalizeZipPath(directoryName(sheetPath) + "/" + commentsTarget);
+  const commentsBytes = archive[commentsPath];
+  if (!commentsBytes) throw new SyncError("memo_comments_file_missing", 502);
+
+  const commentsXml = strFromU8(commentsBytes);
+  return {
+    waktaverseHistory: commentText(commentsXml, "Q21"),
+    vrMocapHistory: commentText(commentsXml, "Q23"),
+  };
+}
+
+async function loadScheduleMemo(
+  sheetId: string,
+  sheetName: string,
+): Promise<{
+  content: string;
+  sourceSheet: string;
+  waktaverseHistory?: string;
+  vrMocapHistory?: string;
+  historySynced: boolean;
+  historyError?: string;
+}> {
+  const memoRows = parseCsv(await fetchCsv(sheetId, sheetName, "Q18:Q19"));
+  const content = memoRows
+    .map((row) => normalizeCell(row[0]))
+    .filter(Boolean)
+    .join("\n");
+
+  let waktaverseHistory = "";
+  let vrMocapHistory = "";
+  let historySynced = false;
+  let historyError = "";
+
+  try {
+    const archive = await fetchWorkbookArchive(sheetId);
+    const comments = extractSheetComments(archive, sheetName);
+    waktaverseHistory = comments.waktaverseHistory;
+    vrMocapHistory = comments.vrMocapHistory;
+    historySynced = Boolean(waktaverseHistory || vrMocapHistory);
+  } catch (error) {
+    historyError = error instanceof SyncError ? error.code : "memo_history_unexpected_error";
+  }
+
+  return {
+    content,
+    sourceSheet: sheetName,
+    ...(waktaverseHistory ? { waktaverseHistory } : {}),
+    ...(vrMocapHistory ? { vrMocapHistory } : {}),
+    historySynced,
+    ...(historyError ? { historyError } : {}),
+  };
+}
+
 type MonthLoad = { key: string; year: number; month: number; exists: boolean; events: SyncEvent[] };
 
 async function loadMonth(sheetId: string, year: number, month: number): Promise<MonthLoad> {
@@ -210,6 +382,15 @@ export default {
       const incoming = synced.flatMap((item) => item.events);
       if (!synced.length) throw new SyncError("no_month_sheet_found", 502);
 
+      const currentMonth = monthParts(0);
+      let memoData: Awaited<ReturnType<typeof loadScheduleMemo>> | null = null;
+      let memoSyncError = "";
+      try {
+        memoData = await loadScheduleMemo(config.sheet_id, currentMonth.key);
+      } catch (error) {
+        memoSyncError = error instanceof SyncError ? error.code : "memo_sync_unexpected_error";
+      }
+
       const firstBound = monthBounds(synced[0].year, synced[0].month)[0];
       const lastItem = synced[synced.length - 1];
       const lastBound = monthBounds(lastItem.year, lastItem.month)[1];
@@ -240,12 +421,16 @@ export default {
         .filter((row: any) => !row.manual_override && row.source_key && !incomingMap.has(row.source_key))
         .map((row: any) => row.source_key as string);
       const changeCount = inserts.length + updates.length + deleteKeys.length;
-      const details = {
+      const details: Record<string, any> = {
         trigger, dry_run: dryRun,
         found_months: syncedMonths,
         missing_months: loaded.filter((item) => !item.exists).map((item) => item.key),
         manual_overrides: existing.filter((row: any) => row.manual_override).length,
         change_count: changeCount,
+        memo_sheet: memoData?.sourceSheet || currentMonth.key,
+        memo_content_synced: Boolean(memoData),
+        memo_history_synced: memoData?.historySynced || false,
+        memo_sync_error: memoSyncError || memoData?.historyError || null,
       };
       if (changeCount > config.max_changes || deleteKeys.length > config.max_deletes) {
         await admin.from("schedule_sync_runs").update({
@@ -266,6 +451,24 @@ export default {
           const { error } = await admin.from("schedule_events")
             .delete().eq("source_type", "google_sheet").in("source_key", deleteKeys);
           if (error) throw new SyncError("schedule_delete_failed", 503);
+        }
+
+        if (memoData) {
+          const nowIso = new Date().toISOString();
+          const memoUpdate: Record<string, unknown> = {
+            content: memoData.content,
+            source_sheet: memoData.sourceSheet,
+            synced_at: nowIso,
+            updated_at: nowIso,
+          };
+          if (memoData.waktaverseHistory) memoUpdate.waktaverse_history = memoData.waktaverseHistory;
+          if (memoData.vrMocapHistory) memoUpdate.vr_mocap_history = memoData.vrMocapHistory;
+
+          const { error: memoError } = await admin
+            .from("schedule_memo")
+            .update(memoUpdate)
+            .eq("id", 1);
+          if (memoError) details.memo_sync_error = "memo_database_update_failed";
         }
       }
 
@@ -290,6 +493,10 @@ export default {
         inserted: inserts.length,
         updated: updates.length,
         deleted: deleteKeys.length,
+        memo_sheet: details.memo_sheet,
+        memo_content_synced: details.memo_content_synced,
+        memo_history_synced: details.memo_history_synced,
+        memo_sync_error: details.memo_sync_error,
       });
     } catch (error) {
       const syncError = error instanceof SyncError ? error : new SyncError("unexpected_error", 500);
