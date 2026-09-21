@@ -266,6 +266,15 @@ def find_fanart_snapshot(r):
         return {"source_release": release, "metadata": metadata, "image": image_bytes}
     return None
 
+def subdomain_root_bytes(rid: str) -> bytes:
+    return (
+        f"# MIR-SUBDOMAIN-DEPLOY-V1 {rid}\n"
+        "RewriteEngine On\n"
+        f"RewriteRule ^$ _yeop_releases/{rid}/index.html [L]\n"
+        f"RewriteRule ^(?:mir|band|history|schedule|gallery(?:/[^/]+)?|account|admin)/?$ _yeop_releases/{rid}/index.html [L]\n"
+        "# No broad fallback: nonexistent API/assets remain 404.\n"
+    ).encode("utf-8")
+
 def smoke(rid: str, local_files: dict):
     base = ORIGIN + PREFIX + rid + "/"
     results = {}
@@ -424,6 +433,60 @@ def main():
         for rel in sorted(manifest):
             r.new_file(new_dir + "/" + rel, (dist / rel).read_bytes())
 
+        # Prepare a complete mirror under /web/mir so the hosting provider can
+        # switch mir.yeop.net from folder-forwarding to a direct document root
+        # without another file migration.
+        r.mkdir(SUBDOMAIN_WEB, existing=True)
+        mirror_base = SUBDOMAIN_WEB + PREFIX.rstrip("/")
+        if r.info(mirror_base) is None:
+            r.mkdir(mirror_base)
+        else:
+            r.mkdir(mirror_base, existing=True)
+        mirror_dir = SUBDOMAIN_WEB + PREFIX + rid
+        if r.info(mirror_dir) is not None:
+            raise Stop("Subdomain release path already exists")
+        r.mkdir(mirror_dir)
+
+        mirror_directories = set()
+        for rel in list(manifest) + API_FILES:
+            parent = posixpath.dirname(rel)
+            while parent:
+                mirror_directories.add(parent)
+                parent = posixpath.dirname(parent)
+        for directory in sorted(mirror_directories, key=lambda x: (x.count("/"), x)):
+            r.mkdir(mirror_dir + "/" + directory)
+
+        r.new_file(mirror_dir + "/.htaccess", release_htaccess)
+        for rel, data in sorted(api_payload.items()):
+            r.new_file(mirror_dir + "/" + rel, data)
+        if fanart_snapshot:
+            fallback_meta = json.dumps(fanart_snapshot["metadata"], ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            r.new_file(mirror_dir + "/" + FANART_FALLBACK_META, fallback_meta, 0o600)
+            r.new_file(mirror_dir + "/" + FANART_FALLBACK_IMAGE, fanart_snapshot["image"], 0o600)
+        for rel in sorted(manifest):
+            r.new_file(mirror_dir + "/" + rel, (dist / rel).read_bytes())
+
+        mirror_root_path = SUBDOMAIN_WEB + "/.htaccess"
+        mirror_root_before = r.read(mirror_root_path, 1024 * 1024)
+        mirror_root_after = subdomain_root_bytes(rid)
+        if mirror_root_before is None:
+            r.new_file(mirror_root_path, mirror_root_after)
+        elif mirror_root_before.startswith(b"# MIR-SUBDOMAIN-DEPLOY-V1 "):
+            r.atomic_replace(mirror_root_path, mirror_root_after, mirror_root_before)
+        else:
+            raise Stop("Existing subdomain .htaccess is not recognized")
+
+        mirror_preview_url = ORIGIN + "/mir" + PREFIX + rid + "/index.html"
+        mirror_code, mirror_body, _ = http(mirror_preview_url)
+        if mirror_code != 200 or rid.encode() not in mirror_body:
+            raise Stop("Subdomain mirror preview failed")
+        report["subdomain_mirror"] = {
+            "prepared": True,
+            "document_root": SUBDOMAIN_WEB,
+            "release": rid,
+            "preview_status": mirror_code,
+        }
+
         report["phase"] = "uploaded"
         report["previous_release"] = oldrid
         report["preview_checks"] = smoke(rid, manifest)
@@ -462,6 +525,14 @@ def main():
         old_routes = b"(?:mir|band|history|schedule|gallery(?:/[^/]+)?|admin)"
         new_routes = b"(?:mir|band|history|schedule|gallery(?:/[^/]+)?|account|admin)"
         root_template = root
+        route_condition_pair = (
+            b"RewriteCond %{REQUEST_FILENAME} !-f\n"
+            b"RewriteCond %{REQUEST_FILENAME} !-d\n"
+        )
+        if route_condition_pair in root_template:
+            # Known SPA routes must win even if the hosting control panel
+            # creates a physical /web/mir directory for the new subdomain.
+            root_template = root_template.replace(route_condition_pair, b"", 1)
         if new_routes not in root_template:
             if root_template.count(old_routes) != 1:
                 raise Stop("Root route pattern is not recognized")
