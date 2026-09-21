@@ -7,6 +7,7 @@ from pathlib import Path
 HOST, USER, PORT = "seirian.inour.net", "seirian", 1922
 FINGERPRINT = "SHA256:aAMSU6UVE9lIpzE/XifPGYrEGcHO7HQDTMURgfrinRc"
 WEB = "/web"
+SUBDOMAIN_WEB = "/web/mir"
 ORIGIN = "https://yeop.net"
 PREFIX = "/_yeop_releases/"
 OWNER_UID = 5048
@@ -342,6 +343,37 @@ def main():
     backup_dir.mkdir(exist_ok=True)
 
     with Remote() as r, r.lock():
+        subdomain_path = SUBDOMAIN_WEB
+        subdomain_info = r.info(subdomain_path)
+        subdomain_snapshot = {
+            "path": subdomain_path,
+            "exists": subdomain_info is not None,
+            "is_dir": bool(subdomain_info and stat.S_ISDIR(subdomain_info.st_mode)),
+            "owner_uid": subdomain_info.st_uid if subdomain_info is not None else None,
+            "entries": [],
+        }
+        if subdomain_info is not None and stat.S_ISDIR(subdomain_info.st_mode):
+            try:
+                for entry in sorted(r.s.listdir_attr(subdomain_path), key=lambda item: item.filename):
+                    subdomain_snapshot["entries"].append({
+                        "name": entry.filename,
+                        "is_dir": stat.S_ISDIR(entry.st_mode),
+                        "size": entry.st_size,
+                        "owner_uid": entry.st_uid,
+                    })
+            except OSError:
+                subdomain_snapshot["entries_error"] = "list_failed"
+            sub_backup = backup_dir / "subdomain-before"
+            sub_backup.mkdir(exist_ok=True)
+            for name in [".htaccess", "index.html", "index.php", "standard_index.html"]:
+                try:
+                    data = r.read(subdomain_path + "/" + name, 1024 * 1024)
+                except Exception:
+                    data = None
+                if data is not None:
+                    (sub_backup / name.replace("/", "_")).write_bytes(data)
+        report["subdomain_before"] = subdomain_snapshot
+
         root = r.read(WEB + "/.htaccess", 1024 * 1024)
         if root is None:
             raise Stop("Root .htaccess is missing")
