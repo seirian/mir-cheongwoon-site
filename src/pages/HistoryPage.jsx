@@ -5,7 +5,7 @@ import { performanceHistory } from '../data/siteData';
 export default function HistoryPage() {
   return (
     <>
-      <PageHero eyebrow="PERFORMANCE HISTORY" title="공연 이력" description="온라인 및 오프라인에서 펼친 다양한 공연 이력을 연도 흐름에 따라 한 눈에 확인할 수 있습니다." />
+      <PageHero className="history-page-hero" eyebrow="PERFORMANCE HISTORY" title="공연 이력" description="온라인 및 오프라인에서 펼친 다양한 공연 이력을 연도 흐름에 따라 한 눈에 확인할 수 있습니다." />
       <section className="section-wrap timeline">
         {performanceHistory.map((group) => (
           <div className="timeline-year" key={group.year}>
