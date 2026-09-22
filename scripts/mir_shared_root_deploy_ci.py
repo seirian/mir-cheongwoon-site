@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import posixpath
@@ -34,6 +35,65 @@ def ensure_dir(r, path: str) -> None:
             r.mkdir(current)
         elif not stat.S_ISDIR(info.st_mode) or info.st_uid != OWNER_UID:
             raise base.Stop("Unexpected directory type/owner: " + current)
+
+
+def find_persisted_fanart_fallback(r):
+    roots = [
+        (SITE_WEB, "canonical-site"),
+        ("/web/mir", "legacy-subdomain-mirror"),
+        (SHARED_WEB, "legacy-root"),
+    ]
+    article_re = re.compile(r"^https://cafe\\.naver\\.com/f-e/cafes/31003156/articles/[0-9]+$")
+    allowed_mimes = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"}
+
+    for root, label in roots:
+        release_root = root + PREFIX.rstrip("/")
+        info = r.info(release_root)
+        if info is None or not stat.S_ISDIR(info.st_mode):
+            continue
+
+        releases = []
+        try:
+            for entry in r.s.listdir_attr(release_root):
+                if RID_RE.fullmatch(entry.filename) and stat.S_ISDIR(entry.st_mode):
+                    releases.append(entry.filename)
+        except OSError:
+            continue
+
+        for release in sorted(releases, reverse=True)[:80]:
+            base_path = release_root + "/" + release + "/api/_cache/"
+            meta_raw = r.read(base_path + "fanart-fallback.json", 64 * 1024)
+            image = r.read(base_path + "fanart-fallback.bin", 6 * 1024 * 1024 + 1)
+            if not meta_raw or not image or len(image) > 6 * 1024 * 1024:
+                continue
+            try:
+                meta = json.loads(meta_raw)
+            except Exception:
+                continue
+            if not isinstance(meta, dict):
+                continue
+
+            fallback_id = meta.get("id")
+            article_url = meta.get("articleUrl")
+            mime = meta.get("mime")
+            if not isinstance(fallback_id, str) or not re.fullmatch(r"[a-f0-9]{64}", fallback_id):
+                continue
+            if hashlib.sha256(image).hexdigest() != fallback_id:
+                continue
+            if not isinstance(article_url, str) or not article_re.fullmatch(article_url):
+                continue
+            if mime not in allowed_mimes:
+                continue
+
+            return {
+                "meta_raw": meta_raw,
+                "image": image,
+                "source_root": label,
+                "source_release": release,
+                "article_id": meta.get("articleId"),
+                "source_date": meta.get("sourceDate"),
+            }
+    return None
 
 
 def site_root_htaccess(rid: str) -> bytes:
@@ -240,14 +300,70 @@ def main():
         for directory in sorted(directories, key=lambda x: (x.count("/"), x)):
             ensure_dir(r, new_dir + "/" + directory)
 
+        fallback_snapshot = find_persisted_fanart_fallback(r)
+        report["fanart_fallback"] = {
+            "found": fallback_snapshot is not None,
+            "source_root": fallback_snapshot["source_root"] if fallback_snapshot else None,
+            "source_release": fallback_snapshot["source_release"] if fallback_snapshot else None,
+            "article_id": fallback_snapshot["article_id"] if fallback_snapshot else None,
+            "source_date": fallback_snapshot["source_date"] if fallback_snapshot else None,
+        }
+
         r.new_file(new_dir + "/.htaccess", release_htaccess)
         for rel, data in sorted(api_payload.items()):
             r.new_file(new_dir + "/" + rel, data)
+        if fallback_snapshot:
+            r.new_file(
+                new_dir + "/" + base.FANART_FALLBACK_META,
+                fallback_snapshot["meta_raw"],
+                0o600,
+            )
+            r.new_file(
+                new_dir + "/" + base.FANART_FALLBACK_IMAGE,
+                fallback_snapshot["image"],
+                0o600,
+            )
         for rel in sorted(manifest):
             r.new_file(new_dir + "/" + rel, (dist / rel).read_bytes())
 
         report["phase"] = "uploaded"
         report["preview_checks"] = preview_smoke(rid)
+
+        fanart_url = CANONICAL_ORIGIN + PREFIX + rid + "/api/naver-fanart.php"
+        code, body, _ = base.http(fanart_url)
+        try:
+            fanart_payload = json.loads(body)
+        except Exception:
+            fanart_payload = {}
+        fanart_ok = (
+            code == 200
+            and fanart_payload.get("status") == "ok"
+            and isinstance(fanart_payload.get("imageUrl"), str)
+            and bool(fanart_payload.get("imageUrl"))
+        )
+        report["fanart_preview"] = {
+            "status": code,
+            "fanart_status": fanart_payload.get("status"),
+            "fallback": bool(fanart_payload.get("fallback")),
+            "reason": fanart_payload.get("reason"),
+            "passed": fanart_ok,
+        }
+        if not fanart_ok:
+            raise base.Stop("Fanart preview is unavailable")
+
+        image_url = fanart_payload["imageUrl"]
+        if image_url.startswith("/"):
+            image_url = CANONICAL_ORIGIN + image_url
+        image_code, image_body, image_type = base.http(image_url, limit=7 * 1024 * 1024)
+        image_ok = image_code == 200 and image_type.startswith("image/") and len(image_body) > 0
+        report["fanart_image_preview"] = {
+            "status": image_code,
+            "content_type": image_type,
+            "bytes": len(image_body),
+            "passed": image_ok,
+        }
+        if not image_ok:
+            raise base.Stop("Fanart fallback image is unavailable")
 
         if os.environ.get("ACTIVATE", "") != "true":
             report["phase"] = "staged"
