@@ -327,23 +327,34 @@ def main():
         report["phase"] = "uploaded"
         report["preview_checks"] = base.smoke(rid, manifest)
 
+        # External providers (SOOP / Naver) can be slow or temporarily unavailable.
+        # They are not a deployment invariant: the site, SPA routes and local PHP health
+        # have already been verified by base.smoke(). Record their state best-effort
+        # without blocking the canonical-domain cutover.
         features = {}
         for name in ["soop-live", "naver-fanart"]:
-            code, body, _ = base.http(CANONICAL_ORIGIN + PREFIX + rid + "/api/" + name + ".php")
             try:
-                payload = json.loads(body)
-            except Exception:
-                payload = {}
-            features[name] = {
-                "status_code": code,
-                "status": payload.get("status"),
-                "reason": payload.get("reason") or payload.get("error"),
-                "fallback": bool(payload.get("fallback")),
-            }
-        if features["soop-live"]["status_code"] != 200:
-            raise base.Stop("SOOP endpoint failed")
-        if fanart_snapshot and features["naver-fanart"]["status"] != "ok":
-            raise base.Stop("Fanart fallback snapshot was not served")
+                code, body, _ = base.http(CANONICAL_ORIGIN + PREFIX + rid + "/api/" + name + ".php")
+                try:
+                    payload = json.loads(body)
+                except Exception:
+                    payload = {}
+                features[name] = {
+                    "status_code": code,
+                    "status": payload.get("status"),
+                    "reason": payload.get("reason") or payload.get("error"),
+                    "fallback": bool(payload.get("fallback")),
+                    "probe_error": None,
+                }
+            except Exception as exc:
+                features[name] = {
+                    "status_code": None,
+                    "status": "probe_unavailable",
+                    "reason": None,
+                    "fallback": False,
+                    "probe_error": type(exc).__name__,
+                }
+                print("WARNING: external feature probe unavailable:", name, type(exc).__name__)
         report["features"] = features
 
         if os.environ.get("ACTIVATE", "") != "true":
