@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -37,14 +38,53 @@ def ensure_dir(r, path: str) -> None:
             raise base.Stop("Unexpected directory type/owner: " + current)
 
 
+def _validated_fallback(meta: dict, image: bytes, label: str, release: str, source_kind: str):
+    if not isinstance(meta, dict) or not image or len(image) > 6 * 1024 * 1024:
+        return None
+    fallback_id = meta.get("id")
+    article_url = meta.get("articleUrl")
+    if not isinstance(fallback_id, str) or not re.fullmatch(r"[a-f0-9]{64}", fallback_id):
+        return None
+    if hashlib.sha256(image).hexdigest() != fallback_id:
+        return None
+    if not isinstance(article_url, str) or not base.FANART_ARTICLE_RE.fullmatch(article_url):
+        return None
+
+    mime = meta.get("mime")
+    if mime not in base.FANART_IMAGE_MIMES:
+        # Older fallback metadata may not carry mime. Recover it from magic bytes
+        # when possible; PHP performs its own authoritative finfo check at serve time.
+        if image.startswith(b"\xff\xd8\xff"):
+            mime = "image/jpeg"
+        elif image.startswith(b"\x89PNG\r\n\x1a\n"):
+            mime = "image/png"
+        elif image.startswith((b"GIF87a", b"GIF89a")):
+            mime = "image/gif"
+        elif image.startswith(b"RIFF") and image[8:12] == b"WEBP":
+            mime = "image/webp"
+        else:
+            return None
+        meta = dict(meta)
+        meta["mime"] = mime
+
+    meta_raw = json.dumps(meta, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return {
+        "meta_raw": meta_raw,
+        "image": image,
+        "source_root": label,
+        "source_release": release,
+        "source_kind": source_kind,
+        "article_id": meta.get("articleId"),
+        "source_date": meta.get("sourceDate"),
+    }
+
+
 def find_persisted_fanart_fallback(r):
     roots = [
         (SITE_WEB, "canonical-site"),
         ("/web/mir", "legacy-subdomain-mirror"),
         (SHARED_WEB, "legacy-root"),
     ]
-    article_re = re.compile(r"^https://cafe\\.naver\\.com/f-e/cafes/31003156/articles/[0-9]+$")
-    allowed_mimes = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"}
 
     for root, label in roots:
         release_root = root + PREFIX.rstrip("/")
@@ -60,39 +100,67 @@ def find_persisted_fanart_fallback(r):
         except OSError:
             continue
 
-        for release in sorted(releases, reverse=True)[:80]:
-            base_path = release_root + "/" + release + "/api/_cache/"
-            meta_raw = r.read(base_path + "fanart-fallback.json", 64 * 1024)
-            image = r.read(base_path + "fanart-fallback.bin", 6 * 1024 * 1024 + 1)
-            if not meta_raw or not image or len(image) > 6 * 1024 * 1024:
+        for release in sorted(releases, reverse=True)[:100]:
+            cache_path = release_root + "/" + release + "/api/_cache/"
+
+            # Preferred path: an already materialized, verified fallback.
+            meta_raw = r.read(cache_path + "fanart-fallback.json", 64 * 1024)
+            image = r.read(cache_path + "fanart-fallback.bin", 6 * 1024 * 1024 + 1)
+            if meta_raw and image:
+                try:
+                    meta = json.loads(meta_raw)
+                except Exception:
+                    meta = None
+                snapshot = _validated_fallback(meta, image, label, release, "fallback-files")
+                if snapshot:
+                    return snapshot
+
+            # Recovery path for older releases: reconstruct the fallback from the
+            # successful fanart/image cache states used by the previous deployer.
+            fanart_state = base.parse_cache_value(
+                r.read(cache_path + "fanart.state.php", 4 * 1024 * 1024)
+            )
+            image_state = base.parse_cache_value(
+                r.read(cache_path + "image.state.php", 12 * 1024 * 1024)
+            )
+            if not fanart_state or not image_state:
+                continue
+
+            public = fanart_state.get("public")
+            source = fanart_state.get("source")
+            if not isinstance(public, dict) or public.get("status") != "ok":
+                continue
+            if not isinstance(source, str) or not base.allowed_fanart_source(source):
+                continue
+            article_url = public.get("articleUrl")
+            if not isinstance(article_url, str) or not base.FANART_ARTICLE_RE.fullmatch(article_url):
+                continue
+            if image_state.get("id") != hashlib.sha256(source.encode()).hexdigest():
+                continue
+            mime = image_state.get("mime")
+            encoded = image_state.get("data")
+            if mime not in base.FANART_IMAGE_MIMES or not isinstance(encoded, str):
                 continue
             try:
-                meta = json.loads(meta_raw)
+                image = base64.b64decode(encoded, validate=True)
             except Exception:
                 continue
-            if not isinstance(meta, dict):
+            if not image or len(image) > 6 * 1024 * 1024:
                 continue
 
-            fallback_id = meta.get("id")
-            article_url = meta.get("articleUrl")
-            mime = meta.get("mime")
-            if not isinstance(fallback_id, str) or not re.fullmatch(r"[a-f0-9]{64}", fallback_id):
-                continue
-            if hashlib.sha256(image).hexdigest() != fallback_id:
-                continue
-            if not isinstance(article_url, str) or not article_re.fullmatch(article_url):
-                continue
-            if mime not in allowed_mimes:
-                continue
-
-            return {
-                "meta_raw": meta_raw,
-                "image": image,
-                "source_root": label,
-                "source_release": release,
-                "article_id": meta.get("articleId"),
-                "source_date": meta.get("sourceDate"),
+            meta = {
+                "id": hashlib.sha256(image).hexdigest(),
+                "mime": mime,
+                "boardUrl": base.FANART_BOARD,
+                "articleId": int(public.get("articleId") or 0),
+                "title": str(public.get("title") or "오늘의 팬아트")[:500],
+                "author": str(public.get("author") or "작성자")[:200],
+                "articleUrl": article_url,
+                "sourceDate": str(public.get("sourceDate") or "")[:10],
             }
+            snapshot = _validated_fallback(meta, image, label, release, "cache-state")
+            if snapshot:
+                return snapshot
     return None
 
 
@@ -305,6 +373,7 @@ def main():
             "found": fallback_snapshot is not None,
             "source_root": fallback_snapshot["source_root"] if fallback_snapshot else None,
             "source_release": fallback_snapshot["source_release"] if fallback_snapshot else None,
+            "source_kind": fallback_snapshot["source_kind"] if fallback_snapshot else None,
             "article_id": fallback_snapshot["article_id"] if fallback_snapshot else None,
             "source_date": fallback_snapshot["source_date"] if fallback_snapshot else None,
         }
@@ -349,6 +418,7 @@ def main():
             "passed": fanart_ok,
         }
         if not fanart_ok:
+            report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             raise base.Stop("Fanart preview is unavailable")
 
         image_url = fanart_payload["imageUrl"]
