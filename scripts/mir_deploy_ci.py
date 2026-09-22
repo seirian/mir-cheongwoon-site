@@ -88,9 +88,19 @@ if ($host === 'yeop.net' || $host === 'www.yeop.net') {{
     header('Location: https://mir.yeop.net' . $uri, true, 301);
     exit;
 }}
-$root = rtrim((string)($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
-$file = $root . '/_yeop_releases/{rid}/index.html';
-if (!is_file($file)) {{ http_response_code(503); exit; }}
+$dir = __DIR__;
+$file = '';
+for ($i = 0; $i < 4; $i++) {{
+    $candidate = $dir . '/_yeop_releases/{rid}/index.html';
+    if (is_file($candidate)) {{
+        $file = $candidate;
+        break;
+    }}
+    $parent = dirname($dir);
+    if ($parent === $dir) break;
+    $dir = $parent;
+}}
+if ($file === '') {{ http_response_code(503); exit; }}
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: no-cache');
 readfile($file);
