@@ -20,6 +20,7 @@ export default function App() {
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/gallery/view" element={<GalleryDetailPage />} />
         <Route path="/gallery/:id" element={<GalleryDetailPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/admin" element={<AdminPage />} />
