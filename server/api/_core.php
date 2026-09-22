@@ -13,7 +13,7 @@ const SOOP_PAGE = 'https://play.sooplive.com/alice427';
 const SOOP_API = 'https://live.sooplive.com/afreeca/player_live_api.php';
 const LIST_API = 'https://apis.naver.com/cafe-web/cafe-boardlist-api/v1/cafes/31003156/menus/10/articles';
 const ARTICLE_API = 'https://apis.naver.com/cafe-web/cafe-articleapi/v3/cafes/31003156/articles/';
-const UA = 'YeopMirMigration/0.2 (+https://yeop.net)';
+const UA = 'YeopMirMigration/0.3 (+https://mir.yeop.net)';
 
 function validUrl(string $url, bool $image = false): bool {
     if (strlen($url) > 4096 || preg_match('/[\x00-\x20\x7f\\\\]/', $url)) return false;
