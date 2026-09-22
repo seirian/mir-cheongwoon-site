@@ -133,7 +133,7 @@ def allowed_old(path: str, old: bytes | None, kind: str) -> bool:
     if kind == "canonical-entry":
         return old.startswith(CANONICAL_ENTRY_MARKER)
     if kind == "canonical-test-index":
-        return b"mir.yeop.net" in old and (b"접속" in old or b"test" in old.lower())
+        return b"mir.yeop.net" in old and ("접속".encode("utf-8") in old or b"test" in old.lower())
     if kind == "gallery-router":
         return old.startswith(b"# MIR-GALLERY-ROUTER-V1")
     if kind == "legacy-router":
