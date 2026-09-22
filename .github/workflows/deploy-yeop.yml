@@ -250,7 +250,7 @@ jobs:
           ACTIVATE: 'true'
           DIST_DIR: dist
           SERVER_SOURCE_DIR: server
-        run: python scripts/mir_subdomain_deploy_ci.py
+        run: python scripts/mir_shared_root_deploy_ci.py
 
       - name: Upload deployment report and rollback material
         if: always()
@@ -270,4 +270,4 @@ jobs:
           echo "### mir.yeop.net production deployment" >> "$GITHUB_STEP_SUMMARY"
           echo "- Release: \`${RELEASE_ID}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- mir.yeop.net deployed only under /web/mir; yeop.net remains outside the MIR deployment target." >> "$GITHUB_STEP_SUMMARY"
+          echo "- mir.yeop.net deployed under /web/_mir_site via a stable host-only bridge; yeop.net is not redirected and remains available for personal projects." >> "$GITHUB_STEP_SUMMARY"
