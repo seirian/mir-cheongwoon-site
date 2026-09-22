@@ -186,7 +186,10 @@ def main():
         raise base.Stop("dist/index.html missing")
 
     base.SERVER_SOURCE = Path(os.environ.get("SERVER_SOURCE_DIR", "server")).resolve()
-    base.WEB = SITE_WEB
+    # The hosting account exposes both domains through the shared /web root.
+    # Keep the inherited SFTP ownership/lock checks anchored there; the canonical
+    # site payload itself is stored below SITE_WEB.
+    base.WEB = SHARED_WEB
     base.ORIGIN = CANONICAL_ORIGIN
 
     manifest = base.local_manifest(dist)
