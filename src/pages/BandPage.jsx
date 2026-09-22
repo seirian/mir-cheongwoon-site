@@ -4,27 +4,12 @@ import PageHero from '../components/PageHero';
 import BandMemberEditor from '../components/BandMemberEditor';
 import { bandInfo } from '../data/siteData';
 import CHEONGWOON_HERO_IMAGE from '../data/cheongwoonHeroImage';
-import {
-  MAENGGAMJA_ILLUSTRATION,
-  RANDOM_MEMBER_ILLUSTRATIONS,
-  RAY_ILLUSTRATION,
-  SWEETBERRY_ILLUSTRATION,
-} from '../data/bandMemberIllustrations';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import '../band-page.css';
 
 const PUBLIC_BASE = import.meta.env.BASE_URL || '/';
 const DEFAULT_MEMBER_IMAGE = `${PUBLIC_BASE}images/cheongwoon-member-default.webp`;
 const BAND_TAGLINE_HIGHLIGHT = '미르와 함께 여름을 노래하는 동료';
-
-function shuffleIllustrations(items) {
-  const shuffled = [...items];
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
-  }
-  return shuffled;
-}
 
 function sortMembers(items) {
   return [...items].sort((left, right) => (
@@ -98,33 +83,14 @@ export default function BandPage() {
     };
   }, []);
 
-  const memberVisuals = useMemo(() => {
-    const shuffled = shuffleIllustrations(RANDOM_MEMBER_ILLUSTRATIONS);
-    let randomIndex = 0;
-
-    return members.reduce((map, member) => {
-      if (member.image_path && supabase) {
-        map[member.id] = supabase.storage.from('band-members').getPublicUrl(member.image_path).data.publicUrl;
-        return map;
-      }
-      if (member.name === 'Ray') {
-        map[member.id] = RAY_ILLUSTRATION;
-        return map;
-      }
-      if (member.name === 'SweetBerry') {
-        map[member.id] = SWEETBERRY_ILLUSTRATION;
-        return map;
-      }
-      if (member.name === '맹감자') {
-        map[member.id] = MAENGGAMJA_ILLUSTRATION;
-        return map;
-      }
-
-      map[member.id] = shuffled[randomIndex % shuffled.length] || DEFAULT_MEMBER_IMAGE;
-      randomIndex += 1;
-      return map;
-    }, {});
-  }, [members]);
+  const memberVisuals = useMemo(() => members.reduce((map, member) => {
+    if (member.image_path && supabase) {
+      map[member.id] = supabase.storage.from('band-members').getPublicUrl(member.image_path).data.publicUrl;
+    } else {
+      map[member.id] = DEFAULT_MEMBER_IMAGE;
+    }
+    return map;
+  }, {}), [members]);
 
   const defaultSortOrder = useMemo(() => {
     const highest = members.reduce((max, member) => Math.max(max, Number(member.sort_order) || 0), 0);
@@ -209,7 +175,7 @@ export default function BandPage() {
                   <img
                     className="member-photo"
                     src={memberVisuals[member.id] || DEFAULT_MEMBER_IMAGE}
-                    alt={member.image_path ? `${member.name} 프로필 사진` : `${member.name} 밴드 멤버 일러스트`}
+                    alt={member.image_path ? `${member.name} 프로필 사진` : `${member.name} 밴드 멤버 기본 이미지`}
                     loading="lazy"
                     onError={handleMemberImageError}
                   />

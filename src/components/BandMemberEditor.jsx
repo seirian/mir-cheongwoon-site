@@ -229,7 +229,7 @@ export default function BandMemberEditor({
                 <div className="band-member-photo-empty">
                   <ImagePlus size={34}/>
                   <span>사진 미등록</span>
-                  <small>저장 후 기존 일러스트가 대신 표시됩니다.</small>
+                  <small>저장 후 기본 밴드 이미지가 대신 표시됩니다.</small>
                 </div>
               )}
             </div>
