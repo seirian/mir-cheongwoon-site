@@ -127,7 +127,7 @@ export default function GalleryPage() {
               const images = [...(gallery.gallery_images || [])].sort((a,b) => a.sort_order - b.sort_order);
               const cover = gallery.cover_path || images[0]?.file_path;
               return (
-                <Link to={`/gallery/${gallery.id}`} className="gallery-card" key={gallery.id}>
+                <Link to={`/gallery/view?id=${encodeURIComponent(gallery.id)}`} className="gallery-card" key={gallery.id}>
                   {cover ? <img src={publicUrl(cover)} alt={gallery.title} /> : <EmptyVisual label="공연 대표 이미지" className="gallery-cover-empty" />}
                   <div className="gallery-overlay"><span>{gallery.event_date || 'DATE'}</span><h2>{gallery.title}</h2><p>{gallery.description}</p><b>사진 보기 <ArrowRight size={16}/></b></div>
                 </Link>
