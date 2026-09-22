@@ -17,14 +17,13 @@ import yeop_deploy_ci as base
 SHARED_WEB = "/web"
 SITE_WEB = "/web/_mir_site"
 CANONICAL_ORIGIN = "https://mir.yeop.net"
-INDEPENDENT_ORIGIN = "https://yeop.net"
-PREVIEW_ORIGIN = CANONICAL_ORIGIN
+LEGACY_ORIGIN = "https://yeop.net"
+PREVIEW_ORIGIN = "https://yeop.net"
 PREFIX = "/_yeop_releases/"
 RID_RE = re.compile(r"r[0-9]{14}_[a-f0-9]{8}")
 OWNER_UID = 5048
 SITE_ROOT_MARKER = b"# MIR-SITE-ROOT-V2 "
-SHARED_ROOT_MARKER = b"# MIR-DOMAIN-ROUTER-V3 "
-PREVIOUS_SHARED_ROOT_MARKER = b"# MIR-DOMAIN-CUTOVER-V2 "
+SHARED_ROOT_MARKER = b"# MIR-DOMAIN-CUTOVER-V2 "
 
 
 def ensure_dir(r, path: str) -> None:
@@ -179,16 +178,19 @@ def site_root_htaccess(rid: str) -> bytes:
 
 def shared_root_htaccess(rid: str) -> bytes:
     return (
-        f"# MIR-DOMAIN-ROUTER-V3 {rid}\n"
+        f"# MIR-DOMAIN-CUTOVER-V2 {rid}\n"
         "RewriteEngine On\n"
         "\n"
-        "# yeop.net / www.yeop.net are intentionally independent and untouched.\n"
-        "# Only mir.yeop.net is internally routed to the MIR site payload.\n"
+        "# Legacy apex/www become permanent aliases of the canonical subdomain.\n"
+        "RewriteCond %{HTTP_HOST} ^(?:www\\.)?yeop\\.net(?::[0-9]+)?$ [NC]\n"
+        "RewriteRule ^ https://mir.yeop.net%{REQUEST_URI} [R=301,L,NE]\n"
+        "\n"
+        "# mir.yeop.net is served from an internal collision-free directory.\n"
         "RewriteCond %{HTTP_HOST} ^mir\\.yeop\\.net(?::[0-9]+)?$ [NC]\n"
         "RewriteCond %{REQUEST_URI} !^/_mir_site(?:/|$)\n"
         "RewriteRule ^(.*)$ _mir_site/$1 [L]\n"
         "\n"
-        "# All other hosts continue with their own document-root behavior.\n"
+        "# Unknown hosts are not rewritten by this cutover file.\n"
     ).encode("utf-8")
 
 
@@ -198,7 +200,6 @@ def allowed_shared_root(old: bytes | None) -> bool:
     return (
         old.startswith(b"# YEOP-DEPLOY-V1 ")
         or old.startswith(b"# YEOP-LEGACY-REDIRECT-V1")
-        or old.startswith(PREVIOUS_SHARED_ROOT_MARKER)
         or old.startswith(SHARED_ROOT_MARKER)
     )
 
@@ -291,24 +292,16 @@ def canonical_smoke(rid: str):
     return results
 
 
-def independent_host_smoke():
-    # yeop.net is a separate site. This deploy must never turn it into a
-    # redirect alias of mir.yeop.net.
-    code, location = redirect_status(INDEPENDENT_ORIGIN + "/")
-    redirects_to_mir = (
-        code in (301, 302, 303, 307, 308)
-        and isinstance(location, str)
-        and location.startswith(CANONICAL_ORIGIN)
-    )
-    result = {
-        "status": code,
-        "location": location,
-        "redirects_to_mir": redirects_to_mir,
-        "passed": not redirects_to_mir,
-    }
-    if redirects_to_mir:
-        raise base.Stop("Independent yeop.net unexpectedly redirects to mir.yeop.net")
-    return result
+def legacy_smoke():
+    results = {}
+    for path in ["/", "/mir", "/band", "/history", "/schedule", "/gallery", "/account", "/admin"]:
+        code, location = redirect_status(LEGACY_ORIGIN + path)
+        expected = CANONICAL_ORIGIN + path
+        ok = code == 301 and location == expected
+        results[path] = {"status": code, "location": location, "passed": ok}
+        if not ok:
+            raise base.Stop("Legacy redirect failed: " + path)
+    return results
 
 
 def main():
@@ -334,7 +327,7 @@ def main():
         "release": rid,
         "source_commit": os.environ.get("GITHUB_SHA", ""),
         "canonical_origin": CANONICAL_ORIGIN,
-        "independent_origin": INDEPENDENT_ORIGIN,
+        "legacy_origin": LEGACY_ORIGIN,
         "shared_document_root": SHARED_WEB,
         "internal_site_root": SITE_WEB,
         "phase": "starting",
@@ -467,7 +460,7 @@ def main():
             )
 
             report["canonical_checks"] = canonical_smoke(rid)
-            report["independent_host_check"] = independent_host_smoke()
+            report["legacy_redirect_checks"] = legacy_smoke()
         except BaseException:
             rollback(r, changes)
             report["phase"] = "rolled_back"
