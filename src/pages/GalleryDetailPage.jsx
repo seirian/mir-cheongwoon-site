@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export default function GalleryDetailPage() {
-  const { id } = useParams();
+  const { id: pathId } = useParams();
+  const [searchParams] = useSearchParams();
+  const id = pathId || searchParams.get('id') || '';
   const [gallery, setGallery] = useState(null);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
