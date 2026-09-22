@@ -14,16 +14,20 @@ from pathlib import Path
 
 import yeop_deploy_ci as base
 
-SHARED_WEB = "/web"
+PERSONAL_WEB = "/web"
 SITE_WEB = "/web/_mir_site"
 CANONICAL_ORIGIN = "https://mir.yeop.net"
-LEGACY_ORIGIN = "https://yeop.net"
-PREVIEW_ORIGIN = "https://yeop.net"
+PERSONAL_ORIGIN = "https://yeop.net"
 PREFIX = "/_yeop_releases/"
 RID_RE = re.compile(r"r[0-9]{14}_[a-f0-9]{8}")
 OWNER_UID = 5048
+
 SITE_ROOT_MARKER = b"# MIR-SITE-ROOT-V2 "
-SHARED_ROOT_MARKER = b"# MIR-DOMAIN-CUTOVER-V2 "
+BRIDGE_MARKER = b"# MIR-SUBDOMAIN-BRIDGE-V1"
+OLD_PERSONAL_MARKERS = (
+    b"# MIR-DOMAIN-CUTOVER-V2 ",
+    b"# MIR-DOMAIN-ROUTER-V3 ",
+)
 
 
 def ensure_dir(r, path: str) -> None:
@@ -52,8 +56,6 @@ def _validated_fallback(meta: dict, image: bytes, label: str, release: str, sour
 
     mime = meta.get("mime")
     if mime not in base.FANART_IMAGE_MIMES:
-        # Older fallback metadata may not carry mime. Recover it from magic bytes
-        # when possible; PHP performs its own authoritative finfo check at serve time.
         if image.startswith(b"\xff\xd8\xff"):
             mime = "image/jpeg"
         elif image.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -67,9 +69,8 @@ def _validated_fallback(meta: dict, image: bytes, label: str, release: str, sour
         meta = dict(meta)
         meta["mime"] = mime
 
-    meta_raw = json.dumps(meta, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     return {
-        "meta_raw": meta_raw,
+        "meta_raw": json.dumps(meta, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
         "image": image,
         "source_root": label,
         "source_release": release,
@@ -83,7 +84,7 @@ def find_persisted_fanart_fallback(r):
     roots = [
         (SITE_WEB, "canonical-site"),
         ("/web/mir", "legacy-subdomain-mirror"),
-        (SHARED_WEB, "legacy-root"),
+        (PERSONAL_WEB, "legacy-root"),
     ]
 
     for root, label in roots:
@@ -92,18 +93,21 @@ def find_persisted_fanart_fallback(r):
         if info is None or not stat.S_ISDIR(info.st_mode):
             continue
 
-        releases = []
         try:
-            for entry in r.s.listdir_attr(release_root):
-                if RID_RE.fullmatch(entry.filename) and stat.S_ISDIR(entry.st_mode):
-                    releases.append(entry.filename)
+            releases = sorted(
+                [
+                    entry.filename
+                    for entry in r.s.listdir_attr(release_root)
+                    if RID_RE.fullmatch(entry.filename) and stat.S_ISDIR(entry.st_mode)
+                ],
+                reverse=True,
+            )
         except OSError:
             continue
 
-        for release in sorted(releases, reverse=True)[:100]:
+        for release in releases[:100]:
             cache_path = release_root + "/" + release + "/api/_cache/"
 
-            # Preferred path: an already materialized, verified fallback.
             meta_raw = r.read(cache_path + "fanart-fallback.json", 64 * 1024)
             image = r.read(cache_path + "fanart-fallback.bin", 6 * 1024 * 1024 + 1)
             if meta_raw and image:
@@ -115,8 +119,6 @@ def find_persisted_fanart_fallback(r):
                 if snapshot:
                     return snapshot
 
-            # Recovery path for older releases: reconstruct the fallback from the
-            # successful fanart/image cache states used by the previous deployer.
             fanart_state = base.parse_cache_value(
                 r.read(cache_path + "fanart.state.php", 4 * 1024 * 1024)
             )
@@ -137,6 +139,7 @@ def find_persisted_fanart_fallback(r):
                 continue
             if image_state.get("id") != hashlib.sha256(source.encode()).hexdigest():
                 continue
+
             mime = image_state.get("mime")
             encoded = image_state.get("data")
             if mime not in base.FANART_IMAGE_MIMES or not isinstance(encoded, str):
@@ -172,42 +175,58 @@ def site_root_htaccess(rid: str) -> bytes:
         f"RewriteRule ^$ _yeop_releases/{rid}/index.html [L]\n"
         f"RewriteRule ^(?:mir|band|history|schedule|gallery(?:/[^/]+)?|account|admin)/?$ "
         f"_yeop_releases/{rid}/index.html [L,QSA]\n"
-        "# No broad fallback: nonexistent API/assets remain 404.\n"
+        "# Release-scoped assets and APIs are served directly from disk.\n"
     ).encode("utf-8")
 
 
-def shared_root_htaccess(rid: str) -> bytes:
+def bridge_htaccess() -> bytes:
     return (
-        f"# MIR-DOMAIN-CUTOVER-V2 {rid}\n"
+        "# MIR-SUBDOMAIN-BRIDGE-V1\n"
         "RewriteEngine On\n"
         "\n"
-        "# Legacy apex/www become permanent aliases of the canonical subdomain.\n"
-        "RewriteCond %{HTTP_HOST} ^(?:www\\.)?yeop\\.net(?::[0-9]+)?$ [NC]\n"
-        "RewriteRule ^ https://mir.yeop.net%{REQUEST_URI} [R=301,L,NE]\n"
-        "\n"
-        "# mir.yeop.net is served from an internal collision-free directory.\n"
+        "# Stable host bridge for the MIR fanpage only.\n"
         "RewriteCond %{HTTP_HOST} ^mir\\.yeop\\.net(?::[0-9]+)?$ [NC]\n"
         "RewriteCond %{REQUEST_URI} !^/_mir_site(?:/|$)\n"
         "RewriteRule ^(.*)$ _mir_site/$1 [L]\n"
         "\n"
-        "# Unknown hosts are not rewritten by this cutover file.\n"
+        "# yeop.net and every other host intentionally fall through untouched.\n"
+        "# Personal-site rewrite rules may be appended below this block.\n"
     ).encode("utf-8")
 
 
-def allowed_shared_root(old: bytes | None) -> bool:
-    if old is None:
-        return True
-    return (
-        old.startswith(b"# YEOP-DEPLOY-V1 ")
-        or old.startswith(b"# YEOP-LEGACY-REDIRECT-V1")
-        or old.startswith(SHARED_ROOT_MARKER)
-    )
-
-
 def allowed_site_root(old: bytes | None) -> bool:
+    return old is None or old.startswith(SITE_ROOT_MARKER)
+
+
+def install_or_verify_bridge(r, changes: list) -> str:
+    path = PERSONAL_WEB + "/.htaccess"
+    old = r.read(path, 4 * 1024 * 1024)
+    new = bridge_htaccess()
+
     if old is None:
-        return True
-    return old.startswith(SITE_ROOT_MARKER)
+        r.new_file(path, new)
+        changes.append(("replace", path, None, new))
+        return "created"
+
+    if old.startswith(BRIDGE_MARKER):
+        # Once installed, this file may contain personal-site rules below the
+        # bridge. MIR deploys must never overwrite or normalize those rules.
+        required = [
+            b"RewriteCond %{HTTP_HOST} ^mir\\.yeop\\.net",
+            b"RewriteRule ^(.*)$ _mir_site/$1 [L]",
+        ]
+        if not all(piece in old for piece in required):
+            raise base.Stop("MIR host bridge marker exists but required rules are missing")
+        return "preserved"
+
+    if any(old.startswith(marker) for marker in OLD_PERSONAL_MARKERS):
+        r.atomic_replace(path, new, old)
+        changes.append(("replace", path, old, new))
+        return "converted_from_old_mir_router"
+
+    raise base.Stop(
+        "Personal yeop.net .htaccess is unmanaged. Preserve personal rules and add the MIR bridge manually."
+    )
 
 
 def replace_managed(r, path: str, new: bytes, validator, changes: list) -> None:
@@ -220,18 +239,18 @@ def replace_managed(r, path: str, new: bytes, validator, changes: list) -> None:
         r.new_file(path, new)
     else:
         r.atomic_replace(path, new, old)
-    changes.append((path, old, new))
+    changes.append(("replace", path, old, new))
 
 
 def rollback(r, changes: list) -> None:
-    for path, old, new in reversed(changes):
+    for operation, path, old, new in reversed(changes):
         try:
             current = r.read(path, 4 * 1024 * 1024)
-            if old is None:
-                if current == new:
+            if operation == "replace":
+                if old is None and current == new:
                     r.s.remove(path)
-            elif current == new:
-                r.atomic_replace(path, old, new)
+                elif old is not None and current == new:
+                    r.atomic_replace(path, old, new)
         except Exception:
             print("WARNING: rollback could not restore", path)
 
@@ -243,7 +262,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def redirect_status(url: str):
     opener = urllib.request.build_opener(NoRedirect)
-    req = urllib.request.Request(url, headers={"User-Agent": "MirDomainCutoverV2/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "MirStableBridgeDeploy/1.0"})
     try:
         with opener.open(req, timeout=20) as res:
             return res.status, res.headers.get("Location", "")
@@ -252,7 +271,7 @@ def redirect_status(url: str):
 
 
 def preview_smoke(rid: str):
-    base_url = PREVIEW_ORIGIN + "/_mir_site" + PREFIX + rid + "/"
+    base_url = CANONICAL_ORIGIN + PREFIX + rid + "/"
     results = {}
     for route in ["index.html", "api/health.php"]:
         code, body, _ = base.http(base_url + route)
@@ -279,7 +298,6 @@ def canonical_smoke(rid: str):
         if not ok:
             raise base.Stop("Canonical route failed: " + path)
 
-    # release-scoped API health must also work through the canonical host rewrite.
     code, body, _ = base.http(CANONICAL_ORIGIN + PREFIX + rid + "/api/health.php")
     try:
         payload = json.loads(body)
@@ -292,16 +310,62 @@ def canonical_smoke(rid: str):
     return results
 
 
-def legacy_smoke():
-    results = {}
-    for path in ["/", "/mir", "/band", "/history", "/schedule", "/gallery", "/account", "/admin"]:
-        code, location = redirect_status(LEGACY_ORIGIN + path)
-        expected = CANONICAL_ORIGIN + path
-        ok = code == 301 and location == expected
-        results[path] = {"status": code, "location": location, "passed": ok}
-        if not ok:
-            raise base.Stop("Legacy redirect failed: " + path)
-    return results
+def fanart_smoke(rid: str):
+    url = CANONICAL_ORIGIN + PREFIX + rid + "/api/naver-fanart.php"
+    code, body, _ = base.http(url)
+    try:
+        payload = json.loads(body)
+    except Exception:
+        payload = {}
+
+    ok = (
+        code == 200
+        and payload.get("status") == "ok"
+        and isinstance(payload.get("imageUrl"), str)
+        and bool(payload.get("imageUrl"))
+    )
+    result = {
+        "status": code,
+        "fanart_status": payload.get("status"),
+        "fallback": bool(payload.get("fallback")),
+        "reason": payload.get("reason"),
+        "passed": ok,
+    }
+    if not ok:
+        raise base.Stop("Fanart API is unavailable")
+
+    image_url = payload["imageUrl"]
+    if image_url.startswith("/"):
+        image_url = CANONICAL_ORIGIN + image_url
+    image_code, image_body, image_type = base.http(image_url, limit=7 * 1024 * 1024)
+    image_ok = image_code == 200 and image_type.startswith("image/") and len(image_body) > 0
+    result["image"] = {
+        "status": image_code,
+        "content_type": image_type,
+        "bytes": len(image_body),
+        "passed": image_ok,
+    }
+    if not image_ok:
+        raise base.Stop("Fanart image is unavailable")
+    return result
+
+
+def personal_host_smoke():
+    code, location = redirect_status(PERSONAL_ORIGIN + "/")
+    redirects_to_mir = (
+        code in (301, 302, 303, 307, 308)
+        and isinstance(location, str)
+        and location.startswith(CANONICAL_ORIGIN)
+    )
+    result = {
+        "status": code,
+        "location": location,
+        "redirects_to_mir": redirects_to_mir,
+        "passed": not redirects_to_mir,
+    }
+    if redirects_to_mir:
+        raise base.Stop("yeop.net must remain independent from mir.yeop.net")
+    return result
 
 
 def main():
@@ -314,10 +378,10 @@ def main():
         raise base.Stop("dist/index.html missing")
 
     base.SERVER_SOURCE = Path(os.environ.get("SERVER_SOURCE_DIR", "server")).resolve()
-    # The hosting account exposes both domains through the shared /web root.
-    # Keep the inherited SFTP ownership/lock checks anchored there; the canonical
-    # site payload itself is stored below SITE_WEB.
-    base.WEB = SHARED_WEB
+    # MIR releases and the deployment lock live under the isolated internal site
+    # directory. The personal yeop.net root is touched only once to convert the
+    # old redirect into a stable, release-independent host bridge.
+    base.WEB = SITE_WEB
     base.ORIGIN = CANONICAL_ORIGIN
 
     manifest = base.local_manifest(dist)
@@ -327,9 +391,8 @@ def main():
         "release": rid,
         "source_commit": os.environ.get("GITHUB_SHA", ""),
         "canonical_origin": CANONICAL_ORIGIN,
-        "legacy_origin": LEGACY_ORIGIN,
-        "shared_document_root": SHARED_WEB,
-        "internal_site_root": SITE_WEB,
+        "personal_origin": PERSONAL_ORIGIN,
+        "site_root": SITE_WEB,
         "phase": "starting",
         "files": manifest,
         "server_files": server_files,
@@ -339,15 +402,14 @@ def main():
     backup_dir.mkdir(exist_ok=True)
 
     with base.Remote() as r, r.lock():
-        shared_info = r.info(SHARED_WEB)
-        if shared_info is None or not stat.S_ISDIR(shared_info.st_mode) or shared_info.st_uid != OWNER_UID:
-            raise base.Stop("Unexpected shared web root")
+        site_info = r.info(SITE_WEB)
+        if site_info is None or not stat.S_ISDIR(site_info.st_mode) or site_info.st_uid != OWNER_UID:
+            raise base.Stop("Unexpected MIR internal site root")
 
-        ensure_dir(r, SITE_WEB)
         ensure_dir(r, SITE_WEB + PREFIX.rstrip("/"))
 
         for label, path in [
-            ("shared.htaccess", SHARED_WEB + "/.htaccess"),
+            ("personal.htaccess", PERSONAL_WEB + "/.htaccess"),
             ("site.htaccess", SITE_WEB + "/.htaccess"),
         ]:
             data = r.read(path, 4 * 1024 * 1024)
@@ -368,72 +430,27 @@ def main():
         for directory in sorted(directories, key=lambda x: (x.count("/"), x)):
             ensure_dir(r, new_dir + "/" + directory)
 
-        fallback_snapshot = find_persisted_fanart_fallback(r)
+        fallback = find_persisted_fanart_fallback(r)
         report["fanart_fallback"] = {
-            "found": fallback_snapshot is not None,
-            "source_root": fallback_snapshot["source_root"] if fallback_snapshot else None,
-            "source_release": fallback_snapshot["source_release"] if fallback_snapshot else None,
-            "source_kind": fallback_snapshot["source_kind"] if fallback_snapshot else None,
-            "article_id": fallback_snapshot["article_id"] if fallback_snapshot else None,
-            "source_date": fallback_snapshot["source_date"] if fallback_snapshot else None,
+            "found": fallback is not None,
+            "source_root": fallback["source_root"] if fallback else None,
+            "source_release": fallback["source_release"] if fallback else None,
+            "source_kind": fallback["source_kind"] if fallback else None,
+            "article_id": fallback["article_id"] if fallback else None,
+            "source_date": fallback["source_date"] if fallback else None,
         }
 
         r.new_file(new_dir + "/.htaccess", release_htaccess)
         for rel, data in sorted(api_payload.items()):
             r.new_file(new_dir + "/" + rel, data)
-        if fallback_snapshot:
-            r.new_file(
-                new_dir + "/" + base.FANART_FALLBACK_META,
-                fallback_snapshot["meta_raw"],
-                0o600,
-            )
-            r.new_file(
-                new_dir + "/" + base.FANART_FALLBACK_IMAGE,
-                fallback_snapshot["image"],
-                0o600,
-            )
+        if fallback:
+            r.new_file(new_dir + "/" + base.FANART_FALLBACK_META, fallback["meta_raw"], 0o600)
+            r.new_file(new_dir + "/" + base.FANART_FALLBACK_IMAGE, fallback["image"], 0o600)
         for rel in sorted(manifest):
             r.new_file(new_dir + "/" + rel, (dist / rel).read_bytes())
 
         report["phase"] = "uploaded"
         report["preview_checks"] = preview_smoke(rid)
-
-        fanart_url = CANONICAL_ORIGIN + PREFIX + rid + "/api/naver-fanart.php"
-        code, body, _ = base.http(fanart_url)
-        try:
-            fanart_payload = json.loads(body)
-        except Exception:
-            fanart_payload = {}
-        fanart_ok = (
-            code == 200
-            and fanart_payload.get("status") == "ok"
-            and isinstance(fanart_payload.get("imageUrl"), str)
-            and bool(fanart_payload.get("imageUrl"))
-        )
-        report["fanart_preview"] = {
-            "status": code,
-            "fanart_status": fanart_payload.get("status"),
-            "fallback": bool(fanart_payload.get("fallback")),
-            "reason": fanart_payload.get("reason"),
-            "passed": fanart_ok,
-        }
-        if not fanart_ok:
-            report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            raise base.Stop("Fanart preview is unavailable")
-
-        image_url = fanart_payload["imageUrl"]
-        if image_url.startswith("/"):
-            image_url = CANONICAL_ORIGIN + image_url
-        image_code, image_body, image_type = base.http(image_url, limit=7 * 1024 * 1024)
-        image_ok = image_code == 200 and image_type.startswith("image/") and len(image_body) > 0
-        report["fanart_image_preview"] = {
-            "status": image_code,
-            "content_type": image_type,
-            "bytes": len(image_body),
-            "passed": image_ok,
-        }
-        if not image_ok:
-            raise base.Stop("Fanart fallback image is unavailable")
 
         if os.environ.get("ACTIVATE", "") != "true":
             report["phase"] = "staged"
@@ -451,16 +468,11 @@ def main():
                 allowed_site_root,
                 changes,
             )
-            replace_managed(
-                r,
-                SHARED_WEB + "/.htaccess",
-                shared_root_htaccess(rid),
-                allowed_shared_root,
-                changes,
-            )
+            report["bridge_action"] = install_or_verify_bridge(r, changes)
 
             report["canonical_checks"] = canonical_smoke(rid)
-            report["legacy_redirect_checks"] = legacy_smoke()
+            report["fanart_check"] = fanart_smoke(rid)
+            report["personal_host_check"] = personal_host_smoke()
         except BaseException:
             rollback(r, changes)
             report["phase"] = "rolled_back"
@@ -469,7 +481,7 @@ def main():
 
         report["phase"] = "active"
         report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print("CANONICAL PRODUCTION VERIFIED:", rid)
+        print("MIR STABLE HOST BRIDGE VERIFIED:", rid)
 
 
 if __name__ == "__main__":
