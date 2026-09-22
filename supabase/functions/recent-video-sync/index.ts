@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { withSupabase } from "npm:@supabase/server@1.6.1";
+import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 
 type SyncConfig = {
   cron_token: string;
@@ -295,11 +295,16 @@ function jsonResponse(payload: Record<string, unknown>, status = 200): Response 
   });
 }
 
-export default {
-  fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
-    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
+Deno.serve(async (req: Request) => {
+  if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-    const admin = ctx.supabaseAdmin;
+  const url = Deno.env.get("SUPABASE_URL") || "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (!url || !serviceKey) return jsonResponse({ error: "sync_service_unavailable" }, 503);
+
+  const admin = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
     const { data: configData, error: configError } = await admin
       .from("recent_video_sync_config")
       .select("cron_token,channel_url,channel_id,enabled")
@@ -433,6 +438,5 @@ export default {
 
       console.error("recent-video-sync failed", syncError.code);
       return jsonResponse({ error: syncError.code }, syncError.status);
-    }
-  }),
-};
+  }
+});
