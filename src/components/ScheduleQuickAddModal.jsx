@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarPlus, Pencil, Plus, X } from 'lucide-react';
+import { CalendarPlus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const MIN_DATE = '2025-01-01';
@@ -17,9 +17,10 @@ const createForm = (date, editingEvent) => ({
   sort_order: editingEvent?.sort_order || 0,
 });
 
-export default function ScheduleQuickAddModal({ date, editingEvent = null, onClose, onSaved }) {
+export default function ScheduleQuickAddModal({ date, editingEvent = null, onClose, onSaved, onDeleted }) {
   const [form, setForm] = useState(() => createForm(date, editingEvent));
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState('');
   const isEditing = Boolean(editingEvent?.id);
 
@@ -77,6 +78,37 @@ export default function ScheduleQuickAddModal({ date, editingEvent = null, onClo
     }
 
     onSaved(data);
+    onClose();
+  };
+
+  const deleteEvent = async () => {
+    if (!supabase || !editingEvent?.id || saving || deleting) return;
+
+    const title = form.title.trim() || editingEvent.title || '선택한 일정';
+    const sheetManaged = editingEvent.source_type === 'google_sheet'
+      && /^sheet-\d{4}-\d{2}-\d{2}$/.test(String(editingEvent.source_key || ''));
+    const syncNotice = sheetManaged
+      ? '\n\n시트 연동 일정은 다음 자동 동기화에서 다시 생성되지 않도록 삭제 예외로 등록됩니다.'
+      : '';
+    const confirmed = window.confirm(
+      `"${title}" 일정을 삭제할까요?${syncNotice}\n\n삭제한 일정은 자동으로 복구되지 않습니다.`,
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setMessage('');
+
+    const { data, error } = await supabase.rpc('admin_delete_schedule_event', {
+      p_event_id: editingEvent.id,
+    });
+
+    setDeleting(false);
+    if (error) {
+      setMessage('일정 삭제에 실패했습니다: ' + error.message);
+      return;
+    }
+
+    onDeleted?.(editingEvent.id, data);
     onClose();
   };
 
@@ -160,8 +192,19 @@ export default function ScheduleQuickAddModal({ date, editingEvent = null, onClo
           {message && <div className="schedule-quick-message">{message}</div>}
 
           <div className="schedule-quick-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose}>취소</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
+            {isEditing && (
+              <button
+                type="button"
+                className="btn schedule-delete-button"
+                onClick={deleteEvent}
+                disabled={saving || deleting}
+              >
+                <Trash2 size={17} />
+                {deleting ? '삭제 중...' : '일정 삭제'}
+              </button>
+            )}
+            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving || deleting}>취소</button>
+            <button type="submit" className="btn btn-primary" disabled={saving || deleting}>
               {isEditing ? <Pencil size={17} /> : <Plus size={17} />}
               {saving ? '저장 중...' : isEditing ? '수정 저장' : '일정 추가'}
             </button>
