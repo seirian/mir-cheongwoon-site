@@ -9,7 +9,50 @@ import '../band-page.css';
 
 const PUBLIC_BASE = import.meta.env.BASE_URL || '/';
 const DEFAULT_MEMBER_IMAGE = `${PUBLIC_BASE}images/cheongwoon-member-default.webp`;
+const ROLE_MEMBER_IMAGES = Object.freeze({
+  GUITAR: `${PUBLIC_BASE}images/cheongwoon-member-guitar.webp`,
+  BASS: `${PUBLIC_BASE}images/cheongwoon-member-bass.webp`,
+  KEYBOARD: `${PUBLIC_BASE}images/cheongwoon-member-keyboard.webp`,
+  DRUMS: `${PUBLIC_BASE}images/cheongwoon-member-drums.webp`,
+});
+const RANDOM_MEMBER_IMAGES = Object.values(ROLE_MEMBER_IMAGES);
 const BAND_TAGLINE_HIGHLIGHT = '미르와 함께 여름을 노래하는 동료';
+
+function stableMemberImageIndex(member) {
+  const source = String(member.id || member.name || member.created_at || member.sort_order || '');
+  let hash = 0;
+
+  for (let index = 0; index < source.length; index += 1) {
+    hash = ((hash << 5) - hash + source.charCodeAt(index)) | 0;
+  }
+
+  return Math.abs(hash) % RANDOM_MEMBER_IMAGES.length;
+}
+
+function resolveMemberPlaceholder(member) {
+  const position = String(member.position || '').trim().toUpperCase();
+
+  if (position.includes('GUITAR') || position.includes('기타')) {
+    return ROLE_MEMBER_IMAGES.GUITAR;
+  }
+  if (position.includes('BASS') || position.includes('베이스')) {
+    return ROLE_MEMBER_IMAGES.BASS;
+  }
+  if (
+    position.includes('KEYBOARD')
+    || position.includes('KEYS')
+    || position.includes('PIANO')
+    || position.includes('키보드')
+    || position.includes('건반')
+  ) {
+    return ROLE_MEMBER_IMAGES.KEYBOARD;
+  }
+  if (position.includes('DRUM') || position.includes('드럼')) {
+    return ROLE_MEMBER_IMAGES.DRUMS;
+  }
+
+  return RANDOM_MEMBER_IMAGES[stableMemberImageIndex(member)] || DEFAULT_MEMBER_IMAGE;
+}
 
 function sortMembers(items) {
   return [...items].sort((left, right) => (
@@ -87,7 +130,7 @@ export default function BandPage() {
     if (member.image_path && supabase) {
       map[member.id] = supabase.storage.from('band-members').getPublicUrl(member.image_path).data.publicUrl;
     } else {
-      map[member.id] = DEFAULT_MEMBER_IMAGE;
+      map[member.id] = resolveMemberPlaceholder(member);
     }
     return map;
   }, {}), [members]);
@@ -175,7 +218,7 @@ export default function BandPage() {
                   <img
                     className="member-photo"
                     src={memberVisuals[member.id] || DEFAULT_MEMBER_IMAGE}
-                    alt={member.image_path ? `${member.name} 프로필 사진` : `${member.name} 밴드 멤버 기본 이미지`}
+                    alt={member.image_path ? `${member.name} 프로필 사진` : `${member.name} ${member.position || '밴드'} 기본 일러스트`}
                     loading="lazy"
                     onError={handleMemberImageError}
                   />
