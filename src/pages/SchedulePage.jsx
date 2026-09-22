@@ -222,6 +222,11 @@ export default function SchedulePage() {
     }
   };
 
+  const handleQuickAddDeleted = (eventId) => {
+    setEvents((current) => current.filter((item) => item.id !== eventId));
+    setEditingEvent(null);
+  };
+
   const monthEvents = useMemo(
     () => events.filter((event) => event.event_date?.startsWith(`${year}-${pad(month + 1)}`)),
     [events, year, month],
@@ -365,7 +370,7 @@ export default function SchedulePage() {
                 </div>
                 <small>월별 방송과 주요 일정을 확인하세요.</small>
               </div>
-              {isAdmin && <div className="schedule-admin-mode-hint">관리자 모드 · 빈 날짜 칸 클릭: 일정 추가 · 일정 클릭: 수정 · 일정 드래그: 날짜 이동</div>}
+              {isAdmin && <div className="schedule-admin-mode-hint">관리자 모드 · 빈 날짜 칸 클릭: 일정 추가 · 일정 클릭: 수정/삭제 · 일정 드래그: 날짜 이동</div>}
               <div className="schedule-scroll-hint">← 좌우로 밀어서 일정을 확인하세요 →</div>
               <div className="schedule-scroll">
                 <div className="sheet-calendar">
@@ -555,6 +560,7 @@ export default function SchedulePage() {
             setEditingEvent(null);
           }}
           onSaved={handleQuickAddSaved}
+          onDeleted={handleQuickAddDeleted}
         />
       )}
     </>

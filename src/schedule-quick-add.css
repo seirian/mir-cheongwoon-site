@@ -194,6 +194,24 @@
   padding-top: 4px;
 }
 
+.schedule-delete-button {
+  margin-right: auto;
+  border-color: rgba(255, 92, 116, .38);
+  background: rgba(255, 74, 103, .08);
+  color: #ff9aad;
+}
+
+.schedule-delete-button:hover:not(:disabled) {
+  border-color: rgba(255, 92, 116, .68);
+  background: rgba(255, 74, 103, .16);
+  color: #ffd2da;
+}
+
+.schedule-delete-button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
 @media (max-width: 650px) {
   .schedule-quick-modal-backdrop { padding: 12px; }
   .schedule-quick-modal { max-height: calc(100vh - 24px); border-radius: 19px; }
