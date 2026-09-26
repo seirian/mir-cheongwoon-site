@@ -1,0 +1,17 @@
+.shorts-gallery-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:20px; }
+.shorts-card { min-width:0; }
+.shorts-gallery-frame { width:100%; aspect-ratio:9/16; background:#090a0f; }
+.shorts-gallery-frame iframe { display:block; width:100%; height:100%; border:0; }
+.video-gallery-caption.shorts-caption { padding:16px; }
+.shorts-caption h2 { font-size:16px; line-height:1.6; overflow-wrap:anywhere; }
+.shorts-external-link { display:inline-flex; align-items:center; gap:5px; margin-top:12px; color:var(--blue); font-size:12px; }
+.shorts-external-link:hover { text-decoration:underline; }
+.shorts-message { text-align:center; padding:32px; color:var(--muted); border:1px solid var(--line); border-radius:18px; }
+@media (max-width:1200px) { .shorts-gallery-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media (max-width:1000px) { .shorts-gallery-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:760px) { .shorts-gallery-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; } }
+@media (max-width:560px) {
+  .media-subnav.media-subnav-three { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  .media-subnav.media-subnav-three button { min-width:0; padding:11px 7px; gap:5px; font-size:13px; }
+}
+@media (max-width:500px) { .shorts-gallery-grid { grid-template-columns:minmax(0,380px); justify-content:center; } }
