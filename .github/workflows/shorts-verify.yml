@@ -50,6 +50,7 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/sql/shorts-bootstrap.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260927031000_recent_shorts_daily_sync.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260927035000_shorts_cache_scoped_replace.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/shorts-assertions.sql
       - name: Read-only live YouTube source check
         run: node scripts/verify-shorts-source.mjs
