@@ -1,0 +1,27 @@
+name: Promotion policy
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    name: Develop promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # No checkout or execution of PR code: only trusted event metadata is read.
+      - name: Require this repository's develop branch
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          TARGET_REPO: ${{ github.repository }}
+        run: |
+          if [[ "$HEAD_BRANCH" != "develop" || "$HEAD_REPO" != "$TARGET_REPO" ]]; then
+            echo "::error::Changes to main must come from this repository's develop branch."
+            exit 1
+          fi
