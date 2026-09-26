@@ -38,9 +38,38 @@ UI 변경은 해당 경로를 직접 열어 데스크톱/모바일, 로딩·빈 
 
 ## CI와 운영의 경계
 
-`.github/workflows/verify.yml`은 PR, main push, 수동 실행에서 Windows/Linux 프런트엔드 검증과 Linux 백엔드 문법 검사를 수행한다. 운영 secret과 배포 권한은 사용하지 않는다.
+`.github/workflows/verify.yml`은 PR, develop/main push, 수동 실행에서 Windows/Linux 프런트엔드 검증과 Linux 백엔드 문법 검사를 수행한다. 운영 secret과 배포 권한은 사용하지 않는다.
 
-기존 배포 워크플로는 독립적으로 실행된다. 이 CI 추가만으로 배포가 검증 결과를 기다리지는 않는다. 병합 전 통과를 강제하려면 GitHub 브랜치 규칙에서 `Frontend (ubuntu-latest)`, `Frontend (windows-latest)`, `Backend syntax`를 필수 검사로 지정해야 한다. 저장소 서버 설정은 이번 로컬 구성에 포함되지 않는다.
+GitHub 기본 브랜치와 개발 기준은 `develop`, 운영 기준은 `main`이다. `main`에는 PR을 통해서만 반영하며 관리자에게도 보호 규칙이 적용된다. 필수 검사는 `Frontend (ubuntu-latest)`, `Frontend (windows-latest)`, `Backend syntax`, `Develop promotion`이다. 최신 main을 반영한 상태에서 검사를 통과해야 한다.
+
+`promotion-policy.yml`은 신뢰된 main의 워크플로로 PR 출처가 이 저장소의 `develop`인지 검사한다. `pull_request_target`을 사용하지만 PR 코드를 checkout하거나 실행하지 않는다. 프런트엔드/백엔드 검증은 기존 `pull_request` 워크플로에서 별도로 실행한다.
+
+운영 배포는 main 반영 이후 기존 배포 워크플로의 경로 조건에 해당할 때 실행된다. develop push는 운영 배포를 실행하지 않는다. 수동 배포 기능은 기존대로 유지된다.
+
+## develop에서 main으로 반영
+
+```sh
+git switch develop
+git pull --ff-only origin develop
+# 수정 후
+npm run verify
+git add <변경한 파일>
+git commit -m "변경 설명"
+git push origin develop
+gh pr create --base main --head develop
+```
+
+develop CI와 PR의 필수 검사를 모두 확인하고, 변경 영역의 수동 검증도 완료한다. 반영하기로 결정되면 PR을 merge commit으로 병합한다. 별도 리뷰 승인 인원은 요구하지 않지만 PR과 필수 검사 통과는 요구한다. squash/rebase 병합이나 develop 삭제는 장기 브랜치 동기화를 어렵게 하므로 사용하지 않는다.
+
+```sh
+gh pr merge <PR번호> --merge
+git fetch origin
+git switch develop
+git merge --ff-only origin/main
+git push origin develop
+```
+
+동기화 시 fast-forward가 불가능하면 강제 push 대신 분기 원인을 확인하고 변경을 보존하여 병합한다. 검증 통과가 자동 병합을 의미하지는 않는다.
 
 브라우저 E2E, SQL/Edge Functions 검사, 커버리지 기준은 아직 없다. 변경이 잦거나 장애가 발생하는 영역부터 확장한다.
 

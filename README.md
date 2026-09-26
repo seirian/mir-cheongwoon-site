@@ -4,6 +4,8 @@
 
 ## 개발 하네스
 
+개발 기본 브랜치는 `develop`입니다. 수정 → develop 검증 → `develop`에서 `main`으로 PR → 필수 검사 통과 → 병합 순서로 진행합니다. `main`은 운영 배포 기준이며 직접 push하지 않습니다.
+
 Node 24에서 `npm ci` 후 `npm run verify`로 문법 검사·테스트·빌드를 실행합니다.
 에이전트 지침은 [AGENTS.md](AGENTS.md), 구조는 [docs/architecture.md](docs/architecture.md), 검증 범위와 CI는 [docs/harness.md](docs/harness.md)를 참고하세요.
 

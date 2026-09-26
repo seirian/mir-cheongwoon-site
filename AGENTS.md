@@ -5,6 +5,13 @@
 - 구조는 [docs/architecture.md](docs/architecture.md), 검증 절차는 [docs/harness.md](docs/harness.md)를 읽는다.
 - 설치는 Node 24에서 `npm ci`, 기본 검증은 `npm run verify`를 사용한다.
 
+## 브랜치 흐름
+- 개발은 `develop`에서 시작한다. 작업 전 `git fetch origin` 후 `git switch develop`, `git pull --ff-only origin develop`으로 최신 상태를 확인한다. 기존 미커밋 변경이 있으면 먼저 보존한다.
+- `main`에서 직접 수정하거나 push하지 않는다. 개발 변경을 `develop`에 반영하고 검증한다.
+- 개발 완료 후 `develop` → `main` PR을 만든다. Verify 3개 검사와 `Develop promotion` 검사를 모두 통과해야 병합할 수 있다.
+- UI/API 수동 검증도 완료한 뒤 사용자 요청 범위에 따라 병합한다. 테스트 성공만으로 요청하지 않은 운영 배포를 시작하지 않는다.
+- 장기 유지 브랜치이므로 merge commit으로 병합하고 `develop`을 삭제하지 않는다. 병합 후 `main`을 `develop`에 fast-forward로 동기화한다.
+
 ## 구현 기준
 - React/Vite의 기존 JavaScript/JSX 구조와 한국어 UI를 따른다.
 - `src/main.jsx`의 CSS import 순서는 화면에 영향을 준다. 스타일 수정 시 기존 override를 확인한다.
