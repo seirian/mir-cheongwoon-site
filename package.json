@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "node scripts/check-syntax.mjs",
+    "check:backend": "python scripts/check-python.py && node scripts/check-syntax.mjs --php",
+    "test": "node --test",
+    "verify": "npm run check && npm test && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

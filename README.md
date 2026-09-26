@@ -2,9 +2,14 @@
 
 버튜버 미르와 청운밴드 소개, 연도별 공연 이력, 공연별 사진 갤러리, 관리자 전용 갤러리 업로드 기능을 포함한 React/Vite 기반 사이트입니다.
 
+## 개발 하네스
+
+Node 24에서 `npm ci` 후 `npm run verify`로 문법 검사·테스트·빌드를 실행합니다.
+에이전트 지침은 [AGENTS.md](AGENTS.md), 구조는 [docs/architecture.md](docs/architecture.md), 검증 범위와 CI는 [docs/harness.md](docs/harness.md)를 참고하세요.
+
 ## 운영 기준
 
-- 운영 주소: `https://yeop.net`
+- 운영 주소: `https://mir.yeop.net` (배포 워크플로 기준)
 - **GitHub `main` 브랜치가 운영 소스의 단일 기준(Source of Truth)** 입니다.
 - 운영 배포는 `.github/workflows/deploy-yeop.yml`의 GitHub Actions가 수행합니다.
 - 프런트엔드 소스뿐 아니라 운영 PHP API도 `server/` 아래에 버전 관리합니다.
