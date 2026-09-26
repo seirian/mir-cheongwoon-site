@@ -386,8 +386,17 @@ export default {
       }
       const synced = loaded.filter((item) => item.exists);
       const syncedMonths = synced.map((item) => item.key);
-      const incoming = synced.flatMap((item) => item.events);
+      const rawIncoming = synced.flatMap((item) => item.events);
       if (!synced.length) throw new SyncError("no_month_sheet_found", 502);
+
+      const { data: exclusionData, error: exclusionError } = await admin
+        .from("schedule_sync_exclusions")
+        .select("source_key");
+      if (exclusionError) throw new SyncError("schedule_exclusion_read_failed", 503);
+      const excludedKeys = new Set(
+        (exclusionData || []).map((row: any) => String(row.source_key || "")).filter(Boolean),
+      );
+      const incoming = rawIncoming.filter((row) => !excludedKeys.has(row.source_key));
 
       const currentMonth = monthParts(0);
       let memoData: Awaited<ReturnType<typeof loadScheduleMemo>> | null = null;
@@ -434,6 +443,7 @@ export default {
         missing_months: loaded.filter((item) => !item.exists).map((item) => item.key),
         manual_overrides: existing.filter((row: any) => row.manual_override).length,
         change_count: changeCount,
+        excluded_rows: rawIncoming.length - incoming.length,
         memo_sheet: memoData?.sourceSheet || currentMonth.key,
         memo_content_synced: Boolean(memoData),
         memo_history_synced: memoData?.historySynced || false,
@@ -442,7 +452,7 @@ export default {
       if (changeCount > config.max_changes || deleteKeys.length > config.max_deletes) {
         await admin.from("schedule_sync_runs").update({
           status: "guard_blocked", finished_at: new Date().toISOString(), months: syncedMonths,
-          source_rows: incoming.length, inserted_rows: inserts.length, updated_rows: updates.length,
+          source_rows: rawIncoming.length, inserted_rows: inserts.length, updated_rows: updates.length,
           deleted_rows: deleteKeys.length, error_code: "change_guard_exceeded", details,
         }).eq("id", runId);
         return jsonResponse({ status: "guard_blocked", ...details }, 409);
@@ -488,7 +498,7 @@ export default {
         status: finalStatus,
         finished_at: new Date().toISOString(),
         months: syncedMonths,
-        source_rows: incoming.length,
+        source_rows: rawIncoming.length,
         inserted_rows: inserts.length,
         updated_rows: updates.length,
         deleted_rows: deleteKeys.length,
@@ -500,10 +510,11 @@ export default {
         status: finalStatus,
         months: syncedMonths,
         missing_months: details.missing_months,
-        source_rows: incoming.length,
+        source_rows: rawIncoming.length,
         inserted: inserts.length,
         updated: updates.length,
         deleted: deleteKeys.length,
+        excluded: rawIncoming.length - incoming.length,
         memo_sheet: details.memo_sheet,
         memo_content_synced: details.memo_content_synced,
         memo_history_synced: details.memo_history_synced,
