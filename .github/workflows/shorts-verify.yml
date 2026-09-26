@@ -22,7 +22,7 @@ jobs:
           POSTGRES_DB: shorts_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd pg_isready --health-interval 5s
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
           --health-timeout 5s --health-retries 10
     env:
       PGHOST: localhost
@@ -45,7 +45,7 @@ jobs:
       - name: Unit tests and production build
         run: npm run verify
       - name: Edge entrypoint type check
-        run: deno check supabase/functions/recent-shorts-sync/index.ts
+        run: deno check --node-modules-dir=none supabase/functions/recent-shorts-sync/index.ts
       - name: Isolated PostgreSQL migration, permissions and atomicity tests
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/sql/shorts-bootstrap.sql
