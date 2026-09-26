@@ -50,9 +50,13 @@ test('shorts: excludes recommendations and general videos; deduplicates IDs', ()
 test('shorts: supports legacy reel renderers and chip renderers', () => {
   const root = fixture();
   grid(root).header = { feedFilterChipBarRenderer: { contents: [{ chipCloudChipRenderer: { text: { simpleText: 'Latest' }, isSelected: true } }] } };
-  grid(root).contents = Array.from({ length: 10 }, (_, i) => ({ richItemRenderer: { content: {
-    reelItemRenderer: { videoId: id(i), headline: { runs: [{ text: `Legacy ${i}` }] } },
-  } }));
+  grid(root).contents = Array.from({ length: 10 }, (_, i) => ({
+    richItemRenderer: {
+      content: {
+        reelItemRenderer: { videoId: id(i), headline: { runs: [{ text: `Legacy ${i}` }] } },
+      },
+    },
+  }));
   assert.equal(parseLatestShorts(html(root)).length, 10);
 });
 test('shorts: short complete channels allowed; empty, malformed or partial responses rejected', () => {
