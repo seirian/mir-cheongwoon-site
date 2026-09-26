@@ -1,0 +1,70 @@
+name: Shorts verification
+on:
+  push:
+    branches: [develop]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: shorts-verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integration:
+    name: Shorts integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local-test-only
+          POSTGRES_DB: shorts_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: local-test-only
+      PGDATABASE: shorts_test
+      VITE_SUPABASE_URL: https://shorts-test.supabase.co
+      VITE_SUPABASE_ANON_KEY: public-test-fixture-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Unit tests and production build
+        run: npm run verify
+      - name: Edge entrypoint type check
+        run: deno check --node-modules-dir=none supabase/functions/recent-shorts-sync/index.ts
+      - name: Isolated PostgreSQL migration, permissions and atomicity tests
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/shorts-bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260927031000_recent_shorts_daily_sync.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/shorts-assertions.sql
+      - name: Read-only live YouTube source check
+        run: node scripts/verify-shorts-source.mjs
+      - name: Install isolated browser test tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/shorts-tools" --no-save --no-audit --no-fund playwright@1.55.0
+          "$RUNNER_TEMP/shorts-tools/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Desktop and mobile UI tests with isolated API fixtures
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/shorts-preview.log 2>&1 &
+          for n in $(seq 1 30); do curl --silent --fail http://127.0.0.1:4173/ > /dev/null && break; sleep 1; done
+          SHORTS_PLAYWRIGHT_MODULE="$RUNNER_TEMP/shorts-tools/node_modules/playwright/index.mjs" node scripts/verify-shorts-ui.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shorts-verification-${{ github.run_id }}
+          path: shorts-test-results/
+          if-no-files-found: ignore

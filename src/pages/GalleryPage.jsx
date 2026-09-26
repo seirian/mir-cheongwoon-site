@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, ExternalLink, Images, PlaySquare } from 'lucide-react';
+import { ArrowRight, ExternalLink, Images, PlaySquare, Smartphone } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PageHero from '../components/PageHero';
 import EmptyVisual from '../components/EmptyVisual';
+import ShortsArchive from '../components/ShortsArchive';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { getYouTubeEmbedUrl } from '../lib/youtube';
 
@@ -14,7 +15,8 @@ export default function GalleryPage() {
   const [coverVideos, setCoverVideos] = useState([]);
   const [recentVideos, setRecentVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const activeView = searchParams.get('view') === 'gallery' ? 'gallery' : 'video';
+  const requestedView = searchParams.get('view');
+  const activeView = ['shorts', 'gallery'].includes(requestedView) ? requestedView : 'video';
 
   useEffect(() => {
     async function load() {
@@ -39,7 +41,12 @@ export default function GalleryPage() {
   }, []);
 
   const publicUrl = (path) => supabase.storage.from('gallery').getPublicUrl(path).data.publicUrl;
-  const selectView = (view) => setSearchParams(view === 'gallery' ? { view: 'gallery' } : {});
+  const selectView = (view) => setSearchParams((current) => {
+    const next = new URLSearchParams(current);
+    if (view === 'video') next.delete('view');
+    else next.set('view', view);
+    return next;
+  });
 
   const renderVideoCard = (video, key) => {
     const embedUrl = getYouTubeEmbedUrl(video.youtube_url);
@@ -69,20 +76,23 @@ export default function GalleryPage() {
 
   return (
     <>
-      <PageHero eyebrow="MEDIA ARCHIVE" title="영상 및 갤러리" description="미르와 청운밴드의 영상과 공연 사진을 한곳에서 모아보는 아카이브입니다." />
+      <PageHero eyebrow="MEDIA ARCHIVE" title="영상 및 갤러리" description="미르와 청운밴드의 영상, 쇼츠와 공연 사진을 한곳에서 모아보는 아카이브입니다." />
       <section className="section-wrap media-archive-section">
         {!isSupabaseConfigured && <div className="setup-banner">Supabase 연결 전입니다. <code>.env</code> 설정 후 관리자에서 콘텐츠를 등록해 주세요.</div>}
 
-        <div className="media-subnav" role="tablist" aria-label="영상 및 갤러리 구분">
+        <div className="media-subnav media-subnav-three" role="tablist" aria-label="영상, 쇼츠 및 갤러리 구분">
           <button type="button" role="tab" aria-selected={activeView === 'video'} className={activeView === 'video' ? 'active' : ''} onClick={() => selectView('video')}>
             <PlaySquare size={18} /> 영상
+          </button>
+          <button type="button" role="tab" id="media-shorts-tab" aria-controls="media-shorts-panel" aria-selected={activeView === 'shorts'} className={activeView === 'shorts' ? 'active' : ''} onClick={() => selectView('shorts')}>
+            <Smartphone size={18} /> 쇼츠
           </button>
           <button type="button" role="tab" aria-selected={activeView === 'gallery'} className={activeView === 'gallery' ? 'active' : ''} onClick={() => selectView('gallery')}>
             <Images size={18} /> 갤러리
           </button>
         </div>
 
-        {loading ? <div className="loading">콘텐츠를 불러오는 중...</div> : activeView === 'video' ? (
+        {activeView === 'shorts' ? <ShortsArchive /> : loading ? <div className="loading">콘텐츠를 불러오는 중...</div> : activeView === 'video' ? (
           <div className="video-archive-groups">
             <section className="video-archive-group" aria-labelledby="recent-videos-heading">
               <div className="video-archive-group-head">
