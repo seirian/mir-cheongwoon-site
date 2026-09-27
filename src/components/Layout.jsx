@@ -93,7 +93,7 @@ export default function Layout() {
       <footer className="site-footer">
         <div>
           <strong>미르 × 청운밴드 Archive</strong>
-          <p>미르님과 청운밴드가 같이 만들어간 추억을 오래 남기기 위한 비공식 사이트 초안입니다.</p>
+          <p>미르님과 청운밴드가 같이 만들어간 추억을 오래 남기기 위한 비공식 사이트 입니다.</p>
         </div>
         <div className="footer-account-links">
           {authReady && session ? (
