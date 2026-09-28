@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Radio, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PageHero from '../components/PageHero';
 import { mirProfile } from '../data/siteData';
 
@@ -82,7 +83,7 @@ export default function MirPage() {
       <PageHero eyebrow="ABOUT MIR" title="미르(MIR)" description="방송에서 무대까지, 미르님의 이야기를 소개합니다." />
       <section className="section-wrap profile-layout">
         <div className={`profile-photo-wrap${isLive ? ' is-live' : ''}`}>
-          <img
+          <picture><source media="(prefers-reduced-motion: reduce)" srcSet={`${import.meta.env.BASE_URL}mir-profile-still.webp`}/><img
             className="mir-profile-image"
             src={MIR_PROFILE_IMAGE}
             alt="버추얼 스트리머 미르 프로필"
@@ -91,7 +92,7 @@ export default function MirPage() {
             loading="eager"
             decoding="async"
           />
-          <a
+          </picture><a
             className={`photo-caption soop-status${isLive ? ' is-live' : ''}`}
             href={liveInfo?.watchUrl || MIR_SOOP_URL}
             target="_blank"
@@ -107,6 +108,7 @@ export default function MirPage() {
           <span className="soft-label">{mirProfile.role}</span>
           <h2>{mirProfile.tagline}</h2>
           <p>{mirProfile.description}</p>
+          <div className="promo-inline-actions"><Link className="btn promo-primary" to="/#start-here">추천 영상부터 만나기</Link><a className="btn btn-ghost" href={MIR_SOOP_URL} target="_blank" rel="noopener noreferrer">방송 보러 가기 ↗</a></div>
           <div className="tag-row">{mirProfile.highlights.map((item) => <span key={item}>#{item}</span>)}</div>
           <div className="quote-card"><Sparkles size={19}/><p>여러분과 함께라면, 저는 최강입니다!</p></div>
         </div>

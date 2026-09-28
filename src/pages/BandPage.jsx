@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { isPublishableMember, safeExternalUrl } from '../lib/promotion';
+import { memberHighlights, performances } from '../data/promotionData';
 import PageHero from '../components/PageHero';
 import BandMemberEditor from '../components/BandMemberEditor';
 import { bandInfo } from '../data/siteData';
@@ -126,6 +129,8 @@ export default function BandPage() {
     };
   }, []);
 
+  const visibleMembers = isAdmin ? members : members.filter(isPublishableMember);
+
   const memberVisuals = useMemo(() => members.reduce((map, member) => {
     if (member.image_path && supabase) {
       map[member.id] = supabase.storage.from('band-members').getPublicUrl(member.image_path).data.publicUrl;
@@ -185,12 +190,12 @@ export default function BandPage() {
         </figure>
       </section>
 
-      <section className="section-wrap member-section">
+      <section className="section-wrap member-section" id="band-members">
         <div className="member-section-heading">
           <div className="section-title">
             <span>MEMBERS</span>
             <h2>밴드 멤버</h2>
-            <p>사진, 포지션, 한 줄 코멘트로 각 멤버를 소개합니다.</p>
+            <p>각자의 악기로 함께 만드는 음악. 멤버의 소개와 무대 기록을 만나보세요.</p>
           </div>
 
           {isAdmin && (
@@ -210,9 +215,9 @@ export default function BandPage() {
 
         {loadingMembers ? (
           <div className="loading">밴드 멤버를 불러오는 중...</div>
-        ) : members.length ? (
+        ) : visibleMembers.length ? (
           <div className="member-grid">
-            {members.map((member) => (
+            {visibleMembers.map((member) => (
               <article className="member-card" key={member.id}>
                 <div className={`member-photo-wrap${member.image_path ? '' : ' is-illustration'}`}>
                   <img
@@ -236,7 +241,17 @@ export default function BandPage() {
                 <div className="member-copy">
                   <span>{member.position}</span>
                   <h3>{member.name}</h3>
-                  <p>{member.comment}</p>
+                  <p>{memberHighlights[member.name]?.summary || member.comment}</p>
+                  {memberHighlights[member.name]?.summary && <p className="member-own-words">{member.comment}</p>}
+                  <div className="member-performance-links">
+                    {(memberHighlights[member.name]?.performanceSlugs || []).map((slug) => {
+                      const performance = performances.find((item) => item.slug === slug);
+                      return performance ? <Link key={slug} to={`/history/${slug}`}>참여 무대 · {performance.shortTitle} ↗</Link> : null;
+                    })}
+                    {!(memberHighlights[member.name]?.performanceSlugs?.length) && <Link to="/history/blued-2025#credits">청운밴드 공연 기록 ↗</Link>}
+                    {safeExternalUrl(memberHighlights[member.name]?.channelUrl) && <a href={safeExternalUrl(memberHighlights[member.name].channelUrl)} target="_blank" rel="noopener noreferrer">공개 활동 채널 ↗</a>}
+                  </div>
+                  {isAdmin && !isPublishableMember(member) && <small className="member-draft-note">작성 중 · 공개 목록에서 제외</small>}
                   {isAdmin && (
                     <small className="band-member-sort-label">표시 순서 {member.sort_order}</small>
                   )}
@@ -251,6 +266,8 @@ export default function BandPage() {
           </div>
         )}
       </section>
+
+      <p className="section-wrap promo-inline-note">개별 참여 이력이 확인되지 않은 카드는 청운밴드 전체 공연 기록으로 연결합니다. 특정 공연의 참여 멤버라는 뜻은 아닙니다.</p>
 
       {(addingMember || editingMember) && isAdmin && (
         <BandMemberEditor

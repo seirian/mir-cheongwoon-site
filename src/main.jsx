@@ -14,6 +14,7 @@ import './schedule-memo.css';
 import './media-gallery.css';
 import './site-final-polish.css';
 import './member-auth.css';
+import './promotion.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

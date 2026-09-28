@@ -4,4 +4,4 @@ RewriteEngine On
 RewriteRule ^api/(?:_.*|config\.php)(?:/|$) - [F,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(?:mir|band|history|schedule|gallery(?:/[^/]+)?|account|admin)/?$ index.html [L]
+RewriteRule ^(?:mir|band|history(?:/[^/]+)?(?:/index\.html)?|schedule|gallery(?:/[^/]+)?|account|admin|review)/?$ index.html [L]

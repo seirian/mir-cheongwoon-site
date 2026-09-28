@@ -173,8 +173,13 @@ def site_root_htaccess(rid: str) -> bytes:
         "DirectoryIndex index.html\n"
         "RewriteEngine On\n"
         f"RewriteRule ^$ _yeop_releases/{rid}/index.html [L]\n"
-        f"RewriteRule ^(?:mir|band|history|schedule|gallery(?:/[^/]+)?|account|admin)/?$ "
-        f"_yeop_releases/{rid}/index.html [L,QSA]\n"
+        # The frontend build emits a static HTML head for each public route.
+        f"RewriteRule ^(mir|band|history|schedule|gallery|account|admin)/?$ "
+        f"_yeop_releases/{rid}/$1/index.html [L,QSA]\n"
+        f"RewriteRule ^history/([a-z0-9-]+)/?$ "
+        f"_yeop_releases/{rid}/history/$1/index.html [L,QSA]\n"
+        f"RewriteRule ^gallery/[^/]+/?$ _yeop_releases/{rid}/gallery/index.html [L,QSA]\n"
+        f"RewriteRule ^review/?$ _yeop_releases/{rid}/index.html [L,QSA]\n"
         "# Release-scoped assets and APIs are served directly from disk.\n"
     ).encode("utf-8")
 
