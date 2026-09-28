@@ -60,6 +60,9 @@ export function getUpcomingEvents(events, now = new Date(), limit = 3) {
   return events.filter((event) => {
     if (!isValidDateKey(event.event_date) || event.event_date < today || !String(event.title || '').trim()) return false;
     if (event.is_published === false || ['cancelled', 'canceled', 'draft'].includes(event.status)) return false;
+    // Calendar labels are useful in the full calendar, but are not artist appearances.
+    const title = String(event.title || '').replace(/\s+/g, '');
+    if (/^(?:신정|새해|설날?|추석)(?:연휴)?$|^(?:삼일절|3[.·]1절|어린이날|부처님오신날|석가탄신일|현충일|광복절|개천절|한글날|성탄절|크리스마스|대체공휴일)(?:\(대체공휴일\))?$/.test(title)) return false;
     if (event.category === '휴방' || /휴방|휴뱅|취소|비공개|밴드\s*연습/.test(event.title)) return false;
     if (event.event_date === today && /^\d{2}:\d{2}/.test(event.start_time || '')) {
       return new Date(`${event.event_date}T${event.start_time.slice(0, 5)}:00+09:00`) >= now;

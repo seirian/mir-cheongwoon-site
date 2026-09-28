@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 from playwright.sync_api import sync_playwright
 
 parser=argparse.ArgumentParser()
@@ -19,7 +19,9 @@ videos=[{'id':'voice','title':'노심융해 테스트 커버','youtube_url':'htt
 recent=[{'video_id':'stream','title':'FPS에 소질없는 테스트 방송','youtube_url':'https://www.youtube.com/watch?v=wxyzABCDEFG','position':1}]
 members=[{'id':str(i),'name':n,'position':p,'comment':c,'sort_order':i} for i,(n,p,c) in enumerate([('Ray','GUITAR','청운밴드 기타리스트 Ray입니다'),('SweetBerry','BASS','청운밴드 베이시스트입니다'),('맹감자','KEYBOARD','청운밴드 키보드입니다'),('멤버 04','Position','멤버 소개와 한 줄 코멘트를 입력하세요.')])]
 events=[{'id':'evt','event_date':'2026-09-30','title':'브라우저 테스트용 일정','category':'특별','start_time':'20:00:00','end_time':None,'description':'검증용 데이터입니다. 실제 일정이 아닙니다.','link_url':'https://cafe.naver.com/alice427','sort_order':1}]
+events.insert(0, {'id':'holiday', 'event_date':'2026-09-29', 'title':'개천절', 'category':'기타', 'start_time':None})  # Synthetic date: filter behavior, not holiday-date data.
 mode={'value':'success'}
+headings={'band':'청운밴드','history':'공연 이력','history/blued-2025':'BLUED','gallery':'영상 및 갤러리','schedule':'일정표','mir':'미르(MIR)','review':'개선안 검토실','account':'검토용 화면에서는 로그인과 편집이 잠겨 있습니다.'}
 
 def check(name, passed, **details):
     results.append({'check':name,'passed':bool(passed),**details})
@@ -51,16 +53,24 @@ with sync_playwright() as p:
         for w,h in [(1440,1000),(390,844),(320,812),(768,1024),(1024,900)]:
             page.set_viewport_size({'width':w,'height':h})
             page.goto(base,wait_until='domcontentloaded');page.get_by_role('heading',name='각자의 매력, 함께하는 음악').wait_for();page.wait_for_timeout(1200)
+            check('home stays inside preview',urlsplit(page.url).path.rstrip('/')==urlsplit(base).path.rstrip('/'),actual_url=page.url)
             overflow=page.evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth})')
             check('home no horizontal overflow',overflow['scroll']<=w+1,width=w,measured=overflow)
             if w in [1440,390]: page.screenshot(path=str(out/f'home-{w}.png'),full_page=True)
         for path in ['band','history','history/blued-2025','gallery','schedule','mir','review','account']:
             for w in [1440,390]:
                 page.set_viewport_size({'width':w,'height':900});page.goto(urljoin(base,path),wait_until='domcontentloaded');page.wait_for_timeout(1100)
+                page.get_by_role('heading',level=1,name=headings[path],exact=True).wait_for(timeout=15000)
+                check('deep link shows intended page',urlsplit(page.url).path.rstrip('/')==urlsplit(urljoin(base,path)).path.rstrip('/'),route=path,actual_url=page.url,heading=page.locator('main h1').inner_text())
                 overflow=page.evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth})')
                 check('route no horizontal overflow',overflow['scroll']<=w+1,route=path,width=w,measured=overflow)
                 check('preview noindex',page.locator('meta[name=robots]').get_attribute('content')=='noindex, nofollow',route=path)
                 page.screenshot(path=str(out/f'{path.replace("/","-")}-{w}.png'),full_page=True)
+        for route in ['history/blued-2025/','history/blued-2025/index.html','review/']:
+            page.goto(urljoin(base,route),wait_until='domcontentloaded')
+            logical=route.removesuffix('index.html').rstrip('/')
+            page.get_by_role('heading',level=1,name=headings[logical],exact=True).wait_for(timeout=15000)
+            check('static and trailing slash aliases resolve',urlsplit(page.url).path.rstrip('/')==urlsplit(urljoin(base,logical)).path.rstrip('/'),route=route,actual_url=page.url)
         page.goto(urljoin(base,'band'),wait_until='domcontentloaded');page.wait_for_timeout(1000)
         check('member templates hidden',page.get_by_role('heading',name='멤버 04',exact=True).count()==0)
         page.goto(urljoin(base,'account'));check('preview login disabled',page.locator('input[type=password]').count()==0)
@@ -69,6 +79,7 @@ with sync_playwright() as p:
         page.keyboard.press('Escape');check('mobile menu Escape/focus',page.get_by_role('button',name='메뉴 열기').get_attribute('aria-expanded')=='false')
         if not args.live:
             page.get_by_role('link',name='대표 라이브 보기',exact=True).wait_for()
+            check('holiday is not the next artist activity',page.locator('#next-event').get_by_text('개천절',exact=True).count()==0)
             check('player not loaded before click',page.locator('iframe').count()==0)
             page.get_by_role('button',name='노심융해 테스트 커버 재생').click();check('player loaded on click',page.locator('iframe').count()==1)
             with page.expect_download() as download: page.get_by_role('button',name='캘린더에 저장').first.click()
