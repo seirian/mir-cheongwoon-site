@@ -1,0 +1,40 @@
+name: Promotion preview
+
+on:
+  push:
+    branches: [feature/promotion-discovery-preview]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: promotion-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.ref == 'refs/heads/feature/promotion-discovery-preview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run verify
+      - run: npm run check:backend
+      - name: Package reproducible review workspace
+        run: |
+          git archive --format=tar HEAD > review-source.tar
+          tar -rf review-source.tar node_modules
+          gzip review-source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: promotion-review-workspace
+          path: review-source.tar.gz
+          retention-days: 3
