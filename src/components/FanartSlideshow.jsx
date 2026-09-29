@@ -3,12 +3,12 @@ import { ChevronLeft, ChevronRight, Image as ImageIcon, Pause, Play } from 'luci
 import { FANART_INTERVAL_MS, fanartImageUrls, nextFanartImage } from '../lib/fanartSlides';
 import './fanart-slideshow.css';
 
-export default function FanartSlideshow({ fanart }) {
+export default function FanartSlideshow({ fanart, onUnavailable }) {
   const images = useMemo(() => fanartImageUrls(fanart), [fanart]);
-  return <Slides key={`${fanart.articleId}:${images.join('|')}`} images={images} fanart={fanart}/>;
+  return <Slides key={`${fanart.articleId}:${images.join('|')}`} images={images} fanart={fanart} onUnavailable={onUnavailable}/>;
 }
 
-function Slides({ images, fanart }) {
+function Slides({ images, fanart, onUnavailable }) {
   const [target, setTarget] = useState(images[0] || '');
   const [shown, setShown] = useState('');
   const [requested, setRequested] = useState(() => images.slice(0, 1));
@@ -20,6 +20,7 @@ function Slides({ images, fanart }) {
   const [visible, setVisible] = useState(() => document.visibilityState === 'visible');
   const [inView, setInView] = useState(false);
   const root = useRef(null);
+  const notifiedUnavailable = useRef(false);
   const remaining = images.filter((url) => !failed[url]);
   const multiple = remaining.length > 1;
   const rotating = playing && !hovered && visible && inView && multiple;
@@ -56,6 +57,13 @@ function Slides({ images, fanart }) {
     return () => clearTimeout(timer);
   }, [rotating, shown, target, loaded, images, failed]);
 
+  useEffect(() => {
+    if (!remaining.length && !notifiedUnavailable.current) {
+      notifiedUnavailable.current = true;
+      onUnavailable?.();
+    }
+  }, [remaining.length, onUnavailable]);
+
   function move(direction) {
     setPlaying(false);
     setTarget(nextFanartImage(images, target, failed, direction));
@@ -83,7 +91,8 @@ function Slides({ images, fanart }) {
         <span className="fanart-open-label">팬아트 게시글 보기</span>
       </> : <div className="fanart-placeholder" role="status"><ImageIcon size={36}/><strong>FAN ART</strong><p>이미지를 불러오지 못했습니다.<br/>원본 게시글에서 확인해 주세요.</p></div>}
     </a>
-    {(fanart.fallback || fanart.stale) && <p className="fanart-slide-note">최신 팬아트를 확인하지 못했습니다. {fanart.sourceDate ? `${fanart.sourceDate} 게시글의 저장본을 표시합니다.` : '이전에 저장된 이미지를 표시합니다.'}</p>}
+    {fanart.fallbackKind === 'daily_batch' && <p className="fanart-slide-note">실시간 조회가 원활하지 않아 일배치 저장본을 표시합니다.<br/>수집: {new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(fanart.batchCollectedAt))} · 게시: {fanart.sourceDate}</p>}
+    {fanart.fallbackKind !== 'daily_batch' && (fanart.fallback || fanart.stale) && <p className="fanart-slide-note">최신 팬아트를 확인하지 못했습니다. {fanart.sourceDate ? `${fanart.sourceDate} 게시글의 저장본을 표시합니다.` : '이전에 저장된 이미지를 표시합니다.'}</p>}
     {reduced && !playing && multiple && <p className="fanart-slide-note">동작 줄이기 설정에 따라 자동 넘김을 멈췄습니다. 버튼으로 감상할 수 있습니다.</p>}
   </div>;
 }

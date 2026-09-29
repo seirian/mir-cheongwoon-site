@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/_entry.php';
+require_once __DIR__ . '/_fanart_daily.php';
 
 function loadFanartFallback(array $config): ?array {
+    if ($daily = \YeopMigration\dailyFanartSnapshot($config)) return $daily;
+    // Last-resort legacy snapshot only until the first successful daily batch exists.
     $metaPath = __DIR__ . '/_cache/fanart-fallback.json';
     $imagePath = __DIR__ . '/_cache/fanart-fallback.bin';
     if (!is_file($metaPath) || is_link($metaPath) || !is_file($imagePath) || is_link($imagePath)) return null;
