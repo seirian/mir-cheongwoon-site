@@ -131,7 +131,7 @@ export default function HomeHeroImage() {
     <span className="promo-art-word" aria-hidden="true">MIR</span><div className="promo-art-ring" aria-hidden="true"/>
     {image && !imageFailed && <img key={image} className="promo-mir-portrait" src={image} alt="청룡 버튜버 미르 캐릭터" width="548" height="574" fetchPriority="high" decoding="async" style={{ visibility: imageReady ? 'visible' : 'hidden' }} onLoad={() => setLoadedImage(image)} onError={() => setImageFailed(true)}/>}
     <figcaption><span>VIRTUAL VOICE. LIVE SOUND.</span><strong>미르 <b>×</b> 청운밴드</strong><small>노래로 만나, 무대로 이어지는 이야기</small></figcaption>
-    <span className="promo-art-index" aria-hidden="true">MIR / CHEONGWOON<br/>FAN ARCHIVE</span>
+    {!imageReady && <span className="promo-art-index" aria-hidden="true">MIR / CHEONGWOON<br/>FAN ARCHIVE</span>}
     {(isAdmin || IS_REVIEW_PREVIEW) && <button className="hero-image-manage" type="button" onClick={() => { setError(''); dialog.current.showModal(); }}><ImagePlus size={16}/>{isAdmin ? '홈 이미지 교체' : '관리자 이미지 관리'}</button>}
     {imageFailed ? <p className="hero-image-feedback" role="status">홈 이미지를 불러오지 못했습니다. <button className="promo-text-link" type="button" onClick={retryImage}>이미지 다시 불러오기</button></p> : notice && <p className="hero-image-feedback" role="status">{notice}</p>}
     <dialog className="hero-image-dialog" ref={dialog} aria-labelledby="hero-image-title" onClose={clearSelection} onCancel={(event) => { if (busy) event.preventDefault(); }}>
