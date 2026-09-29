@@ -25,6 +25,8 @@ function loadFanartFallback(array $config): ?array {
         'author' => is_string($meta['author'] ?? null) ? $meta['author'] : '작성자',
         'imageUrl' => $config['api_base'] . 'naver-fanart-image.php?fallback=' . $id,
         'articleUrl' => $articleUrl,
+        'imageUrls' => [$config['api_base'] . 'naver-fanart-image.php?fallback=' . $id],
+        'imageCount' => 1,
         'sourceDate' => is_string($meta['sourceDate'] ?? null) ? $meta['sourceDate'] : '',
         'fallback' => true,
         'stale' => true,
@@ -37,15 +39,21 @@ try {
         try {
             // At most three accessible candidates; immediately stops on any 401/403/429.
             $data = \YeopMigration\fanart(new \YeopMigration\Client(budget:20), $config['api_base'].'naver-fanart-image.php', attempts:3);
-            $source = '';
+            $source = ''; $sources = [];
             if (($data['status']??'')==='ok') {
-                parse_str((string)parse_url($data['imageUrl'],PHP_URL_QUERY),$query);
-                $source = is_string($query['url']??null)?$query['url']:'';
-                if (!\YeopMigration\validUrl($source,true)) throw new \RuntimeException('image_not_allowed');
-                $data['imageUrl']=$config['api_base'].'naver-fanart-image.php?id='.hash('sha256',$source);
+                foreach (array_slice($data['imageUrls'] ?? [$data['imageUrl']], 0, 12) as $url) {
+                    parse_str((string)parse_url($url, PHP_URL_QUERY), $query);
+                    $candidate = is_string($query['url'] ?? null) ? $query['url'] : '';
+                    if (!\YeopMigration\validUrl($candidate, true)) throw new \RuntimeException('image_not_allowed');
+                    if (!in_array($candidate, $sources, true)) $sources[] = $candidate;
+                }
+                $source = $sources[0] ?? '';
+                $data['imageUrls'] = array_map(static fn($url) => $config['api_base'].'naver-fanart-image.php?id='.hash('sha256', $url), $sources);
+                $data['imageUrl'] = $data['imageUrls'][0];
+                $data['imageCount'] = count($sources);
             }
             $data['checked_at']=gmdate('c');
-            return [['public'=>$data,'source'=>$source],1800];
+            return [['public'=>$data,'source'=>$source,'sources'=>$sources],1800];
         } catch (\Throwable $e) {
             $denied = preg_match('/^upstream_http_(401|403|429)$/D',$e->getMessage(),$match)===1;
             $reason = $denied ? ($match[1]==='429'?'upstream_rate_limited':'upstream_access_restricted'):'upstream_unavailable';
@@ -53,6 +61,10 @@ try {
         }
     });
     $public = $state['public'];
+    if (($public['status'] ?? '') === 'ok') {
+        $public['imageUrls'] ??= [$public['imageUrl']];
+        $public['imageCount'] = count($public['imageUrls']);
+    }
     if (($public['status'] ?? '') !== 'ok' && ($fallback = loadFanartFallback($config))) {
         $fallback['reason'] = $public['reason'] ?? 'upstream_unavailable';
         $fallback['cached'] = $hit;

@@ -182,6 +182,29 @@ function htmlImages(string $html): array {
     }
     return array_values(array_unique($out));
 }
+/** Body order is intentional: a preview-cover image must not hide subsequent art.
+ * Only fall back to structured media when no usable body images exist. */
+function articleImages(array $article): array {
+    $images = htmlImages(firstText($article['contentHtml'] ?? '', $article['content'] ?? ''));
+    if (!$images) {
+        foreach (['images', 'imageList', 'attachImages', 'attachments'] as $key) {
+            $found = objectImages($article[$key] ?? [], 'image');
+            $images = array_merge($images, $found);
+        }
+        if (!$images) $images = array_slice(objectImages($article), 0, 1);
+    }
+    $out = []; $seen = [];
+    foreach ($images as $url) {
+        // Naver resize variants of the same source are one slide; keep its first URL.
+        $parts = parse_url($url); $query = [];
+        parse_str($parts['query'] ?? '', $query); unset($query['type']); ksort($query);
+        $identity = strtolower($parts['host'] ?? '') . ($parts['path'] ?? '') . '?' . http_build_query($query);
+        if (isset($seen[$identity])) continue;
+        $seen[$identity] = true; $out[] = $url;
+        if (count($out) >= 12) break;
+    }
+    return $out;
+}
 function objectImages($value, string $key = '', int $depth = 0, array &$out = []): array {
     if ($depth > 7 || count($out) >= 12) return $out;
     if (is_string($value) && preg_match('/image|photo|thumb|src|url/i', $key)) {
@@ -232,9 +255,8 @@ function fanart(Client $client, string $imageEndpoint = '/api/naver-fanart-image
         $a = unwrap(parseJson($r['body']))['article'] ?? null;
         // A denied or structurally changed response is not silently treated as an empty board.
         if (!is_array($a)) throw new UpstreamError('article_unavailable');
-        $images = htmlImages(firstText($a['contentHtml'] ?? '', $a['content'] ?? ''));
-        $structured = objectImages($a);
-        $source = $images[0] ?? $structured[0] ?? '';
+        $images = articleImages($a);
+        $source = $images[0] ?? '';
         if ($source === '') continue;
         $w = $a['writer'] ?? $a['member'] ?? $a['author'] ?? [];
         if (!is_array($w)) $w = [];
@@ -247,6 +269,7 @@ function fanart(Client $client, string $imageEndpoint = '/api/naver-fanart-image
         return ['status' => 'ok', 'isToday' => $candidate['date'] === $today, 'today' => $today, 'boardUrl' => BOARD,
             'articleId' => $candidate['id'], 'title' => firstText($a['subject'] ?? '', $candidate['title'], '팬아트'),
             'author' => firstText(...$names) ?: '작성자', 'imageUrl' => $imageEndpoint . '?url=' . rawurlencode($source),
+            'imageUrls' => array_map(static fn($url) => $imageEndpoint . '?url=' . rawurlencode($url), $images),
             'articleUrl' => 'https://cafe.naver.com/f-e/cafes/31003156/articles/' . $candidate['id'], 'sourceDate' => $candidate['date']];
     }
     return ['status' => 'empty', 'today' => $today, 'sourceDate' => $pool[0]['date'], 'boardUrl' => BOARD, 'error' => 'no_image_post_found'];
