@@ -1,0 +1,27 @@
+name: Fanart daily fallback verification
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/fanart-daily-verify.yml', 'server/api/**', 'scripts/fanart-daily-*']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Preserve exact source for isolated verification
+        run: |
+          mkdir -p daily-review
+          git archive --format=tar.gz --output=daily-review/source.tar.gz HEAD
+          git rev-parse HEAD > daily-review/source-sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fanart-daily-regression
+          path: daily-review/
+          retention-days: 7
