@@ -17,15 +17,15 @@ jobs:
         run: |
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium
-      - name: Observe one public article without credentials or writes
+      - name: Observe the public article data request including its iframe
         run: |
           mkdir -p fanart-page-diagnosis
           python - <<'PY'
-          import json,re
+          import json
           from pathlib import Path
-          from urllib.parse import urlsplit, parse_qs
+          from urllib.parse import urlsplit,parse_qs
           from playwright.sync_api import sync_playwright
-          results=[]; documents=[]; denied=[]
+          results=[]; denied=[]
           with sync_playwright() as p:
               browser=p.chromium.launch()
               try:
@@ -34,37 +34,30 @@ jobs:
                       if denied or r.request.method not in ['GET','HEAD','OPTIONS']: return r.abort()
                       return r.continue_()
                   context.route('**/*',route)
-                  page=context.new_page()
                   def response(r):
+                      if r.request.resource_type not in ['xhr','fetch']: return
                       u=urlsplit(r.url)
-                      if u.hostname not in ['cafe.naver.com','apis.naver.com']: return
+                      # Only host/path and non-sensitive article query values, no headers/tokens.
                       query=parse_qs(u.query,keep_blank_values=True)
-                      row={'host':u.hostname,'path':u.path,'query':{k:v if k.lower() in ['query','boardtype','usecafeid','requestfrom','menuid','requestsource','clubid','articleid'] else '[omitted]' for k,v in query.items()},'status':r.status}
-                      if r.status in [401,403,429]: denied.append(r.status)
-                      if r.request.resource_type=='document':
+                      row={'host':u.hostname,'path':u.path,'query':{k:v if k.lower() in ['query','boardtype','usecafeid','requestfrom','menuid','requestsource','clubid','cafeid','articleid'] else '[omitted]' for k,v in query.items()},'status':r.status,'mime':r.headers.get('content-type')}
+                      if 'naver' in (u.hostname or '') and r.status in [401,403,429]: denied.append(r.status)
+                      if '165311' in u.path or 'articleapi' in u.path:
                           try:
-                              text=r.text()
-                              clean=re.sub(r'<script\b[^>]*>[\s\S]*?</script>','',text,flags=re.I)
-                              clean=re.sub(r'<style\b[^>]*>[\s\S]*?</style>','',clean,flags=re.I)
-                              name='document-'+str(len(documents))+'.html'
-                              Path('fanart-page-diagnosis/'+name).write_text(clean[:2000000])
-                              documents.append({**row,'file':name,'bytes':len(text)})
+                              x=r.json(); row['top_keys']=list(x) if isinstance(x,dict) else []
+                              if isinstance(x,dict):
+                                  x=x.get('result',x.get('message',{}).get('result',{}))
+                                  row['result_keys']=list(x) if isinstance(x,dict) else []
+                                  a=x.get('article',{})
+                                  row['article_keys']=list(a) if isinstance(a,dict) else []
+                                  row['title']=a.get('subject')
                           except Exception: pass
-                      if 'json' not in r.headers.get('content-type',''): return
-                      try:
-                          x=r.json(); row['top_keys']=list(x) if isinstance(x,dict) else []
-                          if isinstance(x,dict):
-                              x=x.get('result',x.get('message',{}).get('result',{}))
-                              row['result_keys']=list(x) if isinstance(x,dict) else []
-                      except Exception: pass
                       results.append(row)
-                  page.on('response',response)
+                  context.on('response',response)
+                  page=context.new_page()
                   page.goto('https://cafe.naver.com/f-e/cafes/31003156/articles/165311',wait_until='domcontentloaded',timeout=40000)
                   page.wait_for_timeout(7000)
-                  frames=[]
-                  for f in page.frames:
-                      frames.append({'url':f.url,'article_count':f.locator('.ArticleContentBox').count(),'image_count':f.locator('.se-main-container img, .ContentRenderer img').count()})
-                  result={'requests':results,'documents':documents,'frames':frames,'denied':denied,'title':page.title()}
+                  frames=[{'url':f.url,'article_count':f.locator('.ArticleContentBox').count(),'image_count':f.locator('.se-main-container img').count()} for f in page.frames]
+                  result={'requests':results,'frames':frames,'denied':denied}
                   Path('fanart-page-diagnosis/result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
                   print(json.dumps(result,ensure_ascii=False))
               finally: browser.close()
