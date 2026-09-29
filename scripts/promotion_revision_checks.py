@@ -31,13 +31,25 @@ def run_revision_checks(page, context, base, out, live, check):
         page.set_viewport_size({'width':width,'height':1000})
         page.goto(urljoin(base,'schedule'),wait_until='domcontentloaded')
         page.get_by_role('heading',level=1,name='일정표',exact=True).wait_for()
-        intro=page.locator('.page-hero p')
+        intro=page.locator('.page-hero > p')
         metrics=intro.evaluate('(el)=>({whiteSpace:getComputedStyle(el).whiteSpace,height:el.clientHeight,line:parseFloat(getComputedStyle(el).lineHeight),scroll:el.scrollWidth,width:el.clientWidth})')
-        check('v2 schedule intro remains one line',metrics['whiteSpace']=='nowrap' and metrics['height']<=metrics['line']+6,width=width,metrics=metrics)
-        if width==1440: check('v2 desktop intro completely visible',metrics['scroll']<=metrics['width']+1)
+        check('schedule hero description alone remains one line',metrics['whiteSpace']=='nowrap' and metrics['height']<=metrics['line']+6,width=width,metrics=metrics)
+        if width==1440: check('schedule desktop intro completely visible',metrics['scroll']<=metrics['width']+1)
         page.wait_for_timeout(800)
-        titles=page.locator('.schedule-event-title')
-        if titles.count(): check('v2 event titles do not auto-wrap',all(v=='nowrap' for v in titles.evaluate_all('(items)=>items.map(el=>getComputedStyle(el).whiteSpace)')))
+        text=page.locator('.schedule-event-title,.schedule-event-description,.day-summary-event p')
+        if text.count():
+            styles=text.evaluate_all('(items)=>items.map(el=>({whiteSpace:getComputedStyle(el).whiteSpace,overflowX:getComputedStyle(el).overflowX}))')
+            check('schedule entries restore original wrapping without forced scrolling',all(s['whiteSpace']=='pre-wrap' and s['overflowX']!='auto' for s in styles),width=width,count=len(styles))
+        if not live:
+            title=page.locator('.schedule-event-title').first
+            title.wait_for()
+            original=title.text_content()
+            try:
+                title.evaluate('(el)=>{el.textContent="긴 일정 제목의 자연스러운 줄바꿈 확인 ".repeat(8)}')
+                lines=title.evaluate('(el)=>{const r=document.createRange();r.selectNodeContents(el);return new Set([...r.getClientRects()].map(rect=>Math.round(rect.top))).size}')
+                check('long calendar titles wrap onto multiple lines',lines>1,width=width,lines=lines)
+            finally:
+                title.evaluate('(el,text)=>{el.textContent=text}',original)
         check('v2 schedule viewport no overflow',page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'),width=width)
         page.screenshot(path=str(out/f'v2-schedule-{width}.png'),full_page=True)
 

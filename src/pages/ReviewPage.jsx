@@ -7,7 +7,7 @@ import { REVIEW_BRANCH } from '../data/promotionData';
 const revisionItems = [
   ['2차 · 01', '홈 균형과 관리자 이미지 교체', '홈을 아래 콘텐츠와 같은 중앙 폭에 맞추고 좌우 내부 여백을 균형 있게 조정했습니다. 이미지 위의 관리자 이미지 관리에서 기존 관리자 이메일로 로그인하고 파일 선택 → 미리보기 → 이미지 저장을 확인하세요. 대표 라이브는 지정한 Gh4PqvQVWRc 영상으로 고정했습니다.', '/'],
   ['2차 · 02', '입문 추천 카드의 두 줄 제목 높이', '01·02·03 카드 모두 영상 제목 두 줄 높이를 확보합니다. 짧은 제목도 동일한 공간을 사용하며 두 줄보다 긴 제목은 두 줄까지만 표시됩니다.', '/#start-here'],
-  ['2차 · 03', '일정표의 한 줄 텍스트', '상단 소개 문구에 다시 한 줄 스타일을 적용했습니다. 필터와 일정 제목도 자동으로 꺾이지 않게 처리하며, 좁은 화면의 긴 문구는 해당 영역 안에서 좌우로 확인할 수 있습니다.', '/schedule'],
+  ['2차 · 03 수정', '일정표 원복 · 상단 소개 문구만 한 줄', '일정 제목·설명·일별 기록·필터에 추가했던 한 줄 강제 처리를 제거하고 2차 수정 전 표시 방식으로 되돌렸습니다. 상단의 “월별 일정과 오늘의 기록, 팬아트와 메모를 한 화면에서 확인할 수 있는 미르 일정 대시보드입니다.” 문구만 한 줄로 표시합니다.', '/schedule'],
 ];
 const firstItems = [
   ['최우선', '미작성 멤버 카드 정리', '미작성 카드와 템플릿 문구는 공개 목록에서 제외하며 관리자 편집은 유지합니다.', '/band'],
@@ -22,7 +22,7 @@ const firstItems = [
 export default function ReviewPage() {
   const [checked, setChecked] = useState({});
   const cards = (items) => <div className="review-checks">{items.map(([priority, title, description, path]) => <article key={title}><label><input type="checkbox" checked={Boolean(checked[title])} onChange={(event) => setChecked((previous) => ({ ...previous, [title]: event.target.checked }))}/><span className="review-check-icon" aria-hidden="true">{checked[title] ? <Check size={17}/> : '○'}</span><span className="review-check-title"><small>{priority}</small><strong>{title}</strong></span></label><p>{description}</p><Link className="promo-text-link" to={path}>화면 확인<ArrowUpRight size={16}/></Link></article>)}</div>;
-  return <><PageHero eyebrow="SECOND DESIGN & FUNCTION REVIEW" title="개선안 검토실" description="2차 검토안입니다. 홈 배치와 관리자 이미지 교체, 카드 높이, 일정표 한 줄 표시를 확인해 주세요."/>
+  return <><PageHero eyebrow="SECOND DESIGN & FUNCTION REVIEW" title="개선안 검토실" description="2차 검토안 수정본입니다. 홈과 카드 개선은 유지하고, 일정표는 상단 소개 문구에만 한 줄 표시를 적용했습니다."/>
     <section className="section-wrap promo-section">
       <div className="review-info"><span className="eyebrow">FEATURE BRANCH · REVIEW 02</span><code>{REVIEW_BRANCH}</code><p>운영 화면은 그대로 유지합니다. 홈 이미지에 한해서만 관리자 로그인과 별도 저장을 허용합니다. 계정·일정·밴드·갤러리의 다른 편집은 잠겨 있습니다. 체크 항목은 현재 화면에서만 유지됩니다.</p><a className="promo-text-link" href="https://mir.yeop.net/" target="_blank" rel="noopener noreferrer">기존 운영 사이트와 비교<ExternalLink size={15}/></a></div>
       {cards(revisionItems)}

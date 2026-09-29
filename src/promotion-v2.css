@@ -19,20 +19,13 @@
   height:3.5em; min-height:3.5em; line-height:1.75;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
-/* The mobile agenda sits between PageHero and schedule-section. The old + selector
-   stopped matching after the first review; general sibling matching survives it. */
-.page-hero:has(~ .schedule-section) p {
+/* Only the schedule hero description is single-line. The mobile agenda sits
+   between PageHero and schedule-section, so the old + selector no longer matches.
+   Calendar entries, daily notes and filters keep their pre-revision-2 styles. */
+.page-hero:has(~ .schedule-section) > p {
   max-width:none; white-space:nowrap; overflow-x:auto; overflow-y:hidden;
   font-size:clamp(14px,1.15vw,16px); line-height:1.8; padding-bottom:4px;
 }
-.schedule-section :is(.schedule-heading h2,.schedule-period-label,.schedule-year-tabs button,.schedule-month-tabs button,.schedule-legend button,.schedule-panel-head h3,.schedule-side-heading h3,.day-summary-tabs button) { white-space:nowrap; }
-.schedule-section :is(.schedule-event-title,.schedule-event-description,.day-summary-event p) {
-  white-space:nowrap; overflow-wrap:normal; word-break:normal;
-  overflow-x:auto; overflow-y:hidden; max-width:100%; text-overflow:clip;
-  scrollbar-width:thin;
-}
-.schedule-section .day-summary-event>div { min-width:0; }
-.schedule-section .schedule-day-events,.schedule-section .schedule-event { min-width:0; }
 .hero-image-manage {
   position:absolute; z-index:4; top:22px; left:22px; display:inline-flex; align-items:center; gap:8px;
   min-height:44px; padding:10px 14px; border:1px solid #94bbdf66; border-radius:12px;
