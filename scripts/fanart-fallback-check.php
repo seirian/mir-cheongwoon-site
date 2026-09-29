@@ -12,12 +12,12 @@ declare(strict_types=1);
         $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aLVcAAAAASUVORK5CYII=', true);
         $id = hash('sha256', $png);
         $articleUrl = 'https://cafe.naver.com/f-e/cafes/31003156/articles/123';
-        $meta = ['id'=>$id, 'articleId'=>123, 'articleUrl'=>$articleUrl, 'title'=>'저장된 팬아트', 'author'=>'테스트 작가', 'sourceDate'=>'2026-09-30'];
+        $meta = ['id'=>$id, 'articleId'=>123, 'articleUrl'=>$articleUrl, 'title'=>'저장된 팬아트', 'author'=>'테스트 작가', 'sourceDate'=>'2026-09-21'];
         file_put_contents($dir.'/_cache/fanart-fallback.json', json_encode($meta));
         file_put_contents($dir.'/_cache/fanart-fallback.bin', $png);
         // Seed a denied response: no request to Naver is made by this fixture.
         $cache = new \YeopMigration\SharedCache($dir.'/_cache');
-        $cache->remember('fanart', static fn()=>[['public'=>['status'=>'unavailable','reason'=>'upstream_access_restricted']],21600]);
+        $cache->remember('fanart', static fn()=>[['public'=>['status'=>'unavailable','reason'=>'upstream_access_restricted','checked_at'=>'2026-09-30T00:00:00Z']],21600]);
         $invoke = static function(string $file, string $query='') use ($dir): string {
             $process = proc_open([PHP_BINARY, '-r', '$_SERVER["REQUEST_METHOD"]="GET"; parse_str($argv[2], $_GET); require $argv[1];', $dir.'/'.$file, $query], [0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']], $pipes);
             if (!is_resource($process)) throw new RuntimeException('fixture_process_failed');
@@ -31,6 +31,7 @@ declare(strict_types=1);
         check(($data['imageUrls'] ?? []) === [$data['imageUrl']] && $data['imageCount'] === 1, 'persisted fallback exposes compatible single slide');
         check($data['author'] === $meta['author'] && $data['title'] === $meta['title'] && $data['fallback'] && $data['stale'], 'fallback keeps attribution and stale flags');
         check($data['reason'] === 'upstream_access_restricted', 'fallback preserves upstream restriction reason');
+        check($data['checked_at'] === '2026-09-30T00:00:00Z', 'fallback reports latest lookup separately from original article date');
         check($invoke('naver-fanart-image.php', 'fallback='.$id) === $png, 'real fallback image endpoint returns exact cached raster');
         file_put_contents($dir.'/_cache/fanart-fallback.json', json_encode([...$meta, 'articleUrl'=>'https://evil.test/123']));
         $invalid = json_decode($invoke('naver-fanart.php'), true, 64, JSON_THROW_ON_ERROR);

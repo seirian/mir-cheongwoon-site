@@ -389,7 +389,7 @@ export default function SchedulePage() {
                     {days.map((date) => {
                       const key = toDateKey(date);
                       const dayEvents = eventsByDate[key] || [];
-                      const isCurrentMonth = date.getFullYear() === year && date.getMonth() === month;
+                      const isCurrentMonth = date.getMonth() === month && date.getFullYear() === year;
                       const isToday = key === todayKey;
                       const canQuickAdd = isAdmin && date.getFullYear() >= MIN_YEAR && date.getFullYear() <= MAX_YEAR;
                       const openQuickAdd = () => {
@@ -508,7 +508,7 @@ export default function SchedulePage() {
                     <span>FAN ART</span>
                     <h3>오늘의 팬아트</h3>
                   </div>
-                  <small>{fanart ? (fanart.isToday ? 'TODAY' : `RECENT · ${formatFanartDate(fanart.sourceDate)}`) : 'FEATURED'}</small>
+                  <small>{fanart ? ((fanart.fallback || fanart.stale) ? `저장본 · ${formatFanartDate(fanart.sourceDate)}` : fanart.isToday ? 'TODAY' : `RECENT · ${formatFanartDate(fanart.sourceDate)}`) : 'FEATURED'}</small>
                 </div>
 
                 {fanartLoading ? (

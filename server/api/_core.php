@@ -12,7 +12,8 @@ const BOARD = 'https://cafe.naver.com/f-e/cafes/31003156/menus/10?viewType=I';
 const SOOP_PAGE = 'https://play.sooplive.com/alice427';
 const SOOP_API = 'https://live.sooplive.com/afreeca/player_live_api.php';
 const LIST_API = 'https://apis.naver.com/cafe-web/cafe-boardlist-api/v1/cafes/31003156/menus/10/articles';
-const ARTICLE_API = 'https://apis.naver.com/cafe-web/cafe-articleapi/v3/cafes/31003156/articles/';
+// Current anonymous article page uses this gateway (verified in its iframe network).
+const ARTICLE_API = 'https://article.cafe.naver.com/gw/v4/cafes/31003156/articles/';
 const UA = 'YeopMirMigration/0.3 (+https://mir.yeop.net)';
 
 function validUrl(string $url, bool $image = false): bool {
@@ -22,6 +23,10 @@ function validUrl(string $url, bool $image = false): bool {
     if (isset($p['port']) && $p['port'] !== 443) return false;
     $host = strtolower($p['host'] ?? '');
     if ($image) return (bool) preg_match('/(?:^|\.)(pstatic\.net|naver\.net|naver\.com)$/D', $host);
+    if ($host === 'article.cafe.naver.com') {
+        // Admit only the configured cafe's article read route, not the entire gateway.
+        return preg_match('#^/gw/v4/cafes/31003156/articles/[1-9][0-9]*$#D', $p['path'] ?? '') === 1;
+    }
     return in_array($host, ['play.sooplive.com', 'live.sooplive.com', 'apis.naver.com'], true);
 }
 
@@ -255,6 +260,8 @@ function fanart(Client $client, string $imageEndpoint = '/api/naver-fanart-image
         $a = unwrap(parseJson($r['body']))['article'] ?? null;
         // A denied or structurally changed response is not silently treated as an empty board.
         if (!is_array($a)) throw new UpstreamError('article_unavailable');
+        if (($a['isReadable'] ?? true) === false || ($a['isBlind'] ?? false) === true) throw new UpstreamError('upstream_http_403');
+        if (isset($a['id']) && (int) $a['id'] !== $candidate['id']) throw new UpstreamError('article_identity_mismatch');
         $images = articleImages($a);
         $source = $images[0] ?? '';
         if ($source === '') continue;
@@ -286,7 +293,7 @@ function image(Client $client, string $source): array {
 }
 function sendJson(array $payload, int $status = 200, int $maxAge = 0): never {
     http_response_code($status);
-    header('Content-Type: application/json; charset=utf-8');
+    header('Content-Type: application/json; charset=UTF-8');
     header('Cache-Control: ' . ($maxAge ? 'public, max-age=' . $maxAge : 'no-store'));
     header('X-Content-Type-Options: nosniff');
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
