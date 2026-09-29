@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Palette } from 'lucide-react';
 import { getKstCivilDate } from '../lib/promotion';
 import { ScheduleAgenda } from '../components/UpcomingSchedule';
+import FanartSlideshow from '../components/FanartSlideshow';
 import PageHero from '../components/PageHero';
 import ScheduleQuickAddModal from '../components/ScheduleQuickAddModal';
 import ScheduleMemoCard from '../components/ScheduleMemoCard';
@@ -519,17 +520,7 @@ export default function SchedulePage() {
                     </div>
                   </div>
                 ) : fanart ? (
-                  <a className="fanart-visual fanart-live-link" href={fanart.articleUrl} target="_blank" rel="noreferrer" aria-label={`${fanart.title} 게시글 보기`}>
-                    <img
-                      src={fanart.imageUrl}
-                      alt={`${fanart.title} - ${fanart.author}`}
-                      onError={() => {
-                        setFanart(null);
-                        setFanartError(true);
-                      }}
-                    />
-                    <span className="fanart-open-label">팬아트 게시글 보기</span>
-                  </a>
+                  <FanartSlideshow fanart={fanart}/>
                 ) : (
                   <div className="fanart-visual" role="img" aria-label="팬아트 이미지 영역">
                     <div className="fanart-placeholder">

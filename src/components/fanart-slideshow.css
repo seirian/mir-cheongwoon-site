@@ -1,0 +1,19 @@
+/* Isolated to the schedule fanart card; the calendar and home hero are untouched. */
+.fanart-slideshow { position:relative; min-width:0; }
+.fanart-slideshow .fanart-slide-stage { position:relative; display:grid; }
+.fanart-slideshow .fanart-slide {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center;
+  opacity:0; visibility:hidden; pointer-events:none; transform:none;
+  transition:opacity .45s ease,visibility .45s ease;
+}
+.fanart-slideshow .fanart-slide.is-active { opacity:1; visibility:visible; }
+.fanart-slideshow .fanart-live-link:hover .fanart-slide { transform:none; }
+.fanart-slide-controls { display:flex; align-items:center; gap:6px; margin:0 0 10px; }
+.fanart-slide-controls button { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:44px; min-width:44px; padding:8px; border:1px solid #414052; border-radius:10px; background:#171925; color:#ddd5ff; cursor:pointer; }
+.fanart-slide-controls button:hover { background:#272337; }
+.fanart-slide-controls .fanart-rotation { font-size:11px; padding-inline:10px; }
+.fanart-slide-count { margin-left:auto; text-align:center; min-width:42px; font-size:12px; font-variant-numeric:tabular-nums; color:#c7c0d8; }
+.fanart-slide-note { color:#a6a2b5; font-size:11px; line-height:1.7; margin:10px 0 0; overflow-wrap:anywhere; }
+@media (prefers-reduced-motion:reduce) {
+  .fanart-slideshow .fanart-slide { transition:none; }
+}

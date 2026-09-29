@@ -5,7 +5,9 @@ namespace YeopMigration;
 if (PHP_SAPI !== 'cli' && !defined('YEOP_API')) { http_response_code(404); exit; }
 final class SharedCache {
     public const PREFIX = "<?php http_response_code(404); exit; __halt_compiler();\n";
-    private const KEYS = ['soop', 'fanart', 'image', 'health'];
+    private const KEYS = ['soop', 'fanart', 'image', 'health', 'fanart-image-denied',
+        'fanart-image-1', 'fanart-image-2', 'fanart-image-3', 'fanart-image-4', 'fanart-image-5',
+        'fanart-image-6', 'fanart-image-7', 'fanart-image-8', 'fanart-image-9', 'fanart-image-10', 'fanart-image-11'];
     private const MAX_BYTES = 9 * 1024 * 1024;
     public function __construct(private string $dir, private $clock = null) {
         if (!is_dir($dir) || is_link($dir) || !is_writable($dir)) throw new \RuntimeException('cache_unavailable');
@@ -32,8 +34,8 @@ final class SharedCache {
         return $x && $x['expires'] > ($this->clock)() ? $x['value'] : null;
     }
     /** Worker returns [payload, TTL]. One upstream call per key, no stale LIVE state. */
-    public function remember(string $key, callable $worker): array {
-        if (($fresh = $this->fresh($key)) !== null) return [$fresh, true];
+    public function remember(string $key, callable $worker, ?string $identity = null): array {
+        if (($fresh = $this->fresh($key)) !== null && ($identity === null || ($fresh['id'] ?? null) === $identity)) return [$fresh, true];
         $lockPath = $this->path($key, 'lock');
         if (is_link($lockPath)) throw new \RuntimeException('cache_symlink');
         $lock = @fopen($lockPath, 'c+b');
@@ -41,7 +43,7 @@ final class SharedCache {
         @chmod($lockPath, 0600);
         if (!flock($lock, LOCK_EX | LOCK_NB)) { fclose($lock); throw new \RuntimeException('cache_busy'); }
         try {
-            if (($fresh = $this->fresh($key)) !== null) return [$fresh, true];
+            if (($fresh = $this->fresh($key)) !== null && ($identity === null || ($fresh['id'] ?? null) === $identity)) return [$fresh, true];
             ftruncate($lock, 0); rewind($lock); fwrite($lock, self::PREFIX); fflush($lock);
             [$payload, $ttl] = $worker();
             if (!is_array($payload) || !is_int($ttl) || $ttl < 1 || $ttl > 86400) throw new \RuntimeException('cache_invalid_worker');

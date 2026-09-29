@@ -26,17 +26,30 @@ if (is_string($fallback) && $fallback!=='') {
 $id=$_GET['id']??'';
 if (!is_string($id) || !preg_match('/^[a-f0-9]{64}$/D',$id)) \YeopMigration\sendJson(['error'=>'invalid_image_id'],400);
 try {
-    // Not a general-purpose URL proxy: only the current successful featured image is accepted.
-    $feature=$cache->fresh('fanart');
-    $source=$feature['source']??'';
-    if (!$feature || ($feature['public']['status']??'')!=='ok' || !$source || !hash_equals(hash('sha256',$source),$id)) \YeopMigration\sendJson(['error'=>'image_not_current'],404);
-    $existing=$cache->fresh('image');
-    // A new featured image waits for the single bounded image slot to expire; avoids cache churn.
-    if ($existing && !hash_equals($existing['id']??'', $id)) \YeopMigration\sendJson(['error'=>'image_refresh_pending'],503);
-    [$state,$hit]=$cache->remember('image',static function() use ($source,$id):array {
+    // Only media belonging to the current selected article, never a caller-supplied URL.
+    $feature = $cache->fresh('fanart');
+    $sources = array_slice($feature['sources'] ?? [$feature['source'] ?? ''], 0, 12);
+    $source = ''; $slot = '';
+    if (($feature['public']['status'] ?? '') === 'ok') {
+        foreach ($sources as $index => $candidate) {
+            if (is_string($candidate) && \YeopMigration\validUrl($candidate, true) && hash_equals(hash('sha256', $candidate), $id)) {
+                $source = $candidate; $slot = $index === 0 ? 'image' : 'fanart-image-'.$index; break;
+            }
+        }
+    }
+    if ($source === '') \YeopMigration\sendJson(['error'=>'image_not_current'],404);
+    // Twelve fixed, size-bounded slots. Identity-aware replacement never serves another slide.
+    [$state,$hit]=$cache->remember($slot,static function() use ($source,$id,$cache):array {
+        if ($cache->fresh('fanart-image-denied')) return [['id'=>$id,'error'=>'image_unavailable'],300];
         try { $i=\YeopMigration\image(new \YeopMigration\Client(budget:12),$source); return [['id'=>$id,'mime'=>$i['mime'],'data'=>base64_encode($i['body'])],600]; }
-        catch (\Throwable $e) { return [['id'=>$id,'error'=>'image_unavailable'],300]; }
-    });
+        catch (\Throwable $e) {
+            // A denial on any slide pauses upstream image requests across the whole gallery.
+            if (preg_match('/^upstream_http_(401|403|429)$/D', $e->getMessage())) {
+                $cache->remember('fanart-image-denied', static fn()=>[['blocked'=>true],21600]);
+            }
+            return [['id'=>$id,'error'=>'image_unavailable'],300];
+        }
+    }, $id);
     if (isset($state['error'])) \YeopMigration\sendJson(['error'=>'image_unavailable'],502);
     $body=base64_decode($state['data'],true);
     if ($body===false) throw new \RuntimeException('image_cache_invalid');
