@@ -3,10 +3,10 @@ name: Home hero image verification
 on:
   push:
     branches: [develop]
-    paths: ['src/components/HomeHeroImage.jsx', 'src/lib/heroImage.js', 'scripts/hero-image-browser-check.py', '.github/workflows/hero-image-verify.yml']
+    paths: ['src/components/HomeHeroImage.jsx', 'src/lib/heroImage.js', 'src/promotion.css', 'src/promotion-v2.css', 'scripts/hero-image-browser-check.py', 'scripts/hero-responsive-check.py', '.github/workflows/hero-image-verify.yml']
   pull_request:
     branches: [main, develop]
-    paths: ['src/components/HomeHeroImage.jsx', 'src/lib/heroImage.js', 'scripts/hero-image-browser-check.py', '.github/workflows/hero-image-verify.yml']
+    paths: ['src/components/HomeHeroImage.jsx', 'src/lib/heroImage.js', 'src/promotion.css', 'src/promotion-v2.css', 'scripts/hero-image-browser-check.py', 'scripts/hero-responsive-check.py', '.github/workflows/hero-image-verify.yml']
   workflow_run:
     workflows: ['Deploy mir.yeop.net']
     types: [completed]
@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -48,6 +49,17 @@ jobs:
           npm run preview -- --host 127.0.0.1 > /tmp/hero-preview.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
           python scripts/hero-image-browser-check.py
+      - name: Compare mobile centering and unchanged desktop against previous CSS
+        run: |
+          cp src/promotion-v2.css "$RUNNER_TEMP/promotion-after.css"
+          trap 'cp "$RUNNER_TEMP/promotion-after.css" src/promotion-v2.css' EXIT
+          git show 4cdb1d56fa7b5a37bc5eab451146246d3809aa4f:src/promotion-v2.css > src/promotion-v2.css
+          npm run build -- --outDir dist-hero-baseline
+          cp "$RUNNER_TEMP/promotion-after.css" src/promotion-v2.css
+          trap - EXIT
+          npm run preview -- --host 127.0.0.1 --port 4174 --outDir dist-hero-baseline > /tmp/hero-baseline.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4174/ >/dev/null && break || sleep 1; done
+          python scripts/hero-responsive-check.py --baseline-url http://127.0.0.1:4174/
       - name: Preserve reviewed layout and administrator upload behavior
         run: |
           VITE_REVIEW_PREVIEW=true npm run dev -- --host 127.0.0.1 > /tmp/hero-dev.log 2>&1 &
@@ -59,6 +71,7 @@ jobs:
           name: hero-image-regression
           path: |
             hero-image-report/
+            hero-responsive-report/
             promotion-regression-report/
           retention-days: 14
 
@@ -82,9 +95,15 @@ jobs:
         env:
           EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: python scripts/hero-image-browser-check.py --live --url https://mir.yeop.net/ --expected-sha "$EXPECTED_SHA" --out live-hero-image-report
+      - name: Read-only mobile center and desktop comparison
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python scripts/hero-responsive-check.py --live --url https://mir.yeop.net/ --baseline-url https://mir.yeop.net/_yeop_releases/r20260929093450_4cdb1d56/ --expected-sha "$EXPECTED_SHA" --out live-responsive-report
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: live-hero-image-review
-          path: live-hero-image-report/
+          path: |
+            live-hero-image-report/
+            live-responsive-report/
           retention-days: 14

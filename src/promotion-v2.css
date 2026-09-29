@@ -69,3 +69,11 @@
   .hero-image-manage { top:16px; left:16px; }
   .review-banner { gap:12px; flex-wrap:wrap; }
 }
+/* Keep the existing mobile image size; center both its box and contained pixels.
+   Desktop (>800px), caption, upload dialog and loading behavior are unchanged. */
+@media (max-width:800px) {
+  .promotion-home .promo-mir-portrait {
+    left:50%; right:auto; transform:translateX(-50%);
+    object-position:center bottom;
+  }
+}
