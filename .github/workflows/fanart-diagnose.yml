@@ -1,0 +1,63 @@
+name: Fanart source diagnosis
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/fanart-diagnose.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Read active public fanart response
+        run: |
+          mkdir -p fanart-diagnosis
+          python - <<'PY'
+          import json, re, urllib.request
+          from pathlib import Path
+          def get(url):
+              request=urllib.request.Request(url,headers={'User-Agent':'MirFanartDiagnosis/1.0','Cache-Control':'no-cache'})
+              with urllib.request.urlopen(request,timeout=35) as response:
+                  return response.read(1000000).decode('utf-8')
+          html=get('https://mir.yeop.net/schedule')
+          rid=re.search(r'name="yeop-release" content="(r[0-9]{14}_[a-f0-9]{8})"',html).group(1)
+          data=json.loads(get('https://mir.yeop.net/_yeop_releases/'+rid+'/api/naver-fanart.php'))
+          result={'release':rid,**{k:data.get(k) for k in ['status','articleId','sourceDate','isToday','fallback','stale','reason','checked_at','cached','imageCount']}}
+          Path('fanart-diagnosis/public.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
+          print(json.dumps(result,ensure_ascii=False))
+          PY
+      - name: Trace one anonymous upstream attempt with existing safeguards
+        run: |
+          php <<'PHP'
+          <?php
+          require 'server/api/_core.php';
+          $client=new \YeopMigration\Client(budget:20);
+          try {
+            $result=\YeopMigration\fanart($client, attempts:1);
+            $out=['ok'=>true,'result'=>array_intersect_key($result,array_flip(['status','articleId','sourceDate','imageCount']))];
+          } catch (\Throwable $e) {
+            $code=$e->getMessage();
+            $out=['ok'=>false,'error'=>preg_match('/^[a-z0-9_]+$/D',$code)?$code:'unclassified_error','class'=>get_class($e)];
+          }
+          $out['trace']=$client->trace;
+          $out['runtime']=['php'=>PHP_VERSION,'curl'=>function_exists('curl_init'),'finfo'=>class_exists('finfo')];
+          $json=json_encode($out,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+          file_put_contents('fanart-diagnosis/upstream.json',$json);
+          echo $json."\n";
+          PHP
+      - name: Preserve source used for diagnosis without credentials or runtime data
+        run: git archive --format=tar.gz --output=fanart-diagnosis/source.tar.gz HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fanart-source-diagnosis
+          path: fanart-diagnosis/
+          retention-days: 7
