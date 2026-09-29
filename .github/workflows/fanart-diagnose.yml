@@ -39,7 +39,22 @@ jobs:
           php <<'PHP'
           <?php
           require 'server/api/_core.php';
-          $client=new \YeopMigration\Client(budget:20);
+          $responses=[];
+          $sender=static function(...$args) use (&$responses): array {
+            $r=\YeopMigration\curlRequest(...$args);
+            $entry=['path'=>parse_url($args[0],PHP_URL_PATH),'http_status'=>$r['code']];
+            $data=json_decode($r['body'],true);
+            if ($r['code']>=400 && is_array($data)) {
+              $entry['error_fields']=array_intersect_key($data,array_flip(['code','error','errorCode','errorMessage','message','status','timestamp','path']));
+              if (strlen(json_encode($entry['error_fields']))>3000) $entry['error_fields']=['keys'=>array_keys($data)];
+            } elseif (str_contains($entry['path'],'cafe-boardlist-api')) {
+              $data=\YeopMigration\unwrap($data??[]);
+              $entry['latest']=array_map(static fn($item)=>array_intersect_key($item['item']??$item,array_flip(['articleId','subject','writeDateTimestamp','writeDate'])),array_slice($data['articleList']??$data['articles']??[],0,3));
+            }
+            $responses[]=$entry;
+            return $r;
+          };
+          $client=new \YeopMigration\Client($sender,budget:20);
           try {
             $result=\YeopMigration\fanart($client, attempts:1);
             $out=['ok'=>true,'result'=>array_intersect_key($result,array_flip(['status','articleId','sourceDate','imageCount']))];
@@ -48,8 +63,9 @@ jobs:
             $out=['ok'=>false,'error'=>preg_match('/^[a-z0-9_]+$/D',$code)?$code:'unclassified_error','class'=>get_class($e)];
           }
           $out['trace']=$client->trace;
+          $out['responses']=$responses;
           $out['runtime']=['php'=>PHP_VERSION,'curl'=>function_exists('curl_init'),'finfo'=>class_exists('finfo')];
-          $json=json_encode($out,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+          $json=json_encode($out,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
           file_put_contents('fanart-diagnosis/upstream.json',$json);
           echo $json."\n";
           PHP
