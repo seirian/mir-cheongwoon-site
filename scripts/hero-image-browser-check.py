@@ -128,7 +128,7 @@ async def scenario(browser, width, mode):
                 if visit == 'reload':
                     await page.reload(wait_until='domcontentloaded')
                 else:
-                    await page.get_by_role('link', name='청운밴드', exact=True).click()
+                    await page.locator('a.promo-artist-card[href$="/band"]').click()
                     await page.get_by_role('heading', name='청운밴드', level=1, exact=True).wait_for()
                     await page.locator('a.brand').click()
                 await page.wait_for_function("""() => { const img=document.querySelector('.promo-mir-portrait'); return img && img.naturalWidth>0 && getComputedStyle(img).visibility==='visible'; }""")
