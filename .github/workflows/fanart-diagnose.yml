@@ -3,74 +3,38 @@ on:
   push:
     branches: [develop]
     paths: ['.github/workflows/fanart-diagnose.yml']
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Read active public fanart response
+      - name: Read public article bootstrap, never execute it
         run: |
           mkdir -p fanart-diagnosis
           python - <<'PY'
-          import json, re, urllib.request
+          import json,re,urllib.request
           from pathlib import Path
-          def get(url):
-              request=urllib.request.Request(url,headers={'User-Agent':'MirFanartDiagnosis/1.0','Cache-Control':'no-cache'})
-              with urllib.request.urlopen(request,timeout=35) as response:
-                  return response.read(1000000).decode('utf-8')
-          html=get('https://mir.yeop.net/schedule')
-          rid=re.search(r'name="yeop-release" content="(r[0-9]{14}_[a-f0-9]{8})"',html).group(1)
-          data=json.loads(get('https://mir.yeop.net/_yeop_releases/'+rid+'/api/naver-fanart.php'))
-          result={'release':rid,**{k:data.get(k) for k in ['status','articleId','sourceDate','isToday','fallback','stale','reason','checked_at','cached','imageCount']}}
-          Path('fanart-diagnosis/public.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
-          print(json.dumps(result,ensure_ascii=False))
+          url='https://cafe.naver.com/f-e/cafes/31003156/articles/165311'
+          req=urllib.request.Request(url,headers={'User-Agent':'YeopMirMigration/0.3 (+https://mir.yeop.net)','Accept':'text/html'})
+          with urllib.request.urlopen(req,timeout=25) as r:
+              assert r.status==200
+              html=r.read(2000001).decode('utf-8')
+          assert len(html)<=2000000
+          decoder=json.JSONDecoder();chunks=[]
+          for m in re.finditer(r'self\.__next_f\.push\(',html):
+              value,end=decoder.raw_decode(html[m.end():])
+              assert html[m.end()+end:].lstrip().startswith(')')
+              if isinstance(value,list) and len(value)==2 and value[0]==1 and isinstance(value[1],str):chunks.append(value[1])
+          text=''.join(chunks)
+          Path('fanart-diagnosis/flight.txt').write_text(text)
+          Path('fanart-diagnosis/summary.json').write_text(json.dumps({'url':url,'chunks':len(chunks),'bytes':len(text),'has_contentHtml':'contentHtml' in text,'has_article':'article' in text}))
+          print({'chunks':len(chunks),'bytes':len(text),'has_contentHtml':'contentHtml' in text})
           PY
-      - name: Trace one anonymous upstream attempt with existing safeguards
-        run: |
-          php <<'PHP'
-          <?php
-          require 'server/api/_core.php';
-          $responses=[];
-          $sender=static function(...$args) use (&$responses): array {
-            $r=\YeopMigration\curlRequest(...$args);
-            $entry=['path'=>parse_url($args[0],PHP_URL_PATH),'http_status'=>$r['code']];
-            $data=json_decode($r['body'],true);
-            if ($r['code']>=400 && is_array($data)) {
-              $entry['error_fields']=array_intersect_key($data,array_flip(['code','error','errorCode','errorMessage','message','status','timestamp','path']));
-              if (strlen(json_encode($entry['error_fields']))>3000) $entry['error_fields']=['keys'=>array_keys($data)];
-            } elseif (str_contains($entry['path'],'cafe-boardlist-api')) {
-              $data=\YeopMigration\unwrap($data??[]);
-              $entry['latest']=array_map(static fn($item)=>array_intersect_key($item['item']??$item,array_flip(['articleId','subject','writeDateTimestamp','writeDate'])),array_slice($data['articleList']??$data['articles']??[],0,3));
-            }
-            $responses[]=$entry;
-            return $r;
-          };
-          $client=new \YeopMigration\Client($sender,budget:20);
-          try {
-            $result=\YeopMigration\fanart($client, attempts:1);
-            $out=['ok'=>true,'result'=>array_intersect_key($result,array_flip(['status','articleId','sourceDate','imageCount']))];
-          } catch (\Throwable $e) {
-            $code=$e->getMessage();
-            $out=['ok'=>false,'error'=>preg_match('/^[a-z0-9_]+$/D',$code)?$code:'unclassified_error','class'=>get_class($e)];
-          }
-          $out['trace']=$client->trace;
-          $out['responses']=$responses;
-          $out['runtime']=['php'=>PHP_VERSION,'curl'=>function_exists('curl_init'),'finfo'=>class_exists('finfo')];
-          $json=json_encode($out,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
-          file_put_contents('fanart-diagnosis/upstream.json',$json);
-          echo $json."\n";
-          PHP
-      - name: Preserve source used for diagnosis without credentials or runtime data
-        run: git archive --format=tar.gz --output=fanart-diagnosis/source.tar.gz HEAD
       - uses: actions/upload-artifact@v4
         if: always()
         with:
