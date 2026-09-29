@@ -1,0 +1,90 @@
+name: Home hero image verification
+
+on:
+  push:
+    branches: [develop]
+    paths: ['src/components/HomeHeroImage.jsx', 'src/lib/heroImage.js', 'scripts/hero-image-browser-check.py', '.github/workflows/hero-image-verify.yml']
+  pull_request:
+    branches: [main, develop]
+    paths: ['src/components/HomeHeroImage.jsx', 'src/lib/heroImage.js', 'scripts/hero-image-browser-check.py', '.github/workflows/hero-image-verify.yml']
+  workflow_run:
+    workflows: ['Deploy mir.yeop.net']
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VITE_SUPABASE_URL: https://preview-fixture.supabase.co
+      VITE_SUPABASE_ANON_KEY: local-fixture-public-key
+      VITE_REVIEW_PREVIEW: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify production build with synthetic configuration
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+      - name: Install isolated browser tools
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Slow image, reload, fallback and outage regressions
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/hero-preview.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python scripts/hero-image-browser-check.py
+      - name: Preserve reviewed layout and administrator upload behavior
+        run: |
+          VITE_REVIEW_PREVIEW=true npm run dev -- --host 127.0.0.1 > /tmp/hero-dev.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
+          python scripts/promotion-browser-check.py --out promotion-regression-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hero-image-regression
+          path: |
+            hero-image-report/
+            promotion-regression-report/
+          retention-days: 14
+
+  live:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install isolated browser tools
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Read-only check of deployed custom portrait
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python scripts/hero-image-browser-check.py --live --url https://mir.yeop.net/ --expected-sha "$EXPECTED_SHA" --out live-hero-image-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-hero-image-review
+          path: live-hero-image-report/
+          retention-days: 14
