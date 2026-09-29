@@ -21,41 +21,50 @@ jobs:
         run: |
           mkdir -p fanart-page-diagnosis
           python - <<'PY'
-          import json
+          import json,re
           from pathlib import Path
           from urllib.parse import urlsplit, parse_qs
           from playwright.sync_api import sync_playwright
-          results=[]
-          denied=[]
+          results=[]; documents=[]; denied=[]
           with sync_playwright() as p:
               browser=p.chromium.launch()
               try:
                   context=browser.new_context()
                   def route(r):
-                      if denied or r.request.method not in ['GET','HEAD','OPTIONS']:
-                          return r.abort()
+                      if denied or r.request.method not in ['GET','HEAD','OPTIONS']: return r.abort()
                       return r.continue_()
                   context.route('**/*',route)
                   page=context.new_page()
                   def response(r):
                       u=urlsplit(r.url)
-                      if 'cafe-articleapi' not in u.path: return
+                      if u.hostname not in ['cafe.naver.com','apis.naver.com']: return
                       query=parse_qs(u.query,keep_blank_values=True)
-                      row={'host':u.hostname,'path':u.path,'query':{k:v if k in ['query','boardType','useCafeId','requestFrom','menuId','requestSource'] else '[omitted]' for k,v in query.items()},'status':r.status}
+                      row={'host':u.hostname,'path':u.path,'query':{k:v if k.lower() in ['query','boardtype','usecafeid','requestfrom','menuid','requestsource','clubid','articleid'] else '[omitted]' for k,v in query.items()},'status':r.status}
                       if r.status in [401,403,429]: denied.append(r.status)
+                      if r.request.resource_type=='document':
+                          try:
+                              text=r.text()
+                              clean=re.sub(r'<script\b[^>]*>[\s\S]*?</script>','',text,flags=re.I)
+                              clean=re.sub(r'<style\b[^>]*>[\s\S]*?</style>','',clean,flags=re.I)
+                              name='document-'+str(len(documents))+'.html'
+                              Path('fanart-page-diagnosis/'+name).write_text(clean[:2000000])
+                              documents.append({**row,'file':name,'bytes':len(text)})
+                          except Exception: pass
+                      if 'json' not in r.headers.get('content-type',''): return
                       try:
                           x=r.json(); row['top_keys']=list(x) if isinstance(x,dict) else []
-                          x=x.get('result',x.get('message',{}).get('result',{}))
-                          row['result_keys']=list(x) if isinstance(x,dict) else []
-                          article=x.get('article',{})
-                          row['article_keys']=list(article) if isinstance(article,dict) else []
+                          if isinstance(x,dict):
+                              x=x.get('result',x.get('message',{}).get('result',{}))
+                              row['result_keys']=list(x) if isinstance(x,dict) else []
                       except Exception: pass
                       results.append(row)
                   page.on('response',response)
                   page.goto('https://cafe.naver.com/f-e/cafes/31003156/articles/165311',wait_until='domcontentloaded',timeout=40000)
                   page.wait_for_timeout(7000)
-                  Path('fanart-page-diagnosis/page.png').write_bytes(page.screenshot())
-                  result={'requests':results,'denied':denied,'title':page.title(),'article_heading_visible':page.get_by_text('뭔가 작고 귀여운 미르님&구르미',exact=False).count(),'image_count':page.locator('article img, .se-main-container img, .ArticleContentBox img').count()}
+                  frames=[]
+                  for f in page.frames:
+                      frames.append({'url':f.url,'article_count':f.locator('.ArticleContentBox').count(),'image_count':f.locator('.se-main-container img, .ContentRenderer img').count()})
+                  result={'requests':results,'documents':documents,'frames':frames,'denied':denied,'title':page.title()}
                   Path('fanart-page-diagnosis/result.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
                   print(json.dumps(result,ensure_ascii=False))
               finally: browser.close()
