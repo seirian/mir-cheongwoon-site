@@ -14,6 +14,10 @@ from pathlib import Path
 
 import yeop_deploy_ci as base
 
+for _daily_api in ("api/_fanart_daily.php", "api/naver-fanart-daily.php", "api/naver-fanart-backup.php"):
+    if _daily_api not in base.API_FILES:
+        base.API_FILES.append(_daily_api)
+
 PERSONAL_WEB = "/web"
 SITE_WEB = "/web/_mir_site"
 CANONICAL_ORIGIN = "https://mir.yeop.net"
@@ -175,11 +179,25 @@ def find_persisted_fanart_fallback(r):
     return None
 
 
+def ensure_daily_fanart_store(r):
+    # Shared across releases; never copy or replace the saved daily records during deploy.
+    path = SITE_WEB + "/_fanart_daily"
+    ensure_dir(r, path)
+    guard = b"Require all denied\nOptions -Indexes\n"
+    existing = r.read(path + "/.htaccess", 4096)
+    if existing is None:
+        r.new_file(path + "/.htaccess", guard)
+    elif existing != guard:
+        raise base.Stop("Unexpected daily fanart storage protection")
+
+
 def site_root_htaccess(rid: str) -> bytes:
     return (
         f"# MIR-SITE-ROOT-V2 {rid}\n"
         "DirectoryIndex index.html\n"
         "RewriteEngine On\n"
+        "RewriteRule ^_fanart_daily(?:/|$) - [F,L]\n"
+        f"RewriteRule ^api/(naver-fanart-(?:daily|backup|image)\\.php)$ _yeop_releases/{rid}/api/$1 [L,QSA]\n"
         f"RewriteRule ^$ _yeop_releases/{rid}/index.html [L]\n"
         # The frontend build emits a static HTML head for each public route.
         f"RewriteRule ^(mir|band|history|schedule|gallery|account|admin)/?$ "
@@ -422,6 +440,7 @@ def main():
             raise base.Stop("Unexpected MIR internal site root")
 
         ensure_dir(r, SITE_WEB + PREFIX.rstrip("/"))
+        ensure_daily_fanart_store(r)
 
         for label, path in [
             ("personal.htaccess", PERSONAL_WEB + "/.htaccess"),

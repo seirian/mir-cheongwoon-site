@@ -1,6 +1,25 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/_entry.php';
+// Daily image delivery must work even if the live cache is unavailable.
+define('YEOP_API', true);
+@ini_set('display_errors', '0');
+require_once __DIR__.'/_core.php';
+\YeopMigration\requireGet();
+$config = require __DIR__.'/config.php';
+if (array_key_exists('daily', $_GET)) {
+    $id = $_GET['daily'];
+    if (!is_string($id) || !preg_match('/^[a-f0-9]{64}$/D', $id)) \YeopMigration\sendJson(['error'=>'invalid_daily_id'],400);
+    require_once __DIR__.'/_fanart_daily.php';
+    try { $image = \YeopMigration\dailyFanartStore($config)->image($id); }
+    catch (\Throwable $error) { $image = null; }
+    if (!$image) \YeopMigration\sendJson(['error'=>'daily_image_unavailable'],404);
+    header('Content-Type: '.$image['mime']); header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: public, max-age=3600'); header("Content-Security-Policy: default-src 'none'; sandbox");
+    echo $image['body']; exit;
+}
+require_once __DIR__.'/_cache.php';
+try { $cache = new \YeopMigration\SharedCache(__DIR__.'/_cache'); }
+catch (\Throwable $error) { \YeopMigration\sendJson(['error'=>'cache_unavailable'],503); }
 
 $fallback=$_GET['fallback']??'';
 if (is_string($fallback) && $fallback!=='') {

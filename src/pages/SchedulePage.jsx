@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Image as ImageIcon, Palette } from 'lucide-r
 import { getKstCivilDate } from '../lib/promotion';
 import { ScheduleAgenda } from '../components/UpcomingSchedule';
 import FanartSlideshow from '../components/FanartSlideshow';
+import { requestFanart } from '../lib/fanartRequest';
 import PageHero from '../components/PageHero';
 import ScheduleQuickAddModal from '../components/ScheduleQuickAddModal';
 import ScheduleMemoCard from '../components/ScheduleMemoCard';
@@ -58,6 +59,7 @@ export default function SchedulePage() {
   const [fanartLoading, setFanartLoading] = useState(true);
   const [fanartError, setFanartError] = useState(false);
   const [fanartReason, setFanartReason] = useState('');
+  const [fanartBackupOnly, setFanartBackupOnly] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [quickAddDate, setQuickAddDate] = useState('');
   const [editingEvent, setEditingEvent] = useState(null);
@@ -136,39 +138,28 @@ export default function SchedulePage() {
 
   useEffect(() => {
     let cancelled = false;
-
+    const controller = new AbortController();
     async function loadFeaturedFanart() {
       try {
-        const response = await fetch(import.meta.env.BASE_URL + 'api/naver-fanart.php', {
-          headers: { Accept: 'application/json' },
-        });
-        const data = await response.json();
+        const data = await requestFanart(import.meta.env.BASE_URL, { signal: controller.signal, backupOnly: fanartBackupOnly });
         if (cancelled) return;
         setFanartReason(data?.reason || '');
-
-        if (response.ok && data?.status === 'ok' && data.imageUrl && data.articleUrl) {
-          setFanart(data);
-          setFanartError(false);
-        } else {
-          setFanart(null);
-          setFanartError(true);
-        }
-      } catch (loadError) {
-        console.error('Featured fan art load failed', loadError);
+        setFanart(data);
+        setFanartError(false);
+      } catch (error) {
         if (!cancelled) {
-          setFanart(null);
+          // If all primary images failed and no daily backup is available, retain attribution/link.
+          if (!fanartBackupOnly) setFanart(null);
           setFanartError(true);
+          setFanartReason(error?.cause?.reason || '');
         }
       } finally {
         if (!cancelled) setFanartLoading(false);
       }
     }
-
     loadFeaturedFanart();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    return () => { cancelled = true; controller.abort(); };
+  }, [fanartBackupOnly]);
 
   const filteredEvents = useMemo(
     () => activeCategory === 'all' ? events : events.filter((event) => (event.category || '기타') === activeCategory),
@@ -520,7 +511,7 @@ export default function SchedulePage() {
                     </div>
                   </div>
                 ) : fanart ? (
-                  <FanartSlideshow fanart={fanart}/>
+                  <FanartSlideshow fanart={fanart} onUnavailable={() => { if (!fanart.fallback) setFanartBackupOnly(true); }}/>
                 ) : (
                   <div className="fanart-visual" role="img" aria-label="팬아트 이미지 영역">
                     <div className="fanart-placeholder">

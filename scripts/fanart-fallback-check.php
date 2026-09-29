@@ -5,7 +5,7 @@ declare(strict_types=1);
     $dir = sys_get_temp_dir().'/mir-fanart-fallback-'.bin2hex(random_bytes(6));
     mkdir($dir, 0700); mkdir($dir.'/_cache', 0700);
     try {
-        foreach (['_core.php','_cache.php','_entry.php','naver-fanart.php','naver-fanart-image.php'] as $name) {
+        foreach (['_fanart_daily.php','_core.php','_cache.php','_entry.php','naver-fanart.php','naver-fanart-image.php'] as $name) {
             copy(__DIR__.'/../server/api/'.$name, $dir.'/'.$name);
         }
         file_put_contents($dir.'/config.php', "<?php return ['api_base'=>'/api/','naver_enabled'=>true];");
