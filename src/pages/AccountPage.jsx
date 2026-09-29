@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { KeyRound, LogIn, LogOut, Mail, ShieldCheck, UserPlus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHero from '../components/PageHero';
+import PasswordChangeForm from '../components/PasswordChangeForm';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const normalizeUsername = (value) => value.trim().toLowerCase();
@@ -17,9 +18,11 @@ const authMessage = (code) => {
 export default function AccountPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialMode = searchParams.get('mode') === 'recovery' ? 'reset' : 'login';
+  const requestedMode = searchParams.get('mode');
+  const initialMode = requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : 'login';
   const [mode, setMode] = useState(initialMode);
   const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [profile, setProfile] = useState(null);
   const [login, setLogin] = useState({ identifier: '', password: '' });
   const [signup, setSignup] = useState({ username: '', email: '', password: '', passwordConfirm: '' });
@@ -45,6 +48,7 @@ export default function AccountPage() {
     const loadProfile = async (nextSession) => {
       if (!active) return;
       setSession(nextSession);
+      setAuthLoading(false);
       if (!nextSession?.user) {
         setProfile(null);
         return;
@@ -57,7 +61,7 @@ export default function AccountPage() {
       if (active) setProfile(data || null);
     };
 
-    supabase.auth.getSession().then(({ data }) => loadProfile(data.session));
+    supabase.auth.getSession().then(({ data }) => loadProfile(data.session)).catch(() => { if (active) setAuthLoading(false); });
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === 'PASSWORD_RECOVERY') {
         setRecoveryAuthorized(true);
@@ -76,7 +80,11 @@ export default function AccountPage() {
   }, []);
 
   useEffect(() => {
-    if (session && nextPath && mode !== 'reset') navigate(nextPath, { replace: true });
+    setMode((previous) => requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : ['reset', 'password'].includes(previous) ? 'login' : previous);
+  }, [requestedMode]);
+
+  useEffect(() => {
+    if (session && nextPath && mode !== 'reset' && mode !== 'password') navigate(nextPath, { replace: true });
   }, [session, nextPath, mode, navigate]);
 
   const switchMode = (nextMode) => {
@@ -85,6 +93,7 @@ export default function AccountPage() {
     const next = new URLSearchParams(searchParams);
     next.delete('verified');
     if (nextMode === 'reset') next.set('mode', 'recovery');
+    else if (nextMode === 'password') next.set('mode', 'password');
     else next.delete('mode');
     setSearchParams(next, { replace: true });
   };
@@ -236,6 +245,18 @@ export default function AccountPage() {
     setMessage('비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.');
   };
 
+  const handlePasswordChanged = async () => {
+    // The server already committed the change. A logout transport error must not
+    // report the password change as failed or encourage a duplicate submission.
+    try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* Clear this view regardless. */ }
+    setSession(null); setProfile(null); setLogin({ identifier: '', password: '' });
+    setMode('login');
+    const next = new URLSearchParams(searchParams);
+    next.delete('mode'); next.delete('next'); next.delete('verified');
+    setSearchParams(next, { replace: true });
+    setMessage('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해 주세요.');
+  };
+
   if (!isSupabaseConfigured) {
     return (
       <>
@@ -243,6 +264,15 @@ export default function AccountPage() {
         <section className="section-wrap"><div className="setup-banner">Supabase 연결이 필요합니다.</div></section>
       </>
     );
+  }
+
+  if (mode === 'password' && authLoading) {
+    return <><PageHero eyebrow="ACCOUNT SECURITY" title="비밀번호 변경" description="로그인 상태를 확인하고 있습니다."/><section className="section-wrap account-auth-wrap"><p role="status">로그인 정보를 확인하는 중…</p></section></>;
+  }
+
+  if (session && mode === 'password') {
+    return <><PageHero eyebrow="ACCOUNT SECURITY" title="비밀번호 변경" description="기존 비밀번호를 확인하고 새 비밀번호로 안전하게 변경합니다."/>
+      <section className="section-wrap account-auth-wrap"><PasswordChangeForm key={session.user.id} userId={session.user.id} onCancel={() => switchMode('login')} onChanged={handlePasswordChanged}/></section></>;
   }
 
   if (session && mode !== 'reset') {
@@ -254,6 +284,7 @@ export default function AccountPage() {
             <ShieldCheck size={34} />
             <h2>{profile?.username || '회원'}</h2>
             <p>{profile?.email || session.user.email}</p>
+            <button type="button" className="btn btn-primary" onClick={() => switchMode('password')}><KeyRound size={17}/> 비밀번호 변경</button>
             <button className="btn btn-ghost" onClick={() => supabase.auth.signOut()}><LogOut size={17}/> 로그아웃</button>
           </div>
         </section>
@@ -277,7 +308,7 @@ export default function AccountPage() {
           </div>
         )}
 
-        {mode === 'login' && (
+        {(mode === 'login' || mode === 'password') && (
           <form className="account-auth-card" onSubmit={handleLogin}>
             <div className="account-auth-title"><LogIn size={20}/><strong>로그인</strong></div>
             <label>아이디 또는 이메일<input value={login.identifier} onChange={(e) => setLogin({ ...login, identifier: e.target.value })} autoComplete="username" required /></label>
@@ -324,7 +355,7 @@ export default function AccountPage() {
           )
         )}
 
-        {message && <div className="account-auth-message">{message}</div>}
+        {message && <div className="account-auth-message" role="status">{message}</div>}
       </section>
     </>
   );
