@@ -7,7 +7,12 @@ import { hasHeroAdminAccess, prepareHeroImage, readHeroImage, saveHeroImage } fr
 const FALLBACK = `${import.meta.env.BASE_URL}mir-profile-still.webp`;
 
 export default function HomeHeroImage() {
-  const [image, setImage] = useState(FALLBACK);
+  // Do not mount the bundled portrait before the saved-image lookup completes.
+  const [image, setImage] = useState('');
+  const [loadedImage, setLoadedImage] = useState('');
+  const [imageFailed, setImageFailed] = useState(false);
+  const [imageReadAttempt, setImageReadAttempt] = useState(0);
+  const imageVersion = useRef(0);
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(Boolean(heroClient));
@@ -25,9 +30,22 @@ export default function HomeHeroImage() {
 
   useEffect(() => {
     let active = true;
-    readHeroImage(heroClient, IS_REVIEW_PREVIEW).then((url) => { if (active && url) setImage(url); }).catch(() => { /* Keep the bundled image on metadata outages. */ });
+    const version = ++imageVersion.current;
+    readHeroImage(heroClient, IS_REVIEW_PREVIEW).then((url) => {
+      // A late initial lookup must not overwrite a just-saved replacement.
+      if (active && version === imageVersion.current) setImage(url || FALLBACK);
+    }).catch(() => {
+      // An outage is not proof that no replacement exists. Never flash the old art.
+      if (active && version === imageVersion.current) setImageFailed(true);
+    });
     return () => { active = false; };
-  }, []);
+  }, [imageReadAttempt]);
+
+  function retryImage() {
+    imageVersion.current += 1;
+    setImage(''); setLoadedImage(''); setImageFailed(false);
+    setImageReadAttempt((attempt) => attempt + 1);
+  }
 
   useEffect(() => {
     if (!heroClient) return undefined;
@@ -90,7 +108,8 @@ export default function HomeHeroImage() {
     setBusy(true); setError('');
     try {
       const url = await saveHeroImage(heroClient, chosen, IS_REVIEW_PREVIEW);
-      setImage(url);
+      imageVersion.current += 1;
+      setImageFailed(false); setLoadedImage(''); setImage(url);
       setNotice(IS_REVIEW_PREVIEW ? '검토용 홈 이미지를 저장했습니다. 운영 이미지는 바뀌지 않습니다.' : '홈 이미지를 저장했습니다.');
       dialog.current.close();
     } catch (cause) { setError(cause.message); }
@@ -107,13 +126,14 @@ export default function HomeHeroImage() {
     finally { setBusy(false); }
   }
 
-  return <figure className="promo-hero-art">
+  const imageReady = Boolean(image) && loadedImage === image && !imageFailed;
+  return <figure className="promo-hero-art" aria-busy={!imageReady && !imageFailed}>
     <span className="promo-art-word" aria-hidden="true">MIR</span><div className="promo-art-ring" aria-hidden="true"/>
-    <img className="promo-mir-portrait" src={image} alt="청룡 버튜버 미르 캐릭터" width="548" height="574" fetchPriority="high" decoding="async" onError={() => setImage(FALLBACK)}/>
+    {image && !imageFailed && <img key={image} className="promo-mir-portrait" src={image} alt="청룡 버튜버 미르 캐릭터" width="548" height="574" fetchPriority="high" decoding="async" style={{ visibility: imageReady ? 'visible' : 'hidden' }} onLoad={() => setLoadedImage(image)} onError={() => setImageFailed(true)}/>}
     <figcaption><span>VIRTUAL VOICE. LIVE SOUND.</span><strong>미르 <b>×</b> 청운밴드</strong><small>노래로 만나, 무대로 이어지는 이야기</small></figcaption>
     <span className="promo-art-index" aria-hidden="true">MIR / CHEONGWOON<br/>FAN ARCHIVE</span>
     {(isAdmin || IS_REVIEW_PREVIEW) && <button className="hero-image-manage" type="button" onClick={() => { setError(''); dialog.current.showModal(); }}><ImagePlus size={16}/>{isAdmin ? '홈 이미지 교체' : '관리자 이미지 관리'}</button>}
-    {notice && <p className="hero-image-feedback" role="status">{notice}</p>}
+    {imageFailed ? <p className="hero-image-feedback" role="status">홈 이미지를 불러오지 못했습니다. <button className="promo-text-link" type="button" onClick={retryImage}>이미지 다시 불러오기</button></p> : notice && <p className="hero-image-feedback" role="status">{notice}</p>}
     <dialog className="hero-image-dialog" ref={dialog} aria-labelledby="hero-image-title" onClose={clearSelection} onCancel={(event) => { if (busy) event.preventDefault(); }}>
       <div className="hero-dialog-heading"><div><span className="eyebrow">HOME IMAGE</span><h2 id="hero-image-title">홈 이미지 관리</h2></div><button className="hero-dialog-close" type="button" aria-label="이미지 관리 닫기" disabled={busy} onClick={() => dialog.current.close()}><X size={22}/></button></div>
       <p className="hero-dialog-scope">{IS_REVIEW_PREVIEW ? '검토용 이미지에만 적용됩니다. 운영 사이트의 이미지는 변경하지 않습니다.' : '저장하면 모든 방문자에게 새 홈 이미지가 표시됩니다.'}</p>
@@ -123,7 +143,7 @@ export default function HomeHeroImage() {
         <label>비밀번호<input type="password" name="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} disabled={busy}/></label>
         <button className="btn promo-primary" type="submit" disabled={busy}><LogIn size={16}/>{busy ? '로그인 중…' : '관리자 로그인'}</button>
       </form> : !isAdmin ? <div><p role="status">이 계정에는 관리자 권한이 없습니다. 이미지 업로드는 관리자만 가능합니다.</p><button type="button" className="btn btn-ghost" disabled={busy} onClick={logout}>다른 계정으로 로그인</button></div> : <form className="hero-image-form" onSubmit={save}>
-        <div className="hero-upload-preview"><img src={chosenUrl || image} alt={chosenUrl ? '저장 전 선택 이미지 미리보기' : '현재 홈 이미지'}/></div>
+        <div className="hero-upload-preview">{chosenUrl || (image && !imageFailed) ? <img src={chosenUrl || image} alt={chosenUrl ? '저장 전 선택 이미지 미리보기' : '현재 홈 이미지'}/> : <p role="status">{imageFailed ? '현재 이미지를 표시할 수 없습니다. 새 이미지를 선택할 수 있습니다.' : '현재 이미지를 확인하는 중…'}</p>}</div>
         <label>새 홈 이미지<input ref={uploadInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={chooseFile} disabled={busy || preparing}/></label>
         <small>JPG · PNG · WebP, 최대 5MB. 긴 변 1,600px 이하의 정지 WebP로 최적화합니다. 사용 권한이 있는 이미지만 올려 주세요.</small>
         {preparing && <p role="status">이미지를 확인하고 최적화하는 중…</p>}
