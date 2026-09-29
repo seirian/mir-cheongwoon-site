@@ -1,4 +1,4 @@
-"""No-flash regression. Synthetic writes/auth are never sent to production."""
+"""No-flash and decorative-label regression. No production writes/auth."""
 import argparse
 import asyncio
 import json
@@ -25,13 +25,16 @@ def check(name, passed, **details):
 
 TRACE = """(() => {
   window.heroSources = [];
+  window.heroLabelOverlap = false;
   const capture = () => {
     for (const img of document.querySelectorAll('.promo-mir-portrait')) {
       const src = img.getAttribute('src');
       if (!window.heroSources.includes(src)) window.heroSources.push(src);
+      const label = document.querySelector('.promo-art-index');
+      if (getComputedStyle(img).visibility === 'visible' && label && getComputedStyle(label).visibility === 'visible' && getComputedStyle(label).display !== 'none') window.heroLabelOverlap = true;
     }
   };
-  new MutationObserver(capture).observe(document, {subtree:true, childList:true, attributes:true, attributeFilter:['src']});
+  new MutationObserver(capture).observe(document, {subtree:true, childList:true, attributes:true, attributeFilter:['src','style']});
 })();"""
 
 async def scenario(browser, width, mode):
@@ -95,6 +98,7 @@ async def scenario(browser, width, mode):
         await page.evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
         check('no portrait before saved-image lookup resolves', await page.locator('.promo-mir-portrait').count() == 0, width=width, mode=mode)
         check('bundled image never requested while lookup is pending', not fallback_requests, width=width, mode=mode)
+        check('vertical archive label remains while portrait is absent', await page.locator('.promo-art-index').is_visible(), width=width, mode=mode)
         before = await page.locator('.promo-hero-art').bounding_box()
         if mode == 'saved':
             await page.screenshot(path=str(out / f'pending-{width}.png'), full_page=True)
@@ -103,26 +107,33 @@ async def scenario(browser, width, mode):
         if mode == 'lookup-error':
             await retry.wait_for()
             check('lookup failure is not treated as missing custom image', not fallback_requests and await page.locator('.promo-mir-portrait').count() == 0, width=width)
+            check('lookup error retains decorative label without portrait', await page.locator('.promo-art-index').is_visible(), width=width)
             state['mode'] = 'saved'
             await retry.click()
         if mode not in ['empty', 'empty-broken']:
             await asyncio.wait_for(image_seen.wait(), timeout=20)
             await page.locator('.promo-mir-portrait').wait_for(state='attached')
             check('selected image stays hidden until load completes', not await page.locator('.promo-mir-portrait').is_visible() and not fallback_requests, width=width, mode=mode)
+            check('vertical label remains until portrait actually loads', await page.locator('.promo-art-index').is_visible(), width=width, mode=mode)
         image_gate.set()
         if mode in ['image-error', 'empty-broken']:
             await retry.wait_for()
             count = len(fallback_requests)
             await page.wait_for_timeout(250)
             check('failed image has no fallback flash or retry loop', await page.locator('.promo-mir-portrait').count() == 0 and len(fallback_requests) == count and count == (1 if mode == 'empty-broken' else 0), width=width, mode=mode)
+            check('image error retains decorative label without portrait', await page.locator('.promo-art-index').is_visible(), width=width, mode=mode)
             state['mode'] = 'saved'
             await retry.click()
         await page.wait_for_function("""() => { const img=document.querySelector('.promo-mir-portrait'); return img && img.naturalWidth>0 && getComputedStyle(img).visibility==='visible'; }""")
         src = await page.locator('.promo-mir-portrait').get_attribute('src')
         check('only resolved portrait becomes visible', '/mir-profile-still.webp' in src if mode == 'empty' else custom_path in src, width=width, mode=mode)
+        check('visible portrait removes only vertical archive label', await page.locator('.promo-art-index').count() == 0, width=width, mode=mode)
+        caption = page.locator('.promo-hero-art figcaption')
+        check('bottom artist caption is preserved', await caption.is_visible() and '미르 × 청운밴드' in await caption.inner_text(), width=width, mode=mode)
         after = await page.locator('.promo-hero-art').bounding_box()
         check('portrait loading keeps hero dimensions stable', abs(before['width']-after['width'])<1 and abs(before['height']-after['height'])<1, width=width, mode=mode)
         check('no page-wide horizontal overflow', await page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), width=width, mode=mode)
+        check('portrait and vertical label never become visible together', not await page.evaluate('window.heroLabelOverlap'), width=width, mode=mode)
         if mode == 'saved':
             for visit in ['reload', 'return-home']:
                 if visit == 'reload':
@@ -134,6 +145,7 @@ async def scenario(browser, width, mode):
                 await page.wait_for_function("""() => { const img=document.querySelector('.promo-mir-portrait'); return img && img.naturalWidth>0 && getComputedStyle(img).visibility==='visible'; }""")
                 sources = await page.evaluate('window.heroSources')
                 check('revisit never requests or mounts bundled portrait', not fallback_requests and all(custom_path in source for source in sources), width=width, visit=visit, sources=sources)
+                check('revisit portrait hides vertical label without overlap', await page.locator('.promo-art-index').count() == 0 and not await page.evaluate('window.heroLabelOverlap'), width=width, visit=visit)
             await page.screenshot(path=str(out / f'ready-{width}.png'), full_page=True)
         check('no JavaScript errors', not errors, width=width, mode=mode, errors=errors)
     except Exception:
