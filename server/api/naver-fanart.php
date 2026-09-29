@@ -24,6 +24,7 @@ function loadFanartFallback(array $config): ?array {
         'title' => is_string($meta['title'] ?? null) ? $meta['title'] : '오늘의 팬아트',
         'author' => is_string($meta['author'] ?? null) ? $meta['author'] : '작성자',
         'imageUrl' => $config['api_base'] . 'naver-fanart-image.php?fallback=' . $id,
+        'articleUrl' => $articleUrl,
         'imageUrls' => [$config['api_base'] . 'naver-fanart-image.php?fallback=' . $id],
         'imageCount' => 1,
         'sourceDate' => is_string($meta['sourceDate'] ?? null) ? $meta['sourceDate'] : '',

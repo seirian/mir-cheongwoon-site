@@ -38,4 +38,5 @@ try {
  foreach(['../escape','fanart-image-12','https://evil.test'] as $key){try{$cache->fresh($key);check(false,'invalid slot');}catch(InvalidArgumentException){check(true,'arbitrary slot rejected');}}
  $cache->remember('fanart-image-denied',static fn()=>[['blocked'=>true],21600]);check($cache->fresh('fanart-image-denied')['blocked'],'shared denial cooldown');
 } finally {foreach(glob($dir.'/*') as $path)unlink($path);rmdir($dir);}
+require __DIR__.'/fanart-fallback-check.php';
 echo json_encode(['passed'=>$checks]).PHP_EOL;
