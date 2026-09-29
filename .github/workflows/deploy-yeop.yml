@@ -15,6 +15,8 @@ on:
       - 'scripts/yeop_deploy_ci.py'
       - 'scripts/mir_deploy_ci.py'
       - 'scripts/mir_shared_root_deploy_ci.py'
+      - 'scripts/generate-home-share-image.py'
+      - 'scripts/verify-home-share-image.py'
       - '.github/workflows/deploy-yeop.yml'
       - 'deploy/**'
   workflow_dispatch:
@@ -209,6 +211,15 @@ jobs:
         run: |
           npx vite build --base "/_yeop_releases/${RELEASE_ID}/"
 
+      - name: Generate current home sharing thumbnail
+        shell: bash
+        env:
+          YEOP_SFTP_PASSWORD: ''
+        run: |
+          python -m pip install --disable-pip-version-check --no-input playwright==1.57.0
+          python -m playwright install --with-deps chromium
+          python scripts/generate-home-share-image.py --asset-base "/_yeop_releases/${RELEASE_ID}/"
+
       - name: Verify build contents
         shell: bash
         run: |
@@ -251,6 +262,11 @@ jobs:
           SERVER_SOURCE_DIR: server
         run: python scripts/mir_shared_root_deploy_ci.py
 
+      - name: Verify public sharing metadata and thumbnail
+        env:
+          YEOP_SFTP_PASSWORD: ''
+        run: python scripts/verify-home-share-image.py --expected-sha "$GITHUB_SHA"
+
       - name: Upload deployment report and rollback material
         if: always()
         uses: actions/upload-artifact@v4
@@ -259,6 +275,7 @@ jobs:
           path: |
             deploy_report.json
             deployment-backup/
+            share-image-report/
           if-no-files-found: ignore
           retention-days: 30
 
