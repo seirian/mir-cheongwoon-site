@@ -43,8 +43,16 @@ try:
                     if report['fresh_source']: assert '저장본' not in card.locator('.fanart-heading').inner_text()
                 assert page.locator('.schedule-grid').count()==1
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
+                advanced=False
+                if report['fresh_source'] and report['image_count']>1:
+                    page.mouse.move(0,0)
+                    initial=page.locator('.fanart-slide.is-active').get_attribute('src')
+                    card.screenshot(path=str(out/f'fanart-initial-{width}.png'))
+                    page.wait_for_function('(initial)=>{const el=document.querySelector(".fanart-slide.is-active");return el && el.complete && el.naturalWidth>0 && el.getAttribute("src")!==initial;}',arg=initial,timeout=18000)
+                    page.wait_for_timeout(500)
+                    advanced=True
                 card.screenshot(path=str(out/f'fanart-{width}.png'))
-                report['viewports'].append({'width':width,'controls':card.locator('.fanart-slide-controls').count(),'passed':True})
+                report['viewports'].append({'width':width,'controls':card.locator('.fanart-slide-controls').count(),'automatically_advanced':advanced,'passed':True})
                 context.close()
         finally:browser.close()
 finally:(out/'results.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
