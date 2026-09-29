@@ -84,18 +84,20 @@ with sync_playwright() as p:
         for variant, size in variants:
             if size:
                 state['raster'] = raster(*size)
-            for page, url in [(current,args.url),(baseline,args.baseline_url)]:
-                page.goto(url, wait_until='domcontentloaded')
-                page.wait_for_function(READY, timeout=30000)
-                page.evaluate('document.fonts.ready')
-            if args.expected_sha:
-                release = current.locator('meta[name=yeop-release]').get_attribute('content')
-                check('expected live release', release.endswith('_'+args.expected_sha[:8]), release=release)
             for width in widths:
-                for page in [baseline, current]:
+                # Load after setting the viewport. Comparing two background tabs
+                # immediately after resize can observe stale breakpoint styles.
+                for page, url in [(baseline,args.baseline_url),(current,args.url)]:
                     page.set_viewport_size({'width':width,'height':1000})
+                    page.bring_to_front()
+                    page.goto(url, wait_until='domcontentloaded')
+                    page.wait_for_function(READY, timeout=30000)
+                    page.evaluate('document.fonts.ready')
                     page.evaluate('window.scrollTo(0,0)')
                     page.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+                if args.expected_sha and width == widths[0]:
+                    release = current.locator('meta[name=yeop-release]').get_attribute('content')
+                    check('expected live release', release.endswith('_'+args.expected_sha[:8]), release=release)
                 before, after = baseline.evaluate(METRICS), current.evaluate(METRICS)
                 (out/f'metrics-{variant}-{width}.json').write_text(json.dumps({'before':before,'after':after},ensure_ascii=False,indent=2),encoding='utf-8')
                 check('no page-wide overflow', current.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), width=width, variant=variant)
