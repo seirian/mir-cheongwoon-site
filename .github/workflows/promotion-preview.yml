@@ -1,0 +1,106 @@
+name: Promotion preview
+
+on:
+  push:
+    branches: [feature/promotion-discovery-preview]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: promotion-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: github.ref == 'refs/heads/feature/promotion-discovery-preview'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install and verify source
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install playwright==1.57.0 paramiko==5.0.0
+          python -m playwright install --with-deps chromium
+      - name: Browser regression tests with synthetic fixtures
+        run: |
+          VITE_REVIEW_PREVIEW=true VITE_SUPABASE_URL=https://preview-fixture.supabase.co VITE_SUPABASE_ANON_KEY=local-fixture-public-key npm run dev -- --host 127.0.0.1 > /tmp/vite.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
+          python scripts/promotion-browser-check.py --url http://127.0.0.1:5173/ --out browser-report
+      - name: Prepare existing public read-only build configuration
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: bash scripts/prepare-public-build-config.sh
+      - name: Build isolated noindex preview
+        run: |
+          rid="r$(date -u +%Y%m%d%H%M%S)_${GITHUB_SHA:0:8}"
+          echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
+          echo "VITE_REVIEW_PREVIEW=true" >> "$GITHUB_ENV"
+          VITE_REVIEW_PREVIEW=true npx vite build --base "/_yeop_releases/${rid}/"
+          RELEASE_ID="$rid" python - <<'PY'
+          import os
+          from pathlib import Path
+          marker = '<meta name="yeop-release" content="' + os.environ['RELEASE_ID'] + '" />'
+          for path in Path('dist').rglob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              if text.count('</head>') != 1 or 'noindex, nofollow' not in text:
+                  raise SystemExit('Invalid preview metadata: ' + str(path))
+              path.write_text(text.replace('</head>', marker + '\n</head>'), encoding='utf-8')
+          PY
+      - name: Stage preview without activation
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+          DIST_DIR: dist
+          SERVER_SOURCE_DIR: server
+        run: python scripts/stage-promotion-preview.py
+      - name: Verify publicly reachable preview and metadata
+        run: |
+          python - <<'PY'
+          import json, re, urllib.request
+          from pathlib import Path
+          report = json.loads(Path('deploy_report.json').read_text())
+          base = report['preview_url']
+          results = []
+          for path in Path('dist').rglob('index.html'):
+              relative = path.relative_to('dist').as_posix()
+              url = base + relative
+              with urllib.request.urlopen(url, timeout=30) as response:
+                  html = response.read().decode('utf-8')
+                  assert response.status == 200 and 'noindex, nofollow' in html, url
+                  assert len(re.findall(r'<title>', html)) == 1, url
+                  assert '<meta property="og:image"' in html, url
+                  results.append({'url': url, 'status': response.status})
+          with urllib.request.urlopen(base + 'og/home.png', timeout=30) as response:
+              assert response.status == 200 and response.headers.get_content_type() == 'image/png'
+          Path('preview-http-report.json').write_text(json.dumps(results, indent=2))
+          assert report['phase'] == 'staged' and report['production_routing_unchanged'] is True
+          PY
+          python scripts/promotion-browser-check.py --live --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out live-browser-report
+      - name: Save review reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promotion-preview-review
+          path: |
+            browser-report/
+            live-browser-report/
+            deploy_report.json
+            preview-http-report.json
+          if-no-files-found: warn
+          retention-days: 14

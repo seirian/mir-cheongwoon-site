@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, ExternalLink, Images, PlaySquare, Smartphone } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import StartHere from '../components/StartHere';
+import VideoCard from '../components/VideoCard';
 import PageHero from '../components/PageHero';
 import EmptyVisual from '../components/EmptyVisual';
 import ShortsArchive from '../components/ShortsArchive';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { getYouTubeEmbedUrl } from '../lib/youtube';
 
 const MIR_YOUTUBE_VIDEOS_URL = 'https://www.youtube.com/@%EB%AF%B8%EB%A5%B4MIR/videos';
 
@@ -48,35 +49,12 @@ export default function GalleryPage() {
     return next;
   });
 
-  const renderVideoCard = (video, key) => {
-    const embedUrl = getYouTubeEmbedUrl(video.youtube_url);
-    return (
-      <article className="video-gallery-card" key={key}>
-        <div className="video-gallery-frame">
-          {embedUrl ? (
-            <iframe
-              src={embedUrl}
-              title={video.title}
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          ) : (
-            <div className="video-invalid"><PlaySquare size={38} /><span>영상을 불러올 수 없습니다.</span></div>
-          )}
-        </div>
-        <div className="video-gallery-caption">
-          <span>YOUTUBE</span>
-          <h2>{video.title}</h2>
-        </div>
-      </article>
-    );
-  };
+  const renderVideoCard = (video, key) => <VideoCard key={key} video={video}/>;
 
   return (
     <>
       <PageHero eyebrow="MEDIA ARCHIVE" title="영상 및 갤러리" description="미르와 청운밴드의 영상, 쇼츠와 공연 사진을 한곳에서 모아보는 아카이브입니다." />
+      {activeView === 'video' && <StartHere covers={coverVideos} recent={recentVideos} loading={loading}/>}
       <section className="section-wrap media-archive-section">
         {!isSupabaseConfigured && <div className="setup-banner">Supabase 연결 전입니다. <code>.env</code> 설정 후 관리자에서 콘텐츠를 등록해 주세요.</div>}
 

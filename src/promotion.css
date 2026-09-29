@@ -1,0 +1,260 @@
+/* Promotional layer: loaded last; does not replace the existing admin/calendar CSS. */
+:root { --promo-blue:#83baff; --promo-ice:#e4f2ff; --promo-edge:#30394f; }
+:where(a,button,input,select,textarea):focus-visible { outline:3px solid #99d7ff; outline-offset:4px; }
+:where(button,a,input,select,textarea) { -webkit-tap-highlight-color:transparent; }
+#main-content:focus { outline:none; }
+.skip-link { position:fixed; z-index:1000; left:16px; top:-80px; padding:14px 20px; border-radius:10px; background:#e4f2ff; color:#102037; font-weight:700; }
+.skip-link:focus { top:12px; }
+.site-header .main-nav a { display:inline-flex; align-items:center; min-height:44px; }
+.site-header .main-nav a.active:after { bottom:0; }
+.site-header .mobile-menu { min-width:44px; min-height:44px; align-items:center; justify-content:center; }
+.review-banner { min-height:38px; display:flex; justify-content:center; align-items:center; gap:24px; padding:6px 20px; font-size:12px; color:#dce7ff; background:#1b2944; border-bottom:1px solid #334a70; }
+.review-banner a { text-decoration:underline; text-underline-offset:4px; min-height:32px; display:inline-flex; align-items:center; }
+.promo-section { margin-top:88px; scroll-margin-top:24px; }
+.promo-section-head { display:flex; justify-content:space-between; align-items:end; gap:24px; margin-bottom:26px; }
+.promo-section-head h2 { font-size:clamp(24px,3vw,36px); line-height:1.35; letter-spacing:-.05em; margin:10px 0 0; word-break:keep-all; }
+.promo-section-head>p { color:#adb9cb; font-size:14px; line-height:1.8; margin:0; }
+.promo-text-link { display:inline-flex; gap:8px; align-items:center; min-height:44px; color:#b9d8ff; font-size:14px; font-weight:600; line-height:1.6; }
+.promo-text-link:hover { color:#fff; }
+.promo-primary { background:#b4d8ff; color:#101d32; border:1px solid #c5e1ff; box-shadow:0 8px 24px #17366838; }
+.promo-primary:hover { background:#d8ebff; }
+.promo-hero { display:grid; grid-template-columns:1.12fr 1fr; width:min(1440px,calc(100% - 32px)); margin:12px auto 0; min-height:640px; border-radius:28px; overflow:hidden; border:1px solid #2b3650; background:linear-gradient(118deg,#121a2d 0%,#101623 56%,#173875 100%); }
+.promo-hero-copy { padding:72px 0 62px max(32px,calc((100vw - 1290px)/2)); position:relative; z-index:2; }
+.promo-hero-copy>.eyebrow { color:#9cc9ff; letter-spacing:.14em; }
+.promo-hero h1 { font-size:clamp(36px,4.15vw,63px); line-height:1.2; letter-spacing:-.065em; margin:28px 0 24px; word-break:keep-all; }
+.promo-hero h1 em { font-style:normal; color:#92c7ff; }
+.promo-hero-copy>p { color:#b1bfd5; font-size:16px; line-height:1.9; }
+.promo-hero-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
+.promo-hero-actions .btn { min-height:48px; padding:13px 18px; }
+.promo-live-status { display:flex; align-items:center; gap:8px; width:fit-content; font-size:12px; min-height:44px; color:#a7b5ca; }
+.promo-live-status>span:first-child { height:6px; width:6px; border-radius:50%; background:#8a95a8; }
+.promo-live-status.is-live { color:#ffb7ba; }
+.promo-live-status.is-live>span:first-child { background:#ff8189; box-shadow:0 0 12px #ff818977; }
+.promo-hero-archive { margin-top:16px; font-size:12px; }
+.promo-hero-art { margin:0; position:relative; min-width:0; align-self:stretch; isolation:isolate; overflow:hidden; background:radial-gradient(ellipse at 60% 50%,#3971b3aa,transparent 65%); }
+.promo-art-word { position:absolute; top:2%; left:3%; font:800 clamp(140px,17vw,260px)/1 Outfit,sans-serif; letter-spacing:-.09em; color:transparent; -webkit-text-stroke:1px #cde1ff26; z-index:-1; }
+.promo-art-ring { position:absolute; width:420px; height:420px; border:1px solid #90b8f342; border-radius:50%; top:18%; left:9%; }
+.promo-art-ring:before { content:''; position:absolute; inset:30px; border:1px solid #90b8f324; border-radius:50%; }
+.promo-mir-portrait { position:absolute; width:100%; height:94%; bottom:0; object-fit:contain; object-position:bottom; filter:drop-shadow(0 0 38px #1c4078); }
+.promo-hero-art:after { content:''; position:absolute; inset:58% 0 0; background:linear-gradient(transparent,#0c182c); z-index:1; }
+.promo-hero-art figcaption { position:absolute; bottom:40px; left:38px; right:24px; z-index:2; }
+.promo-hero-art figcaption>span { font:600 10px Outfit,sans-serif; color:#b2cef2; letter-spacing:.19em; }
+.promo-hero-art figcaption strong { display:block; margin:9px 0; font-size:27px; letter-spacing:-.04em; }
+.promo-hero-art figcaption strong b { color:#8ebfff; padding:0 6px; }
+.promo-hero-art figcaption small { font-size:12px; color:#adbbd0; }
+.promo-art-index { position:absolute; top:34px; right:24px; color:#b7cde8; font:600 10px/1.7 Outfit,sans-serif; letter-spacing:.13em; writing-mode:vertical-rl; }
+.promo-intro-line { display:flex; justify-content:center; align-items:center; gap:34px; padding:28px 0; border-bottom:1px solid #293143; color:#abb8ce; font-size:13px; }
+.promo-intro-line>span { display:inline-flex; gap:9px; align-items:center; }
+.promo-intro-line>i { width:3px; height:3px; background:#526682; border-radius:50%; }
+.promo-picks { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+.promo-pick { min-width:0; overflow:hidden; border-top:1px solid #41516d; background:linear-gradient(180deg,#171e2c,transparent); border-radius:4px 4px 18px 18px; }
+.promo-pick-intro { padding:26px 22px 20px; min-height:185px; }
+.promo-pick-intro>.eyebrow { color:#a8c7f0; font-size:10px; }
+.promo-pick-intro h3 { display:flex; align-items:center; gap:9px; margin:16px 0 10px; font-size:23px; letter-spacing:-.035em; }
+.promo-pick-intro h3 svg { color:#8ebeff; }
+.promo-pick-intro p { color:#aebbce; font-size:13px; line-height:1.9; margin:0; word-break:keep-all; }
+.promo-video { min-width:0; border:1px solid #30384a; border-radius:17px; background:#131a27; overflow:hidden; }
+.promo-pick .promo-video { border-radius:0 0 15px 15px; border:0; }
+.promo-video-frame { aspect-ratio:16/9; background:linear-gradient(135deg,#263a5d,#182339); position:relative; overflow:hidden; }
+.promo-video-frame iframe { border:0; position:absolute; inset:0; width:100%; height:100%; }
+.promo-play { display:block; width:100%; height:100%; padding:0; border:0; background:transparent; color:#fff; position:relative; }
+.promo-play img { width:100%; height:100%; object-fit:cover; opacity:.83; transition:opacity .18s ease; }
+.promo-play:hover img { opacity:1; }
+.promo-play-icon { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:grid; place-items:center; width:60px; height:60px; border-radius:50%; background:#e3f1ffef; color:#102342; box-shadow:0 4px 24px #0005; }
+.promo-video-source { position:absolute; bottom:10px; left:10px; background:#08101bcf; padding:5px 8px; border-radius:5px; font-size:10px; }
+.promo-video-caption { padding:18px 20px; }
+.promo-video-caption h3 { font-size:14px; line-height:1.75; margin:0; word-break:keep-all; overflow-wrap:anywhere; }
+.promo-video-caption a { display:inline-flex; align-items:center; gap:6px; min-height:44px; font-size:12px; color:#aecdf4; }
+.promo-pick-fallback { min-height:240px; padding:28px 22px; display:flex; align-items:start; justify-content:center; flex-direction:column; gap:14px; background:linear-gradient(145deg,#253655,#151b2a); color:#c8ddf9; }
+.promo-pick-fallback p { font-size:13px; margin:0; color:#aabbcf; }
+.promo-pick-fallback .btn { font-size:12px; }
+.promo-duo { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.promo-artist-card { position:relative; min-height:275px; padding:32px; border-radius:20px; border:1px solid #35415a; background:#141e30; overflow:hidden; isolation:isolate; }
+.promo-artist-card>div { position:relative; z-index:2; max-width:75%; }
+.promo-artist-card:after { content:''; position:absolute; inset:0; z-index:1; background:linear-gradient(90deg,#131e31 20%,#131e31bb 60%,transparent); }
+.promo-artist-card img { position:absolute; right:-10%; bottom:0; width:82%; height:95%; object-fit:contain; object-position:bottom right; opacity:.65; z-index:0; }
+.promo-artist-card h3 { font-size:30px; letter-spacing:-.04em; margin:18px 0 12px; }
+.promo-artist-card p { font-size:13px; line-height:1.85; color:#b1bfd4; margin:0 0 18px; }
+.promo-artist-card b { display:inline-flex; align-items:center; gap:10px; min-height:44px; font-size:13px; color:#cbe2ff; }
+.promo-artist-card:hover { border-color:#83a5d2; }
+.promo-next { padding:32px; width:min(var(--max),calc(100% - 40px)); border:1px solid #36455e; border-radius:22px; background:linear-gradient(115deg,#192740,#151b27); }
+.promo-agenda>h3 { font-size:14px; color:#a7bedc; font-weight:500; margin:8px 0 22px; }
+.promo-agenda-item { display:grid; grid-template-columns:180px 1fr; gap:30px; padding:24px 0; border-top:1px solid #35425a; }
+.promo-agenda-item>div:first-child { display:flex; flex-direction:column; gap:8px; }
+.promo-agenda-item time { font-size:20px; letter-spacing:-.025em; font-weight:700; }
+.promo-agenda-item>div:first-child span { color:#acc6e5; font-size:13px; }
+.promo-agenda-item h4 { font-size:22px; line-height:1.5; margin:8px 0 12px; overflow-wrap:anywhere; }
+.promo-agenda-item p { color:#b4c3d7; white-space:pre-line; font-size:14px; line-height:1.7; }
+.promo-category { font-size:11px; color:#cbe1ff; padding:4px 8px; background:#304664; border-radius:5px; }
+.promo-inline-actions { display:flex; align-items:start; flex-wrap:wrap; gap:10px; }
+.promo-calendar-save { display:flex; align-items:start; flex-direction:column; gap:8px; }
+.promo-calendar-save small { max-width:340px; color:#c0cddd; font-size:11px; line-height:1.6; }
+.promo-empty { padding:30px; border:1px dashed #3c4962; border-radius:15px; color:#b5c3d9; font-size:14px; line-height:1.8; background:#111a282e; }
+.promo-empty p { margin:8px 0 18px; }
+.promo-inline-note { color:#a1b0c7; font-size:12px; line-height:1.8; margin:16px 0; }
+p.section-wrap.promo-inline-note { margin-inline:auto; }
+.promo-featured-stage { display:grid; grid-template-columns:1fr 280px; gap:30px; border:1px solid #365285; border-radius:22px; padding:46px; background:linear-gradient(117deg,#142954,#19316d 58%,#204a95); overflow:hidden; }
+.promo-featured-stage h3 { margin:24px 0 18px; font:600 clamp(62px,7vw,98px)/1 Outfit,sans-serif; letter-spacing:-.03em; color:#e6f1ff; }
+.promo-featured-stage h3 span { display:block; font-size:11px; letter-spacing:.16em; font-weight:500; margin-top:16px; color:#bacce9; }
+.promo-featured-stage p { color:#c0cfe5; font-size:14px; line-height:1.8; max-width:510px; }
+.promo-featured-stage b { display:inline-flex; gap:10px; align-items:center; margin-top:18px; min-height:44px; font-size:14px; }
+.promo-stage-ticket { border-left:1px dashed #91b5ea77; padding:22px 0 22px 42px; display:flex; flex-direction:column; justify-content:space-between; font-family:Outfit,sans-serif; }
+.promo-stage-ticket>span { color:#b2c8e9; font-size:11px; letter-spacing:.13em; }
+.promo-stage-ticket>strong { font-size:74px; line-height:1; font-weight:500; letter-spacing:-.07em; }
+.promo-stage-ticket>strong span { display:block; padding-left:62px; color:#92bafa; }
+.promo-stage-ticket small { font-size:9px; letter-spacing:.14em; color:#bdd1ed; }
+.promo-recent { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+.promo-channels { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.promo-channels>a { padding:24px; border:1px solid #334159; border-radius:16px; background:#151e2e; min-height:158px; }
+.promo-channels>a:hover { border-color:#7399cc; background:#1e2b42; }
+.promo-channels>a>span { display:flex; align-items:center; justify-content:space-between; color:#9fc7fd; font:600 12px Outfit,sans-serif; }
+.promo-channels strong { display:block; font-size:21px; margin:20px 0 8px; }
+.promo-channels small { color:#adbcd1; font-size:12px; }
+.member-performance-links { margin-top:18px; display:flex; flex-direction:column; gap:5px; }
+.member-performance-links a { min-height:44px; display:inline-flex; align-items:center; font-size:12px; color:#c0dbff; }
+.member-own-words { font-size:12px!important; color:#a8b6c9!important; }
+.member-draft-note { display:block; color:#f1bd83; margin:10px 0; }
+.performance-story { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(270px,1fr); gap:50px; padding:30px 0; }
+.performance-story h2 { font-size:32px; letter-spacing:-.04em; margin:15px 0 20px; }
+.performance-story p { color:#b5c3d7; font-size:15px; line-height:1.9; }
+.performance-story aside { border:1px solid #34435e; padding:28px; border-radius:18px; background:#172134; }
+.performance-story aside h3 { line-height:1.6; font-size:20px; }
+.performance-jump { display:flex; flex-wrap:wrap; gap:12px; border-top:1px solid #36415a; padding:16px 0; }
+.performance-jump a { display:inline-flex; align-items:center; min-height:44px; padding:10px 18px; border-radius:8px; background:#202d44; font-size:13px; }
+.performance-credits { display:flex; flex-wrap:wrap; gap:18px; }
+.performance-credits>a { display:flex; flex-direction:column; gap:14px; border:1px solid #364560; border-radius:16px; background:#192338; padding:26px; min-width:240px; }
+.performance-credits strong { font-size:23px; }
+.performance-credits span { display:flex; align-items:center; gap:22px; font-size:13px; color:#afc6e6; }
+.performance-songs article { display:flex; align-items:center; gap:16px; padding:24px; border-bottom:1px solid #35415a; }
+.performance-songs article>div { flex:1; }
+.performance-songs h3 { margin:0 0 6px; font-size:19px; }
+.performance-songs small { color:#a9bbd5; font-size:12px; }
+.performance-photo-card { display:block; padding:18px; border:1px solid #36425b; border-radius:17px; background:#151d2a; }
+.performance-photo-card img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:10px; }
+.performance-photo-card h3 { font-size:17px; }
+.performance-photo-card span { display:flex; align-items:center; gap:10px; font-size:13px; min-height:44px; color:#b6d7ff; }
+.promo-share { display:flex; flex-direction:column; align-items:start; gap:12px; }
+.promo-share>span { font-size:12px; color:#c1d6f3; }
+.promo-share input { max-width:100%; width:100%; padding:10px; background:#121c2c; color:white; border:1px solid #526b90; border-radius:6px; }
+.review-info { padding:30px; background:#182237; border:1px solid #354868; border-radius:18px; margin-bottom:28px; }
+.review-info code { display:block; color:#c7e0ff; font-size:14px; margin:15px 0; overflow-wrap:anywhere; }
+.review-info p { font-size:14px; color:#b6c5d9; line-height:1.9; }
+.review-info p code { display:inline; }
+.review-checks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin:28px 0; }
+.review-checks article { padding:24px; border:1px solid #35435c; border-radius:16px; background:#151e2d; }
+.review-checks label { display:flex; align-items:center; gap:14px; cursor:pointer; min-height:48px; position:relative; }
+.review-checks input { position:absolute; width:32px; height:32px; opacity:0; }
+.review-checks input:focus-visible + .review-check-icon { outline:3px solid #abd4ff; outline-offset:3px; }
+.review-check-icon { width:36px; height:36px; display:grid; place-items:center; background:#2c4368; border-radius:10px; font:600 13px Outfit,sans-serif; flex:none; }
+.review-checks input:checked + .review-check-icon { background:#b7d9ff; color:#14315b; }
+.review-check-title { display:flex; flex-direction:column; gap:7px; }
+.review-check-title small { color:#adcdf9; font-size:10px; }
+.review-check-title strong { font-size:17px; line-height:1.5; }
+.review-checks p { font-size:13px; line-height:1.9; color:#b2c1d5; margin:20px 0 10px; }
+.schedule-mobile-agenda { display:none; }
+.timeline-event .promo-text-link { margin-top:14px; }
+.promo-inline-actions .btn { min-height:44px; }
+@media(max-width:1100px) {
+ .promo-hero { min-height:610px; }
+ .promo-hero-copy { padding:54px 0 42px 30px; }
+ .promo-hero h1 { font-size:44px; }
+ .promo-hero-art figcaption { left:25px; }
+ .promo-pick-intro { min-height:210px; padding-inline:18px; }
+ .promo-picks { gap:16px; }
+ .promo-channels { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .promo-intro-line { gap:20px; font-size:12px; }
+ .promo-featured-stage { padding:32px; grid-template-columns:1fr 230px; }
+ .promo-artist-card { padding:24px; }
+}
+@media(max-width:800px) {
+ .promo-hero { grid-template-columns:1fr; }
+ .promo-hero-copy { padding:42px 30px 22px; }
+ .promo-hero h1 { font-size:clamp(34px,5.7vw,48px); }
+ .promo-desktop-break { display:none; }
+ .promo-hero-art { height:420px; }
+ .promo-mir-portrait { object-position:bottom right; width:78%; right:0; }
+ .promo-art-word { top:9%; font-size:170px; }
+ .promo-art-ring { width:310px; height:310px; left:auto; right:7%; top:13%; }
+ .promo-hero-art figcaption { bottom:30px; left:30px; max-width:70%; }
+ .promo-section { margin-top:60px; }
+ .promo-picks { grid-template-columns:1fr; gap:24px; }
+ .promo-pick { display:grid; grid-template-columns:1fr 1fr; }
+ .promo-pick-intro { min-height:auto; }
+ .promo-pick .promo-video { border-radius:0 0 15px 0; }
+ .promo-pick-fallback { min-height:220px; }
+ .promo-section-head { align-items:start; flex-direction:column; gap:14px; }
+ .promo-section-head>p br { display:none; }
+ .promo-duo { grid-template-columns:1fr; }
+ .promo-artist-card { min-height:260px; }
+ .promo-artist-card img { width:68%; }
+ .promo-featured-stage { grid-template-columns:1fr 170px; padding:30px; gap:20px; }
+ .promo-stage-ticket { padding-left:25px; }
+ .promo-stage-ticket>strong { font-size:60px; }
+ .promo-stage-ticket>strong span { padding-left:36px; }
+ .promo-intro-line>i { display:none; }
+ .promo-intro-line { flex-wrap:wrap; gap:14px 22px; }
+ .performance-story { grid-template-columns:1fr; gap:22px; }
+ .review-checks { grid-template-columns:1fr; }
+ .schedule-mobile-agenda { display:block; padding:24px 0 0; }
+ .schedule-mobile-agenda .promo-agenda { padding:22px; border:1px solid #35415d; background:#18243a; border-radius:18px; }
+ .promo-agenda-item { grid-template-columns:1fr; gap:14px; }
+ .promo-agenda-item>div:first-child { flex-direction:row; align-items:center; flex-wrap:wrap; gap:16px; }
+ .promo-agenda-item time { font-size:18px; }
+ .promo-agenda-item h4 { font-size:20px; }
+ .performance-songs article { flex-wrap:wrap; padding-inline:12px; }
+}
+@media(max-width:520px) {
+ .review-banner { justify-content:space-between; gap:10px; padding:5px 16px; font-size:10px; }
+ .review-banner a { font-size:10px; }
+ .promo-hero { width:calc(100% - 24px); border-radius:20px; }
+ .promo-hero-copy { padding:34px 22px 14px; }
+ .promo-hero-copy>.eyebrow { font-size:9px; letter-spacing:.1em; }
+ .promo-hero h1 { font-size:34px; line-height:1.25; margin:23px 0 18px; }
+ .promo-hero-copy>p { font-size:13px; }
+ .promo-hero-actions { flex-direction:column; align-items:stretch; margin-top:22px; }
+ .promo-hero-actions .btn { width:100%; font-size:13px; }
+ .promo-live-status { font-size:10px; }
+ .promo-hero-archive { font-size:11px; margin-top:2px; }
+ .promo-hero-art { height:330px; }
+ .promo-hero-art figcaption { left:22px; bottom:24px; }
+ .promo-hero-art figcaption strong { font-size:22px; }
+ .promo-hero-art figcaption>span { font-size:8px; }
+ .promo-hero-art figcaption small { font-size:10px; }
+ .promo-art-index { font-size:8px; top:14px; right:15px; }
+ .promo-art-word { font-size:120px; }
+ .promo-art-ring { width:245px; height:245px; }
+ .promo-mir-portrait { width:86%; }
+ .promo-intro-line { flex-direction:column; align-items:start; gap:13px; padding:22px 4px; }
+ .promo-section-head h2 { font-size:25px; }
+ .promo-section-head>p { font-size:12px; }
+ .promo-pick { display:block; }
+ .promo-pick-intro { padding:24px 20px; }
+ .promo-pick .promo-video { border-radius:0 0 15px 15px; }
+ .promo-recent { grid-template-columns:1fr; }
+ .promo-pick-fallback { min-height:180px; }
+ .promo-next { padding:22px; }
+ .promo-empty { padding:23px; font-size:13px; }
+ .promo-agenda-item>div:first-child span { font-size:12px; }
+ .promo-inline-note { font-size:11px; }
+ .promo-featured-stage { grid-template-columns:1fr; padding:26px; }
+ .promo-featured-stage h3 { font-size:64px; }
+ .promo-stage-ticket { border-left:0; border-top:1px dashed #92b8e955; padding:20px 0 0; gap:14px; }
+ .promo-stage-ticket>strong { display:none; }
+ .promo-featured-stage p { font-size:13px; }
+ .promo-channels { gap:12px; }
+ .promo-channels>a { padding:20px 16px; min-height:160px; }
+ .promo-channels strong { font-size:18px; }
+ .promo-channels small { font-size:11px; line-height:1.6; }
+ .promo-artist-card>div { max-width:100%; }
+ .promo-artist-card img { width:100%; opacity:.45; }
+ .performance-credits>a { min-width:0; width:100%; }
+ .performance-story h2 { font-size:27px; }
+ .performance-story aside { padding:24px; }
+ .performance-jump { gap:8px; }
+ .performance-jump a { padding:10px 13px; font-size:12px; }
+ .review-info { padding:22px; }
+ .schedule-mobile-agenda .promo-agenda { padding:18px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
+}

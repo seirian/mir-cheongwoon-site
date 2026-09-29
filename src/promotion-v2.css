@@ -1,0 +1,71 @@
+/* Second review: constrain hero padding to the content, not viewport width. */
+.promotion-home .promo-hero {
+  width:min(var(--max,1320px),calc(100% - 40px));
+  grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
+  min-height:600px;
+}
+.promotion-home .promo-hero-copy {
+  align-self:center;
+  padding:clamp(36px,4vw,60px) clamp(28px,3.4vw,52px);
+  min-width:0;
+}
+.promotion-home .promo-hero h1 { font-size:clamp(36px,3.7vw,58px); }
+/* Reserve exactly two lines regardless of actual title length. */
+.promo-picks .promo-pick { display:flex; flex-direction:column; }
+.promo-picks .promo-video { flex:1; display:flex; flex-direction:column; }
+.promo-picks .promo-video-frame { flex-shrink:0; }
+.promo-picks .promo-video-caption { flex:1; }
+.promo-picks .promo-video-caption h3 {
+  height:3.5em; min-height:3.5em; line-height:1.75;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+/* Only the schedule hero description is single-line. The mobile agenda sits
+   between PageHero and schedule-section, so the old + selector no longer matches.
+   Calendar entries, daily notes and filters keep their pre-revision-2 styles. */
+.page-hero:has(~ .schedule-section) > p {
+  max-width:none; white-space:nowrap; overflow-x:auto; overflow-y:hidden;
+  font-size:clamp(14px,1.15vw,16px); line-height:1.8; padding-bottom:4px;
+}
+.hero-image-manage {
+  position:absolute; z-index:4; top:22px; left:22px; display:inline-flex; align-items:center; gap:8px;
+  min-height:44px; padding:10px 14px; border:1px solid #94bbdf66; border-radius:12px;
+  background:#0b1939df; color:#e4f2ff; font-size:12px; font-weight:600; line-height:1.5; cursor:pointer;
+}
+.hero-image-feedback { position:absolute; z-index:4; bottom:8px; left:20px; right:20px; margin:0; padding:8px 12px; font-size:12px; color:#e0f4ff; background:#12305ce8; border-radius:8px; }
+.hero-image-dialog {
+  width:min(560px,calc(100vw - 32px)); max-height:calc(100dvh - 48px); overflow-y:auto;
+  padding:28px; border:1px solid #496181; border-radius:20px; background:#111b2c; color:#e8f2ff;
+  box-shadow:0 24px 90px #0008;
+}
+.hero-image-dialog::backdrop { background:#030916bb; backdrop-filter:blur(5px); }
+.hero-dialog-heading { display:flex; justify-content:space-between; align-items:start; gap:16px; }
+.hero-dialog-heading h2 { font-size:24px; margin:8px 0 12px; }
+.hero-dialog-close { border:0; background:transparent; color:inherit; min-width:44px; min-height:44px; display:grid; place-items:center; border-radius:8px; }
+.hero-dialog-scope { margin:0 0 20px; font-size:13px; line-height:1.8; color:#b9cce4; }
+.hero-image-form { display:grid; gap:16px; }
+.hero-image-form p { font-size:14px; line-height:1.8; margin:0; }
+.hero-image-form label { display:grid; gap:8px; font-size:14px; font-weight:600; }
+.hero-image-form input { width:100%; min-width:0; min-height:44px; padding:12px; border:1px solid #435775; border-radius:9px; background:#0b1322; color:#e8f2ff; font:inherit; }
+.hero-image-form input[type=file] { font-size:12px; overflow:hidden; }
+.hero-image-form small { color:#a8bcd7; font-size:12px; line-height:1.8; }
+.hero-upload-preview { height:240px; background:repeating-conic-gradient(#1d2940 0% 25%,#142036 0% 50%) 50%/24px 24px; border:1px solid #3b4d69; border-radius:12px; overflow:hidden; }
+.hero-upload-preview img { width:100%; height:100%; object-fit:contain; }
+.hero-dialog-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.hero-dialog-actions .btn { min-height:44px; }
+.hero-upload-error { color:#ffd6d4; background:#462328; padding:12px; border-radius:8px; font-size:13px; line-height:1.7; }
+.hero-image-dialog :disabled { opacity:.5; cursor:not-allowed; }
+@media (max-width:900px) {
+  .promotion-home .promo-hero { grid-template-columns:1fr 1fr; min-height:520px; }
+  .promotion-home .promo-hero-copy { padding:36px 24px; }
+  .promotion-home .promo-hero h1 { font-size:clamp(30px,4.3vw,38px); }
+}
+@media (max-width:640px) {
+  .promotion-home .promo-hero { width:calc(100% - 32px); grid-template-columns:1fr; }
+  .promotion-home .promo-hero-copy { padding:34px 24px 28px; }
+  .promotion-home .promo-hero h1 { font-size:clamp(30px,7.8vw,42px); }
+  .promotion-home .promo-hero-art { min-height:410px; }
+  .hero-image-dialog { padding:22px; }
+  .hero-upload-preview { height:200px; }
+  .hero-image-manage { top:16px; left:16px; }
+  .review-banner { gap:12px; flex-wrap:wrap; }
+}

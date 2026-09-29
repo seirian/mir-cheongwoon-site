@@ -220,6 +220,7 @@ export default function BandMemberEditor({
           </button>
         </div>
 
+        <p className="promo-inline-note">이름·포지션·소개가 모두 작성된 카드만 공개 목록에 표시됩니다. 미작성 또는 템플릿 카드는 관리자 화면에서만 편집용으로 남습니다.</p>
         <form className="band-member-editor-form" onSubmit={saveMember}>
           <div className="band-member-photo-editor">
             <div className="band-member-photo-preview">
