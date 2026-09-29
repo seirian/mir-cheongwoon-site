@@ -2,10 +2,10 @@ name: Fanart slideshow verification
 on:
   push:
     branches: [develop]
-    paths: ['src/pages/SchedulePage.jsx', 'src/components/FanartSlideshow.jsx', 'src/components/fanart-slideshow.css', 'src/lib/fanartSlides.js', 'server/api/**', 'scripts/fanart-*', 'tests/fanart-*', '.github/workflows/fanart-verify.yml']
+    paths: ['src/pages/SchedulePage.jsx', 'src/components/FanartSlideshow.jsx', 'src/components/fanart-slideshow.css', 'src/lib/fanartSlides.js', 'server/api/**', 'scripts/fanart-*', 'scripts/mir_shared_root_deploy_ci.py', 'tests/fanart-*', '.github/workflows/fanart-verify.yml']
   pull_request:
     branches: [main, develop]
-    paths: ['src/pages/SchedulePage.jsx', 'src/components/FanartSlideshow.jsx', 'src/components/fanart-slideshow.css', 'src/lib/fanartSlides.js', 'server/api/**', 'scripts/fanart-*', 'tests/fanart-*', '.github/workflows/fanart-verify.yml']
+    paths: ['src/pages/SchedulePage.jsx', 'src/components/FanartSlideshow.jsx', 'src/components/fanart-slideshow.css', 'src/lib/fanartSlides.js', 'server/api/**', 'scripts/fanart-*', 'scripts/mir_shared_root_deploy_ci.py', 'tests/fanart-*', '.github/workflows/fanart-verify.yml']
   workflow_run:
     workflows: ['Deploy mir.yeop.net']
     types: [completed]
@@ -39,6 +39,7 @@ jobs:
           npm run verify
           npm run check:backend
           php scripts/fanart-php-check.php
+          python scripts/fanart-deploy-check.py
       - name: Install isolated browser
         run: |
           python -m pip install playwright==1.57.0
@@ -48,12 +49,29 @@ jobs:
           npm run preview -- --host 127.0.0.1 > /tmp/fanart-preview.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
           python scripts/fanart-browser-check.py
+          python scripts/fanart-freshness-browser-check.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: fanart-slideshow-regression
           path: fanart-review/
           retention-days: 14
+  source-contract:
+    if: github.event_name != 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read one current anonymous article with production collector
+        run: php scripts/fanart-source-check.php --live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fanart-source-contract
+          path: fanart-source-report.json
+          retention-days: 7
   live:
     if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
@@ -73,7 +91,7 @@ jobs:
       - name: Read-only production fanart and schedule check
         env:
           EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
-        run: python scripts/fanart-live-check.py --expected-sha "$EXPECTED_SHA"
+        run: python scripts/fanart-live-check.py --expected-sha "$EXPECTED_SHA" --require-fresh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

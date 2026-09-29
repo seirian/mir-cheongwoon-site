@@ -80,6 +80,55 @@ def _validated_fallback(meta: dict, image: bytes, label: str, release: str, sour
     }
 
 
+def _current_fanart_snapshot(r, cache_path, label, release):
+    fanart_state = base.parse_cache_value(
+        r.read(cache_path + "fanart.state.php", 4 * 1024 * 1024)
+    )
+    image_state = base.parse_cache_value(
+        r.read(cache_path + "image.state.php", 12 * 1024 * 1024)
+    )
+    if not fanart_state or not image_state:
+        return None
+
+    public = fanart_state.get("public")
+    source = fanart_state.get("source")
+    if not isinstance(public, dict) or public.get("status") != "ok":
+        return None
+    if not isinstance(source, str) or not base.allowed_fanart_source(source):
+        return None
+    article_url = public.get("articleUrl")
+    if not isinstance(article_url, str) or not base.FANART_ARTICLE_RE.fullmatch(article_url):
+        return None
+    if image_state.get("id") != hashlib.sha256(source.encode()).hexdigest():
+        return None
+
+    mime = image_state.get("mime")
+    encoded = image_state.get("data")
+    if mime not in base.FANART_IMAGE_MIMES or not isinstance(encoded, str):
+        return None
+    try:
+        image = base64.b64decode(encoded, validate=True)
+    except Exception:
+        return None
+    if not image or len(image) > 6 * 1024 * 1024:
+        return None
+
+    meta = {
+        "id": hashlib.sha256(image).hexdigest(),
+        "mime": mime,
+        "boardUrl": base.FANART_BOARD,
+        "articleId": int(public.get("articleId") or 0),
+        "title": str(public.get("title") or "오늘의 팬아트")[:500],
+        "author": str(public.get("author") or "작성자")[:200],
+        "articleUrl": article_url,
+        "sourceDate": str(public.get("sourceDate") or "")[:10],
+    }
+    snapshot = _validated_fallback(meta, image, label, release, "cache-state")
+    if snapshot:
+        return snapshot
+    return None
+
+
 def find_persisted_fanart_fallback(r):
     roots = [
         (SITE_WEB, "canonical-site"),
@@ -108,6 +157,10 @@ def find_persisted_fanart_fallback(r):
         for release in releases[:100]:
             cache_path = release_root + "/" + release + "/api/_cache/"
 
+            current = _current_fanart_snapshot(r, cache_path, label, release)
+            if current:
+                return current
+
             meta_raw = r.read(cache_path + "fanart-fallback.json", 64 * 1024)
             image = r.read(cache_path + "fanart-fallback.bin", 6 * 1024 * 1024 + 1)
             if meta_raw and image:
@@ -119,51 +172,6 @@ def find_persisted_fanart_fallback(r):
                 if snapshot:
                     return snapshot
 
-            fanart_state = base.parse_cache_value(
-                r.read(cache_path + "fanart.state.php", 4 * 1024 * 1024)
-            )
-            image_state = base.parse_cache_value(
-                r.read(cache_path + "image.state.php", 12 * 1024 * 1024)
-            )
-            if not fanart_state or not image_state:
-                continue
-
-            public = fanart_state.get("public")
-            source = fanart_state.get("source")
-            if not isinstance(public, dict) or public.get("status") != "ok":
-                continue
-            if not isinstance(source, str) or not base.allowed_fanart_source(source):
-                continue
-            article_url = public.get("articleUrl")
-            if not isinstance(article_url, str) or not base.FANART_ARTICLE_RE.fullmatch(article_url):
-                continue
-            if image_state.get("id") != hashlib.sha256(source.encode()).hexdigest():
-                continue
-
-            mime = image_state.get("mime")
-            encoded = image_state.get("data")
-            if mime not in base.FANART_IMAGE_MIMES or not isinstance(encoded, str):
-                continue
-            try:
-                image = base64.b64decode(encoded, validate=True)
-            except Exception:
-                continue
-            if not image or len(image) > 6 * 1024 * 1024:
-                continue
-
-            meta = {
-                "id": hashlib.sha256(image).hexdigest(),
-                "mime": mime,
-                "boardUrl": base.FANART_BOARD,
-                "articleId": int(public.get("articleId") or 0),
-                "title": str(public.get("title") or "오늘의 팬아트")[:500],
-                "author": str(public.get("author") or "작성자")[:200],
-                "articleUrl": article_url,
-                "sourceDate": str(public.get("sourceDate") or "")[:10],
-            }
-            snapshot = _validated_fallback(meta, image, label, release, "cache-state")
-            if snapshot:
-                return snapshot
     return None
 
 
@@ -332,6 +340,8 @@ def fanart_smoke(rid: str):
     result = {
         "status": code,
         "fanart_status": payload.get("status"),
+        "source_date": payload.get("sourceDate"),
+        "fresh_source": payload.get("status") == "ok" and not payload.get("fallback") and not payload.get("stale"),
         "fallback": bool(payload.get("fallback")),
         "reason": payload.get("reason"),
         "passed": ok,

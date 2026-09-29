@@ -20,11 +20,29 @@ check(articleImages(['content'=>'<p>no image</p>'])===[],'empty content');
 $many='';for($i=0;$i<50;$i++)$many.='<img src="https://phinf.pstatic.net/'.$i.'.png">';
 check(count(articleImages(['contentHtml'=>$many]))===12,'bounded images');
 $list=['articleList'=>[['type'=>'ARTICLE','item'=>['articleId'=>123,'writeDate'=>'2026-09-30 12:00:00','subject'=>'test']]]];
-$sender=static fn($url)=>['code'=>200,'headers'=>[],'body'=>json_encode(['result'=>str_contains($url,'cafe-boardlist-api')?$list:['article'=>$article]])];
+$sender=static function($url) use ($list, $article): array {
+    if (str_contains($url,'cafe-boardlist-api')) return ['code'=>200,'headers'=>[],'body'=>json_encode(['result'=>$list])];
+    $expected='https://article.cafe.naver.com/gw/v4/cafes/31003156/articles/123?query=&useCafeId=true&requestFrom=A';
+    if ($url!==$expected) return ['code'=>500,'headers'=>[],'body'=>'{"errorCode":"9999"}'];
+    return ['code'=>200,'headers'=>[],'body'=>json_encode(['result'=>['article'=>$article]])];
+};
 $result=fanart(new Client($sender),today:'2026-09-30');
 check($result['articleId']===123 && count($result['imageUrls'])===3,'one selected article with multiple images');
 check($result['imageUrl']===$result['imageUrls'][0] && $result['author']==='테스트 작가','first-image compatibility and attribution');
 foreach([401,403,429] as $status){$calls=0;$denied=new Client(static function()use($status,&$calls){++$calls;return ['code'=>$status,'headers'=>[],'body'=>''];});try{fanart($denied);check(false,'denial must throw');}catch(YeopMigration\UpstreamError $e){check($calls===1,'no retry after upstream denial');}}
+check(\YeopMigration\validUrl(\YeopMigration\ARTICLE_API.'123?query=&useCafeId=true&requestFrom=A'),'current public gateway route allowed');
+foreach (['https://article.cafe.naver.com.evil.test/gw/v4/cafes/31003156/articles/123', 'https://article.cafe.naver.com/gw/v4/cafes/999/articles/123', 'https://article.cafe.naver.com/gw/v4/cafes/31003156/articles/123/comments', 'https://article.cafe.naver.com/gw/v4/cafes/31003156/articles/../123'] as $url) check(!\YeopMigration\validUrl($url),'new gateway allowance remains narrowly scoped');
+foreach ([401,403,429] as $status) {
+    $calls=0;
+    $sender=static function($url) use ($list,$status,&$calls): array { ++$calls; return str_contains($url,'cafe-boardlist-api')?['code'=>200,'headers'=>[],'body'=>json_encode(['result'=>$list])]:['code'=>$status,'headers'=>[],'body'=>'']; };
+    try { fanart(new Client($sender),today:'2026-09-30');check(false,'article denial must fail'); }
+    catch(\YeopMigration\UpstreamError $e) { check($calls===2 && $e->getMessage()==='upstream_http_'.$status,'no alternate source or candidate after article denial'); }
+}
+foreach ([['isReadable'=>false],['isBlind'=>true],['id'=>999]] as $invalid) {
+    $sender=static fn($url)=>['code'=>200,'headers'=>[],'body'=>json_encode(['result'=>str_contains($url,'cafe-boardlist-api')?$list:['article'=>array_merge($article,$invalid)]])];
+    try { fanart(new Client($sender),today:'2026-09-30');check(false,'restricted or mismatched article must fail'); }
+    catch(\YeopMigration\UpstreamError $e) { check(in_array($e->getMessage(),['upstream_http_403','article_identity_mismatch'],true),'restricted or unrelated body rejected'); }
+}
 $dir=sys_get_temp_dir().'/mir-fanart-test-'.bin2hex(random_bytes(6));mkdir($dir,0700);
 try {
  $cache=new SharedCache($dir);$calls=0;

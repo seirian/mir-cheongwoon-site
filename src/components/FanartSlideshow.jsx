@@ -83,7 +83,7 @@ function Slides({ images, fanart }) {
         <span className="fanart-open-label">팬아트 게시글 보기</span>
       </> : <div className="fanart-placeholder" role="status"><ImageIcon size={36}/><strong>FAN ART</strong><p>이미지를 불러오지 못했습니다.<br/>원본 게시글에서 확인해 주세요.</p></div>}
     </a>
-    {(fanart.fallback || fanart.stale) && <p className="fanart-slide-note">원본 조회가 원활하지 않아 저장된 이미지를 표시합니다.</p>}
+    {(fanart.fallback || fanart.stale) && <p className="fanart-slide-note">최신 팬아트를 확인하지 못했습니다. {fanart.sourceDate ? `${fanart.sourceDate} 게시글의 저장본을 표시합니다.` : '이전에 저장된 이미지를 표시합니다.'}</p>}
     {reduced && !playing && multiple && <p className="fanart-slide-note">동작 줄이기 설정에 따라 자동 넘김을 멈췄습니다. 버튼으로 감상할 수 있습니다.</p>}
   </div>;
 }

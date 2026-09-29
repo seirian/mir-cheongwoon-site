@@ -67,6 +67,7 @@ try {
     }
     if (($public['status'] ?? '') !== 'ok' && ($fallback = loadFanartFallback($config))) {
         $fallback['reason'] = $public['reason'] ?? 'upstream_unavailable';
+        $fallback['checked_at'] = $public['checked_at'] ?? null;
         $fallback['cached'] = $hit;
         \YeopMigration\sendJson($fallback,200,300);
     }
@@ -75,6 +76,7 @@ try {
 } catch (\Throwable $e) {
     if ($fallback = loadFanartFallback($config)) {
         $fallback['reason'] = 'cache_busy_or_unavailable';
+        $fallback['checked_at'] = null;
         \YeopMigration\sendJson($fallback,200,300);
     }
     \YeopMigration\sendJson(['status'=>'unavailable','reason'=>'cache_busy_or_unavailable','boardUrl'=>\YeopMigration\BOARD],503);

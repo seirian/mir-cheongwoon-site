@@ -2,11 +2,12 @@
 import argparse
 import json
 from pathlib import Path
+from datetime import datetime, timezone
 import re
 from urllib.parse import urljoin
 from urllib.request import urlopen, Request
 from playwright.sync_api import sync_playwright
-parser=argparse.ArgumentParser();parser.add_argument('--expected-sha',default='');parser.add_argument('--out',default='fanart-live-review');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--expected-sha',default='');parser.add_argument('--out',default='fanart-live-review');parser.add_argument('--require-fresh',action='store_true');args=parser.parse_args()
 out=Path(args.out);out.mkdir(parents=True,exist_ok=True)
 def get(url):
     with urlopen(Request(url,headers={'User-Agent':'MirFanartReview/1.0'}),timeout=35) as response:return response.read(7*1024*1024)
@@ -15,8 +16,14 @@ release=re.search(r'name="yeop-release" content="([^"]+)"',html).group(1)
 if args.expected_sha:assert release.endswith('_'+args.expected_sha[:8])
 base='https://mir.yeop.net/_yeop_releases/'+release+'/'
 feature=json.loads(get(base+'api/naver-fanart.php'))
-report={'release':release,'status':feature.get('status'),'articleId':feature.get('articleId'),'fallback':feature.get('fallback',False),'reason':feature.get('reason'),'image_count':len(feature.get('imageUrls',[])),'viewports':[]}
+report={'release':release,'status':feature.get('status'),'articleId':feature.get('articleId'),'sourceDate':feature.get('sourceDate'),'checked_at':feature.get('checked_at'),'fresh_source':feature.get('status')=='ok' and not feature.get('fallback') and not feature.get('stale'),'fallback':feature.get('fallback',False),'reason':feature.get('reason'),'image_count':len(feature.get('imageUrls',[])),'viewports':[]}
 try:
+    if args.require_fresh:
+        assert report['fresh_source'], 'Fanart collection is stale/unavailable; a backup is not a successful refresh'
+        checked=datetime.fromisoformat(feature['checked_at'].replace('Z','+00:00'))
+        assert 0 <= (datetime.now(timezone.utc)-checked).total_seconds() < 2400, 'Fanart lookup timestamp is stale'
+    report['title']=feature.get('title')
+    report['author']=feature.get('author')
     if feature.get('status')=='ok':
         urls=feature.get('imageUrls',[feature['imageUrl']]);assert 1<=len(urls)<=12 and feature['imageUrl']==urls[0]
         report['image_count']=len(urls)
@@ -30,11 +37,22 @@ try:
                 context=browser.new_context(viewport={'width':width,'height':1000})
                 context.route('**/*',lambda route:route.continue_() if route.request.method in ['GET','HEAD','OPTIONS'] else route.abort())
                 page=context.new_page();page.goto('https://mir.yeop.net/schedule',wait_until='domcontentloaded');card=page.locator('.fanart-card');card.scroll_into_view_if_needed()
-                if feature.get('status')=='ok':page.locator('.fanart-slide.is-active').wait_for(timeout=40000)
+                if feature.get('status')=='ok':
+                    page.locator('.fanart-slide.is-active').wait_for(timeout=40000)
+                    assert card.locator('.fanart-live-caption strong').inner_text()==feature['title']
+                    if report['fresh_source']: assert '저장본' not in card.locator('.fanart-heading').inner_text()
                 assert page.locator('.schedule-grid').count()==1
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
+                advanced=False
+                if report['fresh_source'] and report['image_count']>1:
+                    page.mouse.move(0,0)
+                    initial=page.locator('.fanart-slide.is-active').get_attribute('src')
+                    card.screenshot(path=str(out/f'fanart-initial-{width}.png'))
+                    page.wait_for_function('(initial)=>{const el=document.querySelector(".fanart-slide.is-active");return el && el.complete && el.naturalWidth>0 && el.getAttribute("src")!==initial;}',arg=initial,timeout=18000)
+                    page.wait_for_timeout(500)
+                    advanced=True
                 card.screenshot(path=str(out/f'fanart-{width}.png'))
-                report['viewports'].append({'width':width,'controls':card.locator('.fanart-slide-controls').count(),'passed':True})
+                report['viewports'].append({'width':width,'controls':card.locator('.fanart-slide-controls').count(),'automatically_advanced':advanced,'passed':True})
                 context.close()
         finally:browser.close()
 finally:(out/'results.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
