@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Palette } from 'lucide-react';
+import { getKstCivilDate } from '../lib/promotion';
+import { ScheduleAgenda } from '../components/UpcomingSchedule';
 import PageHero from '../components/PageHero';
 import ScheduleQuickAddModal from '../components/ScheduleQuickAddModal';
 import ScheduleMemoCard from '../components/ScheduleMemoCard';
@@ -40,7 +42,9 @@ const sortScheduleEvents = (left, right) => (
 );
 
 export default function SchedulePage() {
-  const now = new Date();
+  const [clock, setClock] = useState(() => new Date());
+  const now = getKstCivilDate(clock);
+  useEffect(() => { const timer = setInterval(() => setClock(new Date()), 60000); return () => clearInterval(timer); }, []);
   const initialYear = Math.min(MAX_YEAR, Math.max(MIN_YEAR, now.getFullYear()));
   const initialMonth = now.getFullYear() >= MIN_YEAR && now.getFullYear() <= MAX_YEAR ? now.getMonth() : 0;
   const [year, setYear] = useState(initialYear);
@@ -194,7 +198,7 @@ export default function SchedulePage() {
       };
       return map;
     }, {});
-  }, []);
+  }, [now.getFullYear(), now.getMonth(), now.getDate()]);
 
   const selectedSideDay = sideDays[daySummary];
   const selectedSideEvents = eventsByDate[selectedSideDay.key] || [];
@@ -280,6 +284,9 @@ export default function SchedulePage() {
   return (
     <>
       <PageHero eyebrow="MIR SCHEDULE" title="일정표" description="월별 일정과 오늘의 기록, 팬아트와 메모를 한 화면에서 확인할 수 있는 미르 일정 대시보드입니다." />
+      <section className="section-wrap schedule-mobile-agenda" aria-label="모바일 다가오는 일정">
+        {loading ? <p className="promo-empty">일정을 불러오는 중…</p> : error ? <p className="promo-empty" role="status">{error}</p> : <ScheduleAgenda events={events} now={clock}/>}
+      </section>
       <section className="section-wrap schedule-section">
         {!isSupabaseConfigured && <div className="setup-banner">Supabase 연결이 필요합니다.</div>}
 

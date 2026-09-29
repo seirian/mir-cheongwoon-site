@@ -29,7 +29,7 @@ await page.route('https://www.youtube-nocookie.com/**', (route) => route.fulfill
 await mkdir('shorts-test-results', { recursive: true });
 try {
   await page.goto('http://127.0.0.1:4173/gallery');
-  await page.getByRole('heading', { name: '최신 일반영상 테스트' }).waitFor();
+  await page.getByRole('region', { name: 'Recent Videos', exact: true }).getByRole('heading', { name: '최신 일반영상 테스트', exact: true }).waitFor();
   assert.deepEqual((await page.getByRole('tab').allTextContents()).map((v) => v.trim()), ['영상','쇼츠','갤러리']);
   await page.getByRole('tab', { name: '쇼츠', exact: true }).click();
   await page.locator('.shorts-card').nth(9).waitFor();
@@ -50,7 +50,7 @@ try {
   await page.getByRole('heading', { name: '공연 갤러리 테스트' }).waitFor();
   assert.equal(await page.locator('.shorts-card').count(),0);
   await page.getByRole('tab', { name: '영상', exact: true }).click();
-  await page.getByRole('heading', { name: '커버 테스트' }).waitFor();
+  await page.locator('[aria-labelledby="cover-videos-heading"]').getByRole('heading', { name: '커버 테스트', exact: true }).waitFor();
   await page.goBack(); await page.getByRole('heading', { name: '공연 갤러리 테스트' }).waitFor();
   mode='empty'; await page.goto('http://127.0.0.1:4173/gallery?view=shorts');
   await page.getByRole('heading', { name: '등록된 쇼츠가 없습니다.' }).waitFor();
@@ -59,7 +59,7 @@ try {
   mode='loading'; await page.reload(); await page.getByRole('status').filter({hasText:'쇼츠를 불러오는 중'}).waitFor();
   await page.locator('.shorts-card').nth(9).waitFor();
   await page.goto('http://127.0.0.1:4173/gallery?view=unknown');
-  await page.getByRole('heading', { name: '최신 일반영상 테스트' }).waitFor();
+  await page.getByRole('region', { name: 'Recent Videos', exact: true }).getByRole('heading', { name: '최신 일반영상 테스트', exact: true }).waitFor();
   assert.deepEqual(errors, []);
   const result = { status:'passed', checks:['tab order','ten Shorts','latest order','deep link/reload','history navigation','general-video/gallery regression','desktop/tablet/mobile sizing','empty state','error/retry','loading state','invalid tab fallback','no page errors'] };
   await writeFile('shorts-test-results/ui.json', JSON.stringify(result,null,2));
