@@ -36,12 +36,13 @@ def raster(width, height):
     return b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('!IIBBBBB', width, height, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(raw)) + chunk(b'IEND', b'')
 
 
+# Document coordinates exclude scroll anchoring after viewport resize/screenshots.
 METRICS = """() => {
  const selectors=['.promo-hero','.promo-hero-copy','.promo-hero-art','.promo-mir-portrait','.promo-hero-art figcaption','#home-title','.promo-hero-actions'];
  const keys=['position','width','height','left','right','top','bottom','transform','objectFit','objectPosition','paddingLeft','paddingRight','fontSize','lineHeight'];
  return Object.fromEntries(selectors.map(selector=>{
   const el=document.querySelector(selector),r=el.getBoundingClientRect(),s=getComputedStyle(el);
-  return [selector,{box:Object.fromEntries(['x','y','width','height'].map(k=>[k,Math.round(r[k]*1000)/1000])),style:Object.fromEntries(keys.map(k=>[k,s[k]]))}];
+  return [selector,{box:Object.fromEntries(['x','y','width','height'].map(k=>[k,Math.round((r[k]+(k==='x'?scrollX:k==='y'?scrollY:0))*1000)/1000])),style:Object.fromEntries(keys.map(k=>[k,s[k]]))}];
  }));
 }"""
 READY = """() => {const el=document.querySelector('.promo-mir-portrait');return el && el.complete && el.naturalWidth>0 && getComputedStyle(el).visibility==='visible';}"""
@@ -96,6 +97,7 @@ with sync_playwright() as p:
                     page.evaluate('window.scrollTo(0,0)')
                     page.evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
                 before, after = baseline.evaluate(METRICS), current.evaluate(METRICS)
+                (out/f'metrics-{variant}-{width}.json').write_text(json.dumps({'before':before,'after':after},ensure_ascii=False,indent=2),encoding='utf-8')
                 check('no page-wide overflow', current.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), width=width, variant=variant)
                 check('visible image has no vertical archive label', current.locator('.promo-art-index').count()==0, width=width, variant=variant)
                 image, frame = after['.promo-mir-portrait'], after['.promo-hero-art']['box']
@@ -105,7 +107,7 @@ with sync_playwright() as p:
                     gap_left, gap_right = box['x']-frame['x'], frame['x']+frame['width']-box['x']-box['width']
                     check('mobile image box centered', abs(gap_left-gap_right)<1, width=width, variant=variant, left=gap_left, right=gap_right)
                     check('contained image pixels centered with original bottom alignment', image['style']['objectPosition']=='50% 100%' and image['style']['objectFit']=='contain', width=width, variant=variant)
-                    check('mobile image size unchanged', all(abs(box[k]-old_image['box'][k])<1 for k in ['width','height','y']), width=width, variant=variant)
+                    check('mobile image size unchanged', all(abs(box[k]-old_image['box'][k])<1 for k in ['width','height','y']), width=width, variant=variant, before=old_image['box'], after=box)
                     check('mobile hero text caption and frame unchanged', all(after[key]==before[key] for key in after if key!='.promo-mir-portrait'), width=width, variant=variant)
                     old_box=old_image['box']
                     old_delta=abs(old_box['x']+old_box['width']/2-frame['x']-frame['width']/2)
@@ -124,6 +126,10 @@ with sync_playwright() as p:
                         page.evaluate('window.scrollTo(0,0)')
                         page.screenshot(path=str(out/f'{name}-top-{width}.png'), animations='disabled')
         check('no JavaScript errors', not errors, errors=errors)
+    except Exception:
+        for name, page in [('before',baseline),('after',current)]:
+            page.screenshot(path=str(out/f'failure-{name}.png'),full_page=True,animations='disabled')
+        raise
     finally:
         (out/'results.json').write_text(json.dumps({'live':args.live,'checks':results,'errors':errors},ensure_ascii=False,indent=2),encoding='utf-8')
         browser.close()
