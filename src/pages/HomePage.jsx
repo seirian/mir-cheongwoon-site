@@ -1,21 +1,20 @@
 import { ArrowRight, ArrowUpRight, Music2, Play, Radio, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { mirProfile } from '../data/siteData';
-import { editorialPicks, featuredPerformance } from '../data/promotionData';
-import { canonicalVideoUrl, selectEditorialVideo } from '../lib/promotion';
+import { featuredPerformance } from '../data/promotionData';
+import { HERO_LIVE_URL } from '../lib/heroImage';
 import usePromotionContent from '../hooks/usePromotionContent';
 import useSoopStatus from '../hooks/useSoopStatus';
 import StartHere from '../components/StartHere';
 import UpcomingSchedule from '../components/UpcomingSchedule';
 import OfficialChannels from '../components/OfficialChannels';
 import VideoCard from '../components/VideoCard';
+import HomeHeroImage from '../components/HomeHeroImage';
 import CHEONGWOON_HERO_IMAGE from '../data/cheongwoonHeroImage';
 
 export default function HomePage() {
   const content = usePromotionContent();
   const liveStatus = useSoopStatus();
-  const stageVideo = selectEditorialVideo(editorialPicks[1], content.covers, content.recent);
-  const stageUrl = canonicalVideoUrl(stageVideo?.youtube_url);
   const soop = mirProfile.channels.find(({ label }) => label === 'SOOP').url;
   const youtube = mirProfile.channels.find(({ label }) => label === 'YouTube').url;
   const statusLabel = { checking: '방송 상태 확인 중', live: '지금 SOOP에서 방송 중', offline: '다음 방송은 공식 채널에서', unknown: '방송 상태 확인 불가 · 채널에서 확인' }[liveStatus];
@@ -25,17 +24,11 @@ export default function HomePage() {
         <span className="eyebrow"><Sparkles size={14}/> MIR × CHEONGWOON BAND</span>
         <h1 id="home-title">목소리와 연주가 만나<br/><em>하나의 무대</em>가<br className="promo-desktop-break"/> 되는 순간</h1>
         <p>버튜버 미르의 목소리, 청운밴드의 연주.<br/>함께 만든 음악과 무대의 기억을 만나보세요.</p>
-        <div className="promo-hero-actions"><a className="btn promo-primary" href={stageUrl || `${youtube}/videos`} target="_blank" rel="noopener noreferrer"><Play size={17} fill="currentColor"/>{stageUrl ? '대표 라이브 보기' : '공식 라이브 둘러보기'}</a><a className="btn btn-ghost" href={soop} target="_blank" rel="noopener noreferrer">미르 방송 보러 가기<ArrowUpRight size={17}/></a></div>
+        <div className="promo-hero-actions"><a className="btn promo-primary" href={HERO_LIVE_URL} target="_blank" rel="noopener noreferrer"><Play size={17} fill="currentColor"/>대표 라이브 보기</a><a className="btn btn-ghost" href={soop} target="_blank" rel="noopener noreferrer">미르 방송 보러 가기<ArrowUpRight size={17}/></a></div>
         <a className={`promo-live-status ${liveStatus === 'live' ? 'is-live' : ''}`} href={soop} target="_blank" rel="noopener noreferrer"><span aria-hidden="true"/><span aria-live="polite">{statusLabel}</span></a>
         <Link className="promo-text-link promo-hero-archive" to="/history/blued-2025">미르와 청운밴드가 함께한 공연 기록<ArrowRight size={15}/></Link>
       </div>
-      <figure className="promo-hero-art">
-        <span className="promo-art-word" aria-hidden="true">MIR</span>
-        <div className="promo-art-ring" aria-hidden="true"/>
-        <img className="promo-mir-portrait" src={`${import.meta.env.BASE_URL}mir-profile-still.webp`} alt="청룡 버튜버 미르 캐릭터" width="548" height="574" fetchPriority="high" decoding="async"/>
-        <figcaption><span>VIRTUAL VOICE. LIVE SOUND.</span><strong>미르 <b>×</b> 청운밴드</strong><small>노래로 만나, 무대로 이어지는 이야기</small></figcaption>
-        <span className="promo-art-index" aria-hidden="true">MIR / CHEONGWOON<br/>FAN ARCHIVE</span>
-      </figure>
+      <HomeHeroImage/>
     </section>
     <div className="section-wrap promo-intro-line"><span><Radio size={16}/>방송에서 만나고</span><i aria-hidden="true"/><span><Music2 size={16}/>음악으로 가까워지고</span><i aria-hidden="true"/><span><Sparkles size={16}/>무대의 기억을 함께 남깁니다</span></div>
     <StartHere {...content}/>

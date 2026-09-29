@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Read-only browser checks. Fixtures are synthetic and are never deployed."""
+"""Read-only live checks; synthetic upload/auth tests run only on localhost."""
 import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
 from playwright.sync_api import sync_playwright
+from promotion_revision_checks import run_revision_checks
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--url', default='http://127.0.0.1:5173/')
@@ -19,7 +20,7 @@ videos=[{'id':'voice','title':'노심융해 테스트 커버','youtube_url':'htt
 recent=[{'video_id':'stream','title':'FPS에 소질없는 테스트 방송','youtube_url':'https://www.youtube.com/watch?v=wxyzABCDEFG','position':1}]
 members=[{'id':str(i),'name':n,'position':p,'comment':c,'sort_order':i} for i,(n,p,c) in enumerate([('Ray','GUITAR','청운밴드 기타리스트 Ray입니다'),('SweetBerry','BASS','청운밴드 베이시스트입니다'),('맹감자','KEYBOARD','청운밴드 키보드입니다'),('멤버 04','Position','멤버 소개와 한 줄 코멘트를 입력하세요.')])]
 events=[{'id':'evt','event_date':'2026-09-30','title':'브라우저 테스트용 일정','category':'특별','start_time':'20:00:00','end_time':None,'description':'검증용 데이터입니다. 실제 일정이 아닙니다.','link_url':'https://cafe.naver.com/alice427','sort_order':1}]
-events.insert(0, {'id':'holiday', 'event_date':'2026-09-29', 'title':'개천절', 'category':'기타', 'start_time':None})  # Synthetic date: filter behavior, not holiday-date data.
+events.insert(0, {'id':'holiday', 'event_date':'2026-09-29', 'title':'개천절', 'category':'기타', 'start_time':None})
 mode={'value':'success'}
 headings={'band':'청운밴드','history':'공연 이력','history/blued-2025':'BLUED','gallery':'영상 및 갤러리','schedule':'일정표','mir':'미르(MIR)','review':'개선안 검토실','account':'검토용 화면에서는 로그인과 편집이 잠겨 있습니다.'}
 
@@ -34,6 +35,8 @@ def fixture(route):
         if mode['value']=='error': return route.fulfill(status=503,content_type='application/json',body='{"message":"fixture unavailable"}')
         data={'videos':videos,'recent_videos':recent,'band_members':members,'schedule_events':events,'galleries':[]}.get(table,[]) if mode['value']!='empty' else []
         return route.fulfill(status=200,content_type='application/json',body=json.dumps(data),headers={'access-control-allow-origin':'*'})
+    if 'preview-fixture.supabase.co/storage/v1/object/list/gallery' in url:
+        return route.fulfill(status=200,content_type='application/json',body='[]',headers={'access-control-allow-origin':'*'})
     if '/api/soop-live.php' in url:
         return route.fulfill(status=200,content_type='application/json',body=json.dumps({'status':'unknown' if mode['value']=='error' else 'offline'}))
     if '/api/naver-fanart.php' in url: return route.fulfill(status=200,content_type='application/json',body='{"status":"unavailable"}')
@@ -89,6 +92,8 @@ with sync_playwright() as p:
             page.screenshot(path=str(out/'home-error.png'),full_page=True)
             mode['value']='empty';page.goto(base,wait_until='domcontentloaded');page.get_by_text('새로운 공개 일정이 등록되면 여기에 표시됩니다. 공식 채널에서 최신 공지를 확인해 주세요.').wait_for();check('empty state has official fallback',True)
             page.screenshot(path=str(out/'home-empty.png'),full_page=True)
+        mode['value']='success'
+        run_revision_checks(page,context,base,out,args.live,check)
         check('no JavaScript runtime errors',not errors,errors=errors)
     except Exception as exc:
         errors.append(str(exc));page.screenshot(path=str(out/'failure.png'),full_page=True)

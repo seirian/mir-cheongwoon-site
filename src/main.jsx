@@ -15,6 +15,7 @@ import './media-gallery.css';
 import './site-final-polish.css';
 import './member-auth.css';
 import './promotion.css';
+import './promotion-v2.css';
 
 // Static document URLs and clean routes must resolve to the same React page.
 if (window.location.pathname.endsWith('/index.html')) {
