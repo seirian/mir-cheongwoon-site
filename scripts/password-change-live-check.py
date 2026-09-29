@@ -1,9 +1,7 @@
-"""Only anonymous/invalid-token requests: never submit any member's credentials."""
+"""Read-only anonymous production check; never submit any member's credentials."""
 import argparse
 import json
 from pathlib import Path
-from urllib.error import HTTPError
-from urllib.request import Request, urlopen
 from playwright.sync_api import sync_playwright
 
 parser = argparse.ArgumentParser()
@@ -16,28 +14,7 @@ def check(name, ok, **details):
     checks.append({'check':name, 'passed':bool(ok), **details})
     if not ok: raise AssertionError(name)
 
-endpoint = 'https://nohboljeugjmtwnvtayu.supabase.co/functions/v1/member-password'
-# No email/user ID, real password, session or publishable key is used here.
-synthetic = json.dumps({'currentPassword':'Not-a-member-credential', 'newPassword':'Synthetic-new-not-used', 'confirmPassword':'Synthetic-new-not-used'}).encode()
 try:
-    for case, method, expected, extra in [
-        ('preflight','OPTIONS',204,{}), ('get rejected','GET',405,{}),
-        ('anonymous rejected','POST',401,{}),
-        ('invalid token rejected','POST',401,{'Authorization':'Bearer invalid-synthetic-session-token'}),
-        ('cross-origin rejected','POST',403,{'Origin':'https://example.invalid'}),
-    ]:
-        req = Request(endpoint, method=method, data=synthetic if method=='POST' else None,
-            headers={'Content-Type':'application/json','Origin':'https://mir.yeop.net', **extra})
-        try:
-            response = urlopen(req, timeout=30)
-        except HTTPError as response_error:
-            response = response_error
-        with response:
-            status, headers, body = response.status, response.headers, response.read(16384)
-        check(case, status==expected, status=status)
-        check(case+' is not cached', headers.get('Cache-Control')=='no-store')
-        if case in ['anonymous rejected','invalid token rejected']:
-            check(case+' has safe authentication error',json.loads(body).get('error')=='authentication_required')
     with sync_playwright() as p:
         browser = p.chromium.launch()
         try:

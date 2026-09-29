@@ -1,4 +1,4 @@
-// Shared by the form and the server. Passwords are compared verbatim, never trimmed.
+// Shared by the form and the native Auth change flow. Passwords are compared verbatim, never trimmed.
 export function validatePasswordChange(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { code: 'invalid_request' };
   if (typeof value.currentPassword !== 'string' || !value.currentPassword.length || value.currentPassword.length > 256) {

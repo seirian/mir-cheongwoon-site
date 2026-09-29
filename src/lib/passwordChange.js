@@ -1,4 +1,5 @@
-export { validatePasswordChange } from '../../supabase/functions/_shared/password-policy.mjs';
+import { validatePasswordChange } from './passwordPolicy.js';
+export { validatePasswordChange } from './passwordPolicy.js';
 
 export const passwordChangeMessage = (code) => ({
   current_password_required: '기존 비밀번호를 입력해 주세요.',
@@ -14,15 +15,48 @@ export const passwordChangeMessage = (code) => ({
   auth_unavailable: '인증 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.',
 }[code] || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.');
 
-export async function requestPasswordChange(client, values, userId) {
-  // Validate the active user again immediately before transmitting credentials.
-  const current = await client.auth.getUser();
-  if (current.error || !current.data?.user?.id || current.data.user.id !== userId) return { error: 'authentication_required' };
-  const { data, error } = await client.functions.invoke('member-password', { body: values });
-  if (error) {
-    let payload;
-    try { payload = await error.context?.json(); } catch { /* Never render raw errors. */ }
-    return { error: payload?.error || data?.error || 'change_unconfirmed' };
+// Passwords go directly to the existing Supabase Auth service, not an application endpoint.
+export async function requestPasswordChange(client, values, userId, createVerificationClient) {
+  const invalid = validatePasswordChange(values);
+  if (invalid) return { error: invalid.code };
+  if (!client || !userId) return { error: 'authentication_required' };
+  let verifier; let writing = false; let changed = false;
+  try {
+    const current = await client.auth.getUser();
+    const user = current.data?.user;
+    if (current.error || !user?.email || user.id !== userId || user.is_anonymous) return { error: 'authentication_required' };
+    if (user.factors?.some((factor) => factor.status === 'verified')) return { error: 'additional_verification_required' };
+    verifier = createVerificationClient();
+    if (!verifier) return { error: 'auth_unavailable' };
+    // Auth verifies the existing password. No persisted profile field is trusted here.
+    const verified = await verifier.auth.signInWithPassword({ email: user.email, password: values.currentPassword });
+    if (verified.error) {
+      if (verified.error.status === 429) return { error: 'rate_limited' };
+      return { error: verified.error.status >= 500 || !verified.error.status ? 'auth_unavailable' : 'current_password_mismatch' };
+    }
+    if (!verified.data?.session?.access_token || verified.data?.user?.id !== userId) return { error: 'authentication_required' };
+    // Reject an account switch or logout while reauthentication was in flight.
+    const latest = await client.auth.getUser();
+    if (latest.error || latest.data?.user?.id !== userId) return { error: 'authentication_required' };
+    writing = true;
+    const result = await verifier.auth.updateUser({ password: values.newPassword, current_password: values.currentPassword });
+    if (result.error) {
+      const code = result.error.code;
+      if (['weak_password', 'same_password', 'current_password_mismatch', 'current_password_required'].includes(code)) return { error: code };
+      if (result.error.status === 429) return { error: 'rate_limited' };
+      if ([401,403].includes(result.error.status)) return { error: 'authentication_required' };
+      return { error: result.error.status >= 500 || !result.error.status ? 'change_unconfirmed' : 'change_rejected' };
+    }
+    if (result.data?.user?.id !== userId) return { error: 'change_unconfirmed' };
+    changed = true;
+    return { ok: true };
+  } catch {
+    // Never automatically repeat a password mutation after an ambiguous response.
+    return { error: writing ? 'change_unconfirmed' : 'auth_unavailable' };
+  } finally {
+    if (verifier) {
+      try { await verifier.auth.signOut({ scope: changed ? 'global' : 'local' }); } catch { /* Do not misreport a committed change. */ }
+      try { await verifier.auth.stopAutoRefresh?.(); } catch { /* Best-effort client cleanup. */ }
+    }
   }
-  return data?.ok === true ? { ok: true } : { error: data?.error || 'change_unconfirmed' };
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, KeyRound } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { createPasswordVerificationClient } from '../lib/passwordClient';
 import { passwordChangeMessage, requestPasswordChange, validatePasswordChange } from '../lib/passwordChange';
 
 const blank = () => ({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -24,7 +25,7 @@ export default function PasswordChangeForm({ userId, onCancel, onChanged }) {
     if (issue) { report(issue); return; }
     lock.current = true; setBusy(true); setError(null);
     try {
-      const result = await requestPasswordChange(supabase, values, userId);
+      const result = await requestPasswordChange(supabase, values, userId, createPasswordVerificationClient);
       if (!mounted.current) return;
       if (result.ok) {
         setValues(blank());

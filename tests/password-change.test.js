@@ -1,149 +1,91 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPasswordHandler } from '../supabase/functions/member-password/handler.mjs';
-import { validatePasswordChange } from '../supabase/functions/_shared/password-policy.mjs';
+import { validatePasswordChange } from '../src/lib/passwordPolicy.js';
 import { requestPasswordChange, passwordChangeMessage } from '../src/lib/passwordChange.js';
 
-// Synthetic credentials only; no network or production users are involved.
+// Native Auth methods are simulated; no production account or network is used.
 const fields = { currentPassword: ' old synthetic password ', newPassword: ' new synthetic password ', confirmPassword: ' new synthetic password ' };
-const originalToken = 'synthetic-original-session';
-const freshToken = 'synthetic-fresh-session';
 function fixture(options = {}) {
-  const calls = []; let stored = fields.currentPassword;
+  const calls = []; let stored = fields.currentPassword; let reads = 0;
   const user = { id: 'synthetic-user', email: 'synthetic@example.invalid', ...options.user };
-  const fetchImpl = async (url, init) => {
-    const path = new URL(url).pathname.replace('/auth/v1', '') + new URL(url).search;
-    const payload = init.body ? JSON.parse(init.body) : null;
-    calls.push({ path, method: init.method, token: init.headers.Authorization, payload });
-    if (options.onCall) await options.onCall(path, init);
-    if (path === '/user' && init.method === 'GET') return Response.json(user, { status: options.identityStatus || 200 });
-    if (path.startsWith('/token')) {
-      if (options.loginStatus) return Response.json({ error_code: 'test_error' }, { status: options.loginStatus });
-      if (payload.email !== user.email || payload.password !== stored) return Response.json({ error_code: 'invalid_credentials' }, { status: 400 });
-      return Response.json({ access_token: freshToken, user: { ...user, id: options.wrongUser ? 'other-user' : user.id } });
-    }
-    if (path === '/user' && init.method === 'PUT') {
-      assert.equal(init.headers.Authorization, `Bearer ${freshToken}`);
-      assert.equal(payload.current_password, stored);
-      assert.deepEqual(Object.keys(payload).sort(), ['current_password', 'password']);
-      if (options.updateThrows) throw new Error('synthetic network error');
-      if (options.updateStatus) return Response.json({ code: options.updateCode }, { status: options.updateStatus });
-      stored = payload.password;
-      return Response.json(user);
-    }
-    if (path.startsWith('/logout')) {
-      if (options.cleanupThrows) throw new Error('synthetic cleanup error');
-      return new Response(null, { status: 204 });
-    }
-    throw new Error('Unexpected synthetic endpoint');
-  };
-  const handler = createPasswordHandler({ url: 'https://auth.example.invalid', anonKey: 'synthetic-public-key', fetchImpl, now: options.now || (() => 1000) });
-  const request = (body = fields, extra = {}) => new Request('https://edge.example.invalid/member-password', {
-    method: 'POST', headers: { authorization: `Bearer ${originalToken}`, 'content-type': 'application/json', origin: 'https://mir.yeop.net', ...extra.headers },
-    body: JSON.stringify(body), ...extra,
-  });
-  return { handler, calls, request, stored: () => stored };
+  const main = { auth: { getUser: async () => {
+    calls.push('main:getUser'); reads++;
+    return options.expired || (options.switched && reads > 1) ? { data: { user: null }, error: { status:401 } } : { data: { user } };
+  } } };
+  const verifier = { auth: {
+    signInWithPassword: async (data) => {
+      calls.push('reauth:signIn');
+      assert.equal(data.email,user.email); assert.equal(data.password,options.expectedCurrent || fields.currentPassword);
+      if (options.loginError) return { error: options.loginError };
+      return { data: { user: { ...user, id: options.wrongUser ? 'other' : user.id }, session: { access_token: 'memory-only-synthetic-token' } } };
+    },
+    updateUser: async (data) => {
+      calls.push('reauth:updateUser');
+      assert.deepEqual(data,{password:fields.newPassword,current_password:fields.currentPassword});
+      if (options.updateThrows) throw new Error('synthetic network failure');
+      if (options.updateError) return { error: options.updateError };
+      stored=data.password;
+      return { data: { user } };
+    },
+    signOut: async ({scope}) => { calls.push('reauth:logout:'+scope); if(options.cleanupError)throw new Error('synthetic cleanup failure'); },
+    stopAutoRefresh: () => { calls.push('reauth:stop'); },
+  } };
+  return { main, factory:()=>verifier, calls, stored:()=>stored };
 }
-const writes = (f) => f.calls.filter((c) => c.method === 'PUT');
-
-test('password: correct existing + matching new changes only the authenticated user', async () => {
-  const f = fixture(); const response = await f.handler(f.request());
-  assert.equal(response.status, 200); assert.deepEqual(await response.json(), { ok: true });
-  assert.equal(f.stored(), fields.newPassword); assert.equal(writes(f).length, 1);
-  assert.equal(f.calls[0].token, `Bearer ${originalToken}`);
-  assert.equal(f.calls.at(-1).path, '/logout?scope=global');
-  assert.equal(response.headers.get('cache-control'), 'no-store');
+async function run(f, values=fields) { return requestPasswordChange(f.main,values,'synthetic-user',f.factory); }
+test('password: reauthenticate first, verify same user again, update only temporary session',async()=>{
+  const f=fixture(); assert.deepEqual(await run(f),{ok:true}); assert.equal(f.stored(),fields.newPassword);
+  assert.deepEqual(f.calls,['main:getUser','reauth:signIn','main:getUser','reauth:updateUser','reauth:logout:global','reauth:stop']);
 });
-for (const [name, patch, code] of [
-  ['existing required', { currentPassword: '' }, 'current_password_required'],
-  ['confirmation differs', { confirmPassword: 'not equal' }, 'password_mismatch'],
-  ['confirmation missing', { confirmPassword: '' }, 'password_mismatch'],
-  ['weak new', { newPassword: 'short', confirmPassword: 'short' }, 'weak_password'],
-  ['oversized new', { newPassword: 'x'.repeat(129) }, 'weak_password'],
-  ['same password', { newPassword: fields.currentPassword, confirmPassword: fields.currentPassword }, 'same_password'],
-  ['wrong existing', { currentPassword: 'wrong synthetic password' }, 'current_password_mismatch'],
-]) {
-  test('password: rejects ' + name + ' without changing credentials', async () => {
-    const f = fixture(); const response = await f.handler(f.request({ ...fields, ...patch }));
-    assert.equal((await response.json()).error, code); assert.equal(writes(f).length, 0); assert.equal(f.stored(), fields.currentPassword);
-  });
-}
-test('password: preserves whitespace and does not coerce non-string input', () => {
-  assert.equal(validatePasswordChange(fields), null);
-  assert.equal(validatePasswordChange({ ...fields, confirmPassword: fields.newPassword.trim() }).code, 'password_mismatch');
-  assert.equal(validatePasswordChange({ ...fields, currentPassword: 123456789 }).code, 'current_password_required');
-  assert.equal(validatePasswordChange(null).code, 'invalid_request');
+for(const [name,patch,code] of [
+  ['empty existing',{currentPassword:''},'current_password_required'],
+  ['mismatch',{confirmPassword:'different'},'password_mismatch'],
+  ['empty confirmation',{confirmPassword:''},'password_mismatch'],
+  ['short new',{newPassword:'short',confirmPassword:'short'},'weak_password'],
+  ['long new',{newPassword:'x'.repeat(129)},'weak_password'],
+  ['same password',{newPassword:fields.currentPassword,confirmPassword:fields.currentPassword},'same_password'],
+]) test('password: reject '+name+' before any request',async()=>{
+  const f=fixture(); assert.equal((await run(f,{...fields,...patch})).error,code); assert.equal(f.calls.length,0); assert.equal(f.stored(),fields.currentPassword);
 });
-test('password: rejects body-supplied target user/email', async () => {
-  for (const key of ['email', 'user_id']) {
-    const f = fixture(); const response = await f.handler(f.request({ ...fields, [key]: 'other-user' }));
-    assert.equal(response.status, 400); assert.equal(f.calls.length, 0);
+test('password: spaces are not silently trimmed or coerced',()=>{
+  assert.equal(validatePasswordChange(fields),null);
+  assert.equal(validatePasswordChange({...fields,confirmPassword:fields.newPassword.trim()}).code,'password_mismatch');
+  assert.equal(validatePasswordChange({...fields,currentPassword:12345678}).code,'current_password_required');
+  assert.equal(validatePasswordChange(null).code,'invalid_request');
+});
+test('password: wrong existing password never reaches update or changes main session',async()=>{
+  const f=fixture({loginError:{status:400,code:'invalid_credentials'}});
+  assert.equal((await run(f)).error,'current_password_mismatch'); assert.ok(!f.calls.includes('reauth:updateUser')); assert.equal(f.stored(),fields.currentPassword);
+  assert.ok(f.calls.includes('reauth:logout:local'));
+});
+test('password: expired main session blocks reauthentication',async()=>{
+  const f=fixture({expired:true});assert.equal((await run(f)).error,'authentication_required');assert.deepEqual(f.calls,['main:getUser']);
+});
+test('password: anonymous and MFA accounts cannot bypass auth requirements',async()=>{
+  for(const user of [{is_anonymous:true},{email:''},{factors:[{status:'verified'}]}]) {
+    const f=fixture({user}); assert.ok((await run(f)).error); assert.deepEqual(f.calls,['main:getUser']);
   }
 });
-test('password: missing and expired bearer cannot reach password verification', async () => {
-  const f = fixture(); const req = f.request(); req.headers.delete('authorization');
-  assert.equal((await f.handler(req)).status, 401); assert.equal(f.calls.length, 0);
-  const expired = fixture({ identityStatus: 401 });
-  assert.equal((await expired.handler(expired.request())).status, 401); assert.equal(expired.calls.length, 1);
+test('password: provider reauthentication must resolve to same verified account',async()=>{
+  const f=fixture({wrongUser:true}); assert.equal((await run(f)).error,'authentication_required');assert.ok(!f.calls.includes('reauth:updateUser'));
 });
-test('password: anonymous and MFA users cannot bypass their authentication requirement', async () => {
-  for (const user of [{ is_anonymous: true }, { email: '' }, { factors: [{ status: 'verified' }] }]) {
-    const f = fixture({ user }); const res = await f.handler(f.request());
-    assert.ok([401,403].includes(res.status)); assert.equal(f.calls.length, 1);
+test('password: account switch during reauth cancels password mutation',async()=>{
+  const f=fixture({switched:true});assert.equal((await run(f)).error,'authentication_required');assert.ok(!f.calls.includes('reauth:updateUser'));
+});
+test('password: policy rejection, rate limit and auth outage are handled without update',async()=>{
+  for(const [options,code] of [[{loginError:{status:429}},'rate_limited'],[{loginError:{status:503}},'auth_unavailable'],[{updateError:{status:422,code:'weak_password'}},'weak_password'],[{updateError:{status:403}},'authentication_required']]) {
+    const f=fixture(options);assert.equal((await run(f)).error,code);assert.equal(f.stored(),fields.currentPassword);
   }
 });
-test('password: reauthenticated identity must match original verified user', async () => {
-  const f = fixture({ wrongUser: true }); const response = await f.handler(f.request());
-  assert.equal(response.status, 401); assert.equal(writes(f).length, 0); assert.equal(f.calls.at(-1).path, '/logout?scope=local');
+test('password: a lost mutation response is not retried automatically',async()=>{
+  const f=fixture({updateThrows:true});assert.equal((await run(f)).error,'change_unconfirmed');assert.equal(f.calls.filter(v=>v==='reauth:updateUser').length,1);
 });
-test('password: backend policy errors and rate limits are safe and do not change password', async () => {
-  for (const options of [{ loginStatus: 429 }, { loginStatus: 503 }, { updateStatus: 422, updateCode: 'weak_password' }, { updateStatus: 403 }]) {
-    const f = fixture(options); const response = await f.handler(f.request());
-    assert.ok(response.status >= 400); assert.equal(f.stored(), fields.currentPassword);
-    const text = await response.text(); assert.ok(!text.includes(fields.currentPassword)); assert.ok(!text.includes(freshToken));
-  }
+test('password: cleanup failure does not report successful mutation as failed',async()=>{
+  const f=fixture({cleanupError:true});assert.deepEqual(await run(f),{ok:true});assert.equal(f.stored(),fields.newPassword);
 });
-test('password: timed-out mutation is never automatically retried', async () => {
-  const f = fixture({ updateThrows: true }); const response = await f.handler(f.request());
-  assert.equal((await response.json()).error, 'change_unconfirmed'); assert.equal(writes(f).length, 1);
+test('password: missing verification client never mutates the account',async()=>{
+  const f=fixture();f.factory=()=>null;assert.equal((await run(f)).error,'auth_unavailable');assert.equal(f.stored(),fields.currentPassword);
 });
-test('password: logout transport failure never reports a committed change as failed', async () => {
-  const f = fixture({ cleanupThrows: true }); const response = await f.handler(f.request());
-  assert.deepEqual(await response.json(), { ok: true }); assert.equal(f.stored(), fields.newPassword);
-});
-test('password: simultaneous attempts cannot release another request lock', async () => {
-  let release, started;
-  const gate = new Promise((resolve) => { release = resolve; });
-  const seen = new Promise((resolve) => { started = resolve; });
-  const f = fixture({ onCall: async (path) => { if (path.startsWith('/token')) { started(); await gate; } } });
-  const first = f.handler(f.request()); await seen;
-  for (let i = 0; i < 2; i++) assert.equal((await f.handler(f.request())).status, 429);
-  release(); assert.equal((await first).status, 200); assert.equal(writes(f).length, 1);
-});
-test('password: bounded attempt guard expires and allows later attempts', async () => {
-  let now = 1000; const f = fixture({ now: () => now });
-  for (let i = 0; i < 5; i++) await f.handler(f.request({ ...fields, currentPassword: 'wrong' }));
-  assert.equal((await f.handler(f.request())).status, 429); now += 600001;
-  assert.equal((await f.handler(f.request())).status, 200);
-});
-test('password: origin, method, malformed JSON and oversized body are rejected', async () => {
-  const f = fixture();
-  const origin = f.request(); origin.headers.set('origin', 'https://evil.example'); assert.equal((await f.handler(origin)).status, 403);
-  assert.equal((await f.handler(new Request('https://edge.example'))).status, 405);
-  const options = new Request('https://edge.example', { method: 'OPTIONS', headers: { origin: 'https://mir.yeop.net' } });
-  assert.equal((await f.handler(options)).status, 204);
-  const headers = { authorization: `Bearer ${originalToken}`, 'content-type': 'application/json' };
-  assert.equal((await f.handler(new Request('https://edge.example', { method: 'POST', headers, body: '{' }))).status, 400);
-  assert.equal((await f.handler(new Request('https://edge.example', { method: 'POST', headers, body: 'x'.repeat(4097) }))).status, 413);
-  assert.equal(f.calls.length, 0);
-});
-test('password client: account switch or expired session blocks submission', async () => {
-  let invoked = false;
-  const client = { auth: { getUser: async () => ({ data: { user: { id: 'other' } } }) }, functions: { invoke: async () => { invoked = true; } } };
-  assert.equal((await requestPasswordChange(client, fields, 'original')).error, 'authentication_required'); assert.equal(invoked, false);
-});
-test('password client: reads safe error code, never renders raw upstream error', async () => {
-  const client = { auth: { getUser: async () => ({ data: { user: { id: 'same' } } }) }, functions: { invoke: async () => ({ error: { context: Response.json({ error: 'current_password_mismatch', debug: 'secret' }) } }) } };
-  const response = await requestPasswordChange(client, fields, 'same');
-  assert.equal(response.error, 'current_password_mismatch'); assert.ok(!passwordChangeMessage('secret').includes('secret'));
+test('password: raw upstream message never shown to user',()=>{
+  assert.ok(!passwordChangeMessage('untrusted raw error with secret').includes('secret'));
 });

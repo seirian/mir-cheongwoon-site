@@ -26,6 +26,8 @@ def encode(value):
     return base64.urlsafe_b64encode(json.dumps(value).encode()).decode().rstrip('=')
 token = '.'.join([encode({'alg':'HS256','typ':'JWT'}), encode({'sub':uid,'exp':int(time.time())+3600,'aud':'authenticated','role':'authenticated'}), 'synthetic-signature'])
 session = {'access_token': token, 'refresh_token':'synthetic-refresh', 'expires_at':int(time.time())+3600, 'expires_in':3600, 'token_type':'bearer', 'user':user}
+fresh_token = '.'.join([encode({'alg':'HS256','typ':'JWT'}), encode({'sub':uid,'exp':int(time.time())+3600,'aud':'authenticated','role':'authenticated','session_id':'verification-only'}), 'synthetic-signature'])
+fresh_session = {**session,'access_token':fresh_token,'refresh_token':'verification-only-refresh'}
 old, new = 'Synthetic-old-123!', 'Synthetic-new-123!'
 
 with sync_playwright() as p:
@@ -34,7 +36,7 @@ with sync_playwright() as p:
         for width in [1440, 390]:
             context = browser.new_context(viewport={'width':width,'height':1000})
             context.add_init_script('localStorage.setItem("sb-preview-fixture-auth-token", '+json.dumps(json.dumps(session))+');')
-            state = {'calls':0,'error':None,'signed_out':False,'expired':False}
+            state = {'calls':0,'writes':0,'error':None,'signed_out':False,'expired':False}
             errors = []
             def route_request(route):
                 req = route.request; url = urlsplit(req.url)
@@ -43,19 +45,26 @@ with sync_playwright() as p:
                     route.fulfill(status=status, content_type='application/json', headers=headers, body=json.dumps(data))
                 if url.hostname == 'preview-fixture.supabase.co':
                     if req.method == 'OPTIONS': return reply({})
+                    if url.path == '/auth/v1/token' and req.method == 'POST':
+                        state['calls'] += 1
+                        data = req.post_data_json
+                        check('existing password verified against current user email',data.get('email')==user['email'],width=width)
+                        if state['error']=='rate_limited': return reply({'code':'over_request_rate_limit','msg':'Synthetic rate limit'},429)
+                        if data.get('password')!=old: return reply({'code':'invalid_credentials','msg':'Invalid login credentials'},400)
+                        return reply(fresh_session)
+                    if url.path == '/auth/v1/user' and req.method == 'PUT':
+                        state['writes'] += 1; data = req.post_data_json
+                        check('mutation uses only temporary reauthenticated token',req.headers.get('authorization')=='Bearer '+fresh_token,width=width)
+                        check('new and existing passwords reach native Auth unchanged',data.get('password')==new and data.get('current_password')==old,width=width)
+                        if state['error']=='change_unconfirmed': return reply({'code':'unexpected_failure','msg':'Synthetic transport failure'},503)
+                        return reply(user)
                     if url.path == '/auth/v1/user': return reply({'code':'bad_jwt'} if state['expired'] else user, 401 if state['expired'] else 200)
                     if url.path == '/auth/v1/logout':
-                        state['signed_out'] = True
+                        if req.headers.get('authorization')=='Bearer '+token: state['signed_out'] = True
                         return reply({})
                     if url.path == '/rest/v1/member_profiles': return reply({'username':'테스트회원','email':user['email']})
-                    if url.path == '/functions/v1/member-password':
-                        state['calls'] += 1; data = req.post_data_json
-                        check('request uses authenticated session', req.headers.get('authorization') == 'Bearer '+token, width=width)
-                        check('only the three password fields are sent', set(data)=={'currentPassword','newPassword','confirmPassword'}, width=width)
-                        if state['error']: return reply({'error':state['error']}, 429 if state['error']=='rate_limited' else 503)
-                        if data['currentPassword'] != old: return reply({'error':'current_password_mismatch'},400)
-                        if data['newPassword'] != data['confirmPassword']: return reply({'error':'password_mismatch'},400)
-                        return reply({'ok':True})
+                    if url.path.startswith('/functions/v1/'):
+                        raise AssertionError('Password flow must not use an application credential endpoint')
                     return reply([])
                 if url.hostname in ['127.0.0.1','localhost']: return route.continue_()
                 return route.abort()
@@ -82,14 +91,15 @@ with sync_playwright() as p:
                 check('invalid length never sends mutation',state['calls']==0,width=width)
                 fill(current='Synthetic-wrong-123!'); submit()
                 page.get_by_role('alert').filter(has_text='기존 비밀번호가 올바르지 않습니다').wait_for()
-                check('wrong current password stays on form',state['calls']==1 and not state['signed_out'],width=width)
+                check('wrong current password stays on form',state['calls']==1 and state['writes']==0 and not state['signed_out'],width=width)
                 check('wrong current field cleared',page.get_by_label('기존 비밀번호',exact=True).input_value()=='',width=width)
                 state['error']='rate_limited'; fill(); submit()
                 page.get_by_role('alert').filter(has_text='시도 횟수').wait_for()
-                check('rate limit does not report success',not state['signed_out'],width=width)
+                check('rate limit does not report success',state['writes']==0 and not state['signed_out'],width=width)
                 state['error']='change_unconfirmed'; fill(); submit()
                 page.get_by_role('alert').filter(has_text='변경 결과를 확인하지 못했습니다').wait_for()
-                check('unknown outcome has no automatic retry',state['calls']==3,width=width)
+                check('unknown outcome has no automatic retry',state['calls']==3 and state['writes']==1,width=width)
+                check('verification tokens never replace stored main session',page.evaluate('(values)=>!values.some(v=>JSON.stringify(localStorage).includes(v)||JSON.stringify(sessionStorage).includes(v))',[fresh_token,'verification-only-refresh']),width=width)
                 state['error']=None; state['expired']=True; fill(); submit()
                 page.get_by_role('alert').filter(has_text='로그인 상태').wait_for()
                 check('expired identity blocks mutation',state['calls']==3,width=width)
@@ -103,7 +113,7 @@ with sync_playwright() as p:
                 page.evaluate('document.querySelector("form").requestSubmit(); document.querySelector("form").requestSubmit();')
                 page.get_by_role('heading',name='회원 로그인',exact=True).wait_for()
                 page.get_by_role('status').filter(has_text='비밀번호가 변경되었습니다').wait_for()
-                check('valid change succeeds once and returns to login',state['calls']==4 and state['signed_out'],width=width)
+                check('valid change succeeds once and returns to login',state['calls']==4 and state['writes']==2 and state['signed_out'],width=width)
                 check('passwords never persisted or added to URL',page.evaluate('(values)=>!values.some(v=>JSON.stringify(localStorage).includes(v)||JSON.stringify(sessionStorage).includes(v)||location.href.includes(v))',[old,new]),width=width)
                 check('responsive form has no page-wide overflow',page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),width=width)
                 page.screenshot(path=str(out/f'success-{width}.png'),full_page=True)
