@@ -10,31 +10,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
         with:
-          python-version: '3.13'
-      - name: Read public article bootstrap, never execute it
+          persist-credentials: false
+      - name: Validate a single article request with real menu context
         run: |
           mkdir -p fanart-diagnosis
-          python - <<'PY'
-          import json,re,urllib.request
-          from pathlib import Path
-          url='https://cafe.naver.com/f-e/cafes/31003156/articles/165311'
-          req=urllib.request.Request(url,headers={'User-Agent':'YeopMirMigration/0.3 (+https://mir.yeop.net)','Accept':'text/html'})
-          with urllib.request.urlopen(req,timeout=25) as r:
-              assert r.status==200
-              html=r.read(2000001).decode('utf-8')
-          assert len(html)<=2000000
-          decoder=json.JSONDecoder();chunks=[]
-          for m in re.finditer(r'self\.__next_f\.push\(',html):
-              value,end=decoder.raw_decode(html[m.end():])
-              assert html[m.end()+end:].lstrip().startswith(')')
-              if isinstance(value,list) and len(value)==2 and value[0]==1 and isinstance(value[1],str):chunks.append(value[1])
-          text=''.join(chunks)
-          Path('fanart-diagnosis/flight.txt').write_text(text)
-          Path('fanart-diagnosis/summary.json').write_text(json.dumps({'url':url,'chunks':len(chunks),'bytes':len(text),'has_contentHtml':'contentHtml' in text,'has_article':'article' in text}))
-          print({'chunks':len(chunks),'bytes':len(text),'has_contentHtml':'contentHtml' in text})
-          PY
+          php <<'PHP'
+          <?php
+          require 'server/api/_core.php';
+          $client=new \YeopMigration\Client(budget:15);
+          try {
+            $query=http_build_query(['query'=>'','menuId'=>10,'boardType'=>'L','useCafeId'=>'true','requestFrom'=>'A']);
+            $r=$client->request(\YeopMigration\ARTICLE_API.'165311?'.$query,headers:\YeopMigration\naverHeaders());
+            $result=\YeopMigration\unwrap(\YeopMigration\parseJson($r['body']));
+            $a=$result['article']??[];
+            $out=['ok'=>true,'keys'=>array_keys($result),'article_keys'=>array_keys($a),'title'=>$a['subject']??null,'images'=>count(\YeopMigration\articleImages($a))];
+          } catch (\Throwable $e) {
+            $code=$e->getMessage(); $out=['ok'=>false,'error'=>preg_match('/^[a-z0-9_]+$/D',$code)?$code:'unclassified'];
+          }
+          $out['trace']=$client->trace;
+          file_put_contents('fanart-diagnosis/result.json',json_encode($out,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));
+          echo json_encode($out,JSON_UNESCAPED_UNICODE).PHP_EOL;
+          PHP
       - uses: actions/upload-artifact@v4
         if: always()
         with:
