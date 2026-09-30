@@ -344,17 +344,46 @@ function jsonResponse(payload: Record<string, unknown>, status = 200): Response 
   return Response.json(payload, { status, headers: { "Cache-Control": "no-store" } });
 }
 
-export default {
-  fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
-    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
-    const admin = ctx.supabaseAdmin;
-    const { data: configData, error: configError } = await admin
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function loadSyncConfig(admin: any): Promise<{ data: SyncConfig | null; error: any }> {
+  const retryDelays = [0, 300, 1000];
+  let lastError: any = null;
+
+  for (let attempt = 0; attempt < retryDelays.length; attempt += 1) {
+    if (retryDelays[attempt] > 0) await wait(retryDelays[attempt]);
+
+    const { data, error } = await admin
       .from("schedule_sync_config")
       .select("cron_token,sheet_id,enabled,max_changes,max_deletes")
       .eq("id", 1)
       .single();
+
+    if (!error && data) return { data: data as SyncConfig, error: null };
+
+    lastError = error;
+    const errorCode = String(error?.code || "");
+    const errorMessage = String(error?.message || "");
+    const retryableAuthError = errorCode === "PGRST303"
+      || errorMessage.includes("JWT")
+      || errorMessage.includes("401");
+
+    if (!retryableAuthError) break;
+    console.warn("schedule-sync config auth retry", { attempt: attempt + 1, errorCode });
+  }
+
+  return { data: null, error: lastError };
+}
+
+export default {
+  fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
+    if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
+    const admin = ctx.supabaseAdmin;
+    const { data: configData, error: configError } = await loadSyncConfig(admin);
     if (configError || !configData) return jsonResponse({ error: "sync_config_unavailable" }, 503);
-    const config = configData as SyncConfig;
+    const config = configData;
     const suppliedToken = req.headers.get("x-schedule-sync-token") || "";
     if (!safeEqual(suppliedToken, config.cron_token)) return jsonResponse({ error: "unauthorized" }, 401);
     if (!config.enabled) return jsonResponse({ status: "disabled" }, 503);

@@ -28,6 +28,8 @@ Cron 호출은 DB 내부 전용 토큰으로 인증하며 Supabase API 키를 �
 
 - 내부 설정 테이블은 anon/authenticated 클라이언트에 명시적으로 항상 거부됩니다.
 - Cron의 pg_net 응답 timeout은 Google Sheet 조회 시간을 고려해 15초입니다.
+- Supabase API Gateway가 일시적으로 `PGRST303` / JWT 401을 반환할 경우 최초 설정 조회를 짧게 재시도합니다.
+- 정기 배치 3분 뒤(00:03 / 12:03 KST) `schedule-sync-recovery-kst`가 직전 15분 내 성공한 cron 배치가 없을 때만 동일 배치를 재호출합니다.
 
 
 ## 배치 사후 자동 점검
