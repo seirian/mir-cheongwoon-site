@@ -1,0 +1,39 @@
+name: Songbook code audit
+on:
+  push:
+    branches: [feature/songbook]
+    paths: ['.github/workflows/songbook-code-audit.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          mkdir -p code-audit
+          git archive HEAD -o code-audit/repository.tar
+          npm ci --ignore-scripts --no-audit --no-fund
+          node scripts/prepare-songbook-v2.mjs
+          node --input-type=module - <<'JS' > code-audit/jsx-report.txt 2>&1
+          import {readdir,readFile} from 'node:fs/promises';
+          import {transform} from 'esbuild';
+          for (const item of await readdir('src/pages')) {
+            if (!item.endsWith('.jsx')) continue;
+            try {await transform(await readFile('src/pages/'+item,'utf8'),{loader:'jsx',sourcefile:item});}
+            catch(e) {console.log(item, String(e));}
+          }
+          JS
+          cat code-audit/jsx-report.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-code-audit
+          path: code-audit/
+          retention-days: 3

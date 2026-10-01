@@ -1,23 +1,149 @@
-import {createClient} from '@supabase/supabase-js';
-import {useCallback,useEffect,useRef,useState} from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import catalog from '../data/songbookCatalog.json';
-import {DEMO_KEY,duplicateOf,mergeSongs,restrictedFetch,stars,validateEntry} from './songbookV2';
-const url=import.meta.env.VITE_SUPABASE_URL,key=import.meta.env.VITE_SUPABASE_ANON_KEY;
-let storage;try{storage=window.sessionStorage;}catch{storage=undefined;}
-export const songbookClient=url&&key?createClient(url,key,{auth:{storageKey:'mir-songbook-review-editor-v2',storage,persistSession:Boolean(storage),autoRefreshToken:true,detectSessionInUrl:false},global:{fetch:restrictedFetch(url,globalThis.fetch.bind(globalThis))}}):null;
-const tables={entries:'songbook_preview_entries',ratings:'songbook_preview_ratings'};
-async function readTable(name){let data=[];for(let page=0;page<20;page++){const r=await songbookClient.from(name).select('*').order(name===tables.ratings?'song_id':'id').range(page*500,page*500+499);if(r.error)throw r.error;data=data.concat(r.data);if(r.data.length<500)return data;}throw Error('목록이 너무 큽니다.');}
-export function useSongbookStore(demo){
- const [entries,setEntries]=useState([]),[ratings,setRatings]=useState([]),[session,setSession]=useState(null),[role,setRole]=useState(null),[admin,setAdmin]=useState(false),[ready,setReady]=useState(false),[error,setError]=useState(''),[saving,setSaving]=useState(false);const generation=useRef(0);
- const refresh=useCallback(async()=>{if(demo)return;setError('');try{if(!songbookClient)throw Error('no configuration');const [e,r]=await Promise.all([readTable(tables.entries),readTable(tables.ratings)]);setEntries(e);setRatings(r);setReady(true);}catch{setReady(false);setError('저장된 변경사항을 불러오지 못했습니다. 기본 목록만 표시하며 서버 편집은 잠시 중지됩니다.');}},[demo]);
- useEffect(()=>{setEntries([]);setRatings([]);setReady(false);setError('');if(demo){try{const value=JSON.parse(localStorage.getItem(DEMO_KEY)||'{}');setEntries((value.entries||[]).map(validateEntry));setRatings((value.ratings||[]).filter(r=>typeof r.song_id==='string'&&(r.proficiency===null||stars(r.proficiency))));}catch{setError('체험 저장 데이터를 읽지 못해 기본 목록으로 시작합니다.');}setReady(true);return;}refresh();},[demo,refresh]);
- useEffect(()=>{if(!songbookClient||demo)return;let active=true;const resolve=async(next)=>{const n=++generation.current;setSession(next);setRole(null);setAdmin(false);if(!next)return;try{const user=await songbookClient.auth.getUser();if(user.error||user.data.user?.id!==next.user.id)return;const [a,e]=await Promise.all([songbookClient.from('admins').select('user_id').eq('user_id',next.user.id).maybeSingle(),songbookClient.from('songbook_preview_editors').select('role').eq('user_id',next.user.id).maybeSingle()]);if(active&&n===generation.current&&!a.error&&!e.error){setAdmin(Boolean(a.data));setRole(e.data?.role||null);}}catch{/* Fail closed; RLS remains authoritative. */}};
- songbookClient.auth.getSession().then(({data})=>active&&resolve(data.session)).catch(()=>{});const {data}=songbookClient.auth.onAuthStateChange((_event,next)=>{setRole(null);setAdmin(false);setSession(next);setTimeout(()=>active&&resolve(next),0);});return()=>{active=false;++generation.current;data.subscription.unsubscribe();};},[demo]);
- const songs=mergeSongs(catalog,entries,ratings);const canEdit=ready&&(demo||admin||Boolean(role));const canRate=ready&&(demo||role==='owner');
- function persist(e,r){localStorage.setItem(DEMO_KEY,JSON.stringify({entries:e,ratings:r}));setEntries(e);setRatings(r);}
- async function write(table,idField,payload,previous){let q=songbookClient.from(table);const result=previous?await q.update(payload).eq(idField,payload[idField]).eq('revision',previous.revision).select().single():await q.insert(payload).select().single();if(result.error)throw Error(result.error.code==='23505'?'같은 곡이 이미 등록되었거나 갱신이 충돌했습니다.':result.error.code==='PGRST116'?'다른 화면에서 변경되었습니다. 새로고침 후 다시 저장해주세요.':'저장하지 못했습니다. 권한·입력값·연결을 확인해주세요.');return result.data;}
- async function saveSong(input){if(!canEdit)throw Error('편집 권한이 없습니다.');const payload=validateEntry({...input,id:input.id||'custom-'+crypto.randomUUID()});if(duplicateOf(songs,payload))throw Error('같은 곡이 이미 있습니다. 기존 곡을 편집해주세요.');setSaving(true);try{const previous=entries.find(e=>e.id===payload.id);if(demo)persist([...entries.filter(e=>e.id!==payload.id),payload],ratings);else{const saved=await write(tables.entries,'id',payload,previous);setEntries(old=>[...old.filter(e=>e.id!==saved.id),saved]);}return payload.id;}finally{setSaving(false);}}
- async function saveRating(id,value){if(!canRate)throw Error('미르님으로 지정된 계정만 숙련도를 저장할 수 있습니다.');if(!songs.some(s=>s.id===id)||(value!==null&&!stars(value)))throw Error('숙련도를 확인해주세요.');setSaving(true);try{const payload={song_id:id,proficiency:value};if(demo)persist(entries,[...ratings.filter(r=>r.song_id!==id),payload]);else{const saved=await write(tables.ratings,'song_id',payload,ratings.find(r=>r.song_id===id));setRatings(old=>[...old.filter(r=>r.song_id!==id),saved]);}}finally{setSaving(false);}}
- async function setOwner(id){if(!admin||demo)throw Error('관리자만 계정을 지정할 수 있습니다.');if(!/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id))throw Error('계정 ID 형식을 확인해주세요.');const r=await songbookClient.from('songbook_preview_editors').upsert({user_id:id,role:'owner'});if(r.error)throw Error('계정이 없거나 이미 다른 소유자가 지정되어 있습니다.');}
- return {songs,session,role,admin,ready,error,saving,canEdit,canRate,saveSong,saveRating,setOwner,refresh,client:songbookClient};
+import { DEMO_KEY, duplicateOf, mergeSongs, publicSong, restrictedFetch, stars, validateEntry } from './songbookV2';
+
+const url = import.meta.env.VITE_SUPABASE_URL;
+const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+let storage;
+try { storage = window.sessionStorage; } catch { storage = undefined; }
+export const songbookClient = url && key ? createClient(url, key, {
+  auth: { storageKey: 'mir-songbook-review-editor-v2', storage, persistSession: Boolean(storage), autoRefreshToken: true, detectSessionInUrl: false },
+  global: { fetch: restrictedFetch(url, globalThis.fetch.bind(globalThis)) },
+}) : null;
+const tables = { entries: 'songbook_preview_entries', ratings: 'songbook_preview_ratings' };
+async function readTable(name) {
+  let data = [];
+  for (let page = 0; page < 20; page++) {
+    const response = await songbookClient.from(name).select('*').order(name === tables.ratings ? 'song_id' : 'id').range(page * 500, page * 500 + 499);
+    if (response.error) throw response.error;
+    data = data.concat(response.data);
+    if (response.data.length < 500) return data;
+  }
+  throw Error('목록이 너무 큽니다.');
+}
+export function useSongbookStore(demo) {
+  const [entries, setEntries] = useState([]);
+  const [ratings, setRatings] = useState([]);
+  const [session, setSession] = useState(null);
+  const [role, setRole] = useState(null);
+  const [admin, setAdmin] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const authGeneration = useRef(0);
+  const readGeneration = useRef(0);
+  const writeLock = useRef(false);
+  const mode = useRef(demo);
+  mode.current = demo;
+
+  const refresh = useCallback(async () => {
+    if (demo) return;
+    const generation = ++readGeneration.current;
+    setError('');
+    try {
+      if (!songbookClient) throw Error('No configuration');
+      const [e, r] = await Promise.all([readTable(tables.entries), readTable(tables.ratings)]);
+      if (mode.current || generation !== readGeneration.current) return;
+      setEntries(e); setRatings(r); setReady(true);
+    } catch {
+      if (mode.current || generation !== readGeneration.current) return;
+      setReady(false); setEntries([]); setRatings([]);
+      setError('저장된 변경사항을 불러오지 못했습니다. 기본 목록만 표시하며 서버 편집은 잠시 중지됩니다.');
+    }
+  }, [demo]);
+
+  useEffect(() => {
+    setEntries([]); setRatings([]); setReady(false); setError('');
+    if (demo) {
+      try {
+        const value = JSON.parse(localStorage.getItem(DEMO_KEY) || '{}');
+        const e = Array.isArray(value.entries) ? value.entries : [];
+        const r = Array.isArray(value.ratings) ? value.ratings : [];
+        // Stored entries use database field names. Normalize before validating so videos/status survive reload.
+        setEntries(e.map(entry => validateEntry(publicSong(entry))));
+        setRatings(r.filter(row => typeof row.song_id === 'string' && (row.proficiency === null || stars(row.proficiency))));
+      } catch { setError('체험 저장 데이터를 읽지 못해 기본 목록으로 시작합니다.'); }
+      setReady(true);
+    } else refresh();
+    return () => { ++readGeneration.current; };
+  }, [demo, refresh]);
+
+  useEffect(() => {
+    setRole(null); setAdmin(false);
+    if (!songbookClient || demo) return undefined;
+    let active = true;
+    const resolve = async next => {
+      const generation = ++authGeneration.current;
+      setSession(next); setRole(null); setAdmin(false);
+      if (!next) return;
+      try {
+        const user = await songbookClient.auth.getUser();
+        if (user.error || user.data.user?.id !== next.user.id) return;
+        const [a, e] = await Promise.all([
+          songbookClient.from('admins').select('user_id').eq('user_id', next.user.id).maybeSingle(),
+          songbookClient.from('songbook_preview_editors').select('role').eq('user_id', next.user.id).maybeSingle(),
+        ]);
+        if (active && generation === authGeneration.current && !a.error && !e.error) {
+          setAdmin(Boolean(a.data)); setRole(e.data?.role || null);
+        }
+      } catch { /* Fail closed; server RLS is authoritative. */ }
+    };
+    songbookClient.auth.getSession().then(({ data }) => active && resolve(data.session)).catch(() => {});
+    const { data } = songbookClient.auth.onAuthStateChange((_event, next) => {
+      ++authGeneration.current; setRole(null); setAdmin(false); setSession(next);
+      setTimeout(() => active && resolve(next), 0);
+    });
+    return () => { active = false; ++authGeneration.current; data.subscription.unsubscribe(); };
+  }, [demo]);
+
+  const songs = mergeSongs(catalog, entries, ratings);
+  const canEdit = ready && (demo || admin || Boolean(role));
+  const canRate = ready && (demo || role === 'owner');
+  function persist(e, r) {
+    localStorage.setItem(DEMO_KEY, JSON.stringify({ entries: e, ratings: r }));
+    setEntries(e); setRatings(r);
+  }
+  async function write(table, idField, payload, previous) {
+    const query = songbookClient.from(table);
+    const result = previous
+      ? await query.update(payload).eq(idField, payload[idField]).eq('revision', previous.revision).select().single()
+      : await query.insert(payload).select().single();
+    if (result.error) throw Error(result.error.code === '23505' ? '같은 곡이 이미 등록되었거나 갱신이 충돌했습니다.' : result.error.code === 'PGRST116' ? '다른 화면에서 변경되었습니다. 새로고침 후 다시 저장해주세요.' : '저장하지 못했습니다. 권한·입력값·연결을 확인해주세요.');
+    return result.data;
+  }
+  async function saveSong(input) {
+    if (!canEdit || writeLock.current) throw Error('편집 권한이 없거나 저장 중입니다.');
+    const payload = validateEntry({ ...input, id: input.id || 'custom-' + crypto.randomUUID() });
+    if (duplicateOf(songs, payload)) throw Error('같은 곡이 이미 있습니다. 기존 곡을 편집해주세요.');
+    writeLock.current = true; setSaving(true);
+    try {
+      if (demo) persist([...entries.filter(e => e.id !== payload.id), payload], ratings);
+      else {
+        const saved = await write(tables.entries, 'id', payload, entries.find(e => e.id === payload.id));
+        if (!mode.current) setEntries(old => [...old.filter(e => e.id !== saved.id), saved]);
+      }
+      return payload.id;
+    } finally { writeLock.current = false; setSaving(false); }
+  }
+  async function saveRating(id, value) {
+    if (!canRate || writeLock.current) throw Error('미르님으로 지정된 계정만 숙련도를 저장할 수 있습니다. 저장 중에는 잠시 후 다시 눌러주세요.');
+    if (!songs.some(s => s.id === id) || (value !== null && !stars(value))) throw Error('숙련도를 확인해주세요.');
+    writeLock.current = true; setSaving(true);
+    try {
+      const payload = { song_id: id, proficiency: value };
+      if (demo) persist(entries, [...ratings.filter(r => r.song_id !== id), payload]);
+      else {
+        const saved = await write(tables.ratings, 'song_id', payload, ratings.find(r => r.song_id === id));
+        if (!mode.current) setRatings(old => [...old.filter(r => r.song_id !== id), saved]);
+      }
+    } finally { writeLock.current = false; setSaving(false); }
+  }
+  async function setOwner(id) {
+    if (!admin || demo) throw Error('관리자만 계정을 지정할 수 있습니다.');
+    if (!/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)) throw Error('계정 ID 형식을 확인해주세요.');
+    const response = await songbookClient.from('songbook_preview_editors').upsert({ user_id: id, role: 'owner' });
+    if (response.error) throw Error('계정이 없거나 이미 다른 소유자가 지정되어 있습니다.');
+  }
+  return { songs, session, role, admin, ready, error, saving, canEdit, canRate, saveSong, saveRating, setOwner, refresh, client: songbookClient };
 }
