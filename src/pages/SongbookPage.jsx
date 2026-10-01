@@ -63,12 +63,13 @@ export default function SongbookPage() {
   const crossCount = songs.filter(song => new Set(song.sources.map(source => source.id)).size > 1).length;
   function notice(text) { setMessage(text); window.clearTimeout(messageTimer.current); messageTimer.current = window.setTimeout(() => setMessage(''), 5500); }
   function update(values, resetPage = true) {
-    setParams(old => {
-      const next = new URLSearchParams(old);
-      for (const [key, value] of Object.entries(values)) { if (value) next.set(key, value); else next.delete(key); }
-      if (resetPage) next.delete('page');
-      return next;
-    });
+    // BrowserRouter updates history synchronously, before a deferred React render.
+    // useSearchParams callback setters do not queue like setState: reading the
+    // rendered params here can restore stale filters during rapid reset/sort.
+    const next = new URLSearchParams(window.location.search);
+    for (const [key, value] of Object.entries(values)) { if (value) next.set(key, value); else next.delete(key); }
+    if (resetPage) next.delete('page');
+    setParams(next);
   }
   function toggleFavorite(id) {
     const next = favoriteIds.includes(id) ? favoriteIds.filter(value => value !== id) : [...favoriteIds, id];
