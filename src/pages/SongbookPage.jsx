@@ -19,10 +19,34 @@ function SongDialog({ song, close, copy, saved, toggle, manualCopy, message }) {
   const ref = useRef(null);
   useEffect(() => {
     const dialog = ref.current;
+    const restoreTarget = document.activeElement;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     dialog.showModal();
-    return () => { if (dialog.open) dialog.close(); document.body.style.overflow = overflow; };
+    // Native modal inertness does not wrap Tab consistently across browsers.
+    // Recompute visible controls so collapsed MR links and disabled controls
+    // cannot receive keyboard focus; handle both Tab and Shift+Tab.
+    const focusables = () => [...dialog.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),summary,[tabindex="0"]')].filter(element => element.getClientRects().length > 0);
+    const onKey = event => {
+      if (event.key !== 'Tab' || !dialog.open) return;
+      const controls = focusables();
+      const first = controls[0];
+      const last = controls.at(-1);
+      const active = document.activeElement;
+      if (!first) { event.preventDefault(); return; }
+      if (!dialog.contains(active) || (event.shiftKey ? active === first : active === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus({ preventScroll: true });
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    focusables()[0]?.focus({ preventScroll: true });
+    return () => {
+      document.removeEventListener('keydown', onKey, true);
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = overflow;
+      if (restoreTarget?.isConnected && restoreTarget !== document.body) restoreTarget.focus({ preventScroll: true });
+    };
   }, []);
   return <dialog className="sb-dialog" ref={ref} aria-labelledby="song-dialog-title" onCancel={event => { event.preventDefault(); close(); }} onClick={event => { if (event.target === ref.current) close(); }}>
     <div className="sb-dialog-content">
