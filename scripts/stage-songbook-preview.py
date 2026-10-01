@@ -16,11 +16,14 @@ def main():
     if os.environ.get('GITHUB_REF') != 'refs/heads/feature/songbook':
         raise SystemExit('Songbook previews are restricted to feature/songbook.')
     if os.environ.get('VITE_REVIEW_PREVIEW') != 'true' or os.environ.get('VITE_SONGBOOK_PREVIEW') != 'true':
-        raise SystemExit('Read-only songbook preview flags are required.')
+        raise SystemExit('Isolated songbook preview flags are required.')
     dist = Path(os.environ.get('DIST_DIR', 'dist'))
     for route in ('index.html', 'songbook/index.html', 'songbook/review/index.html'):
         if 'noindex, nofollow' not in (dist / route).read_text(encoding='utf-8'):
             raise SystemExit('Missing noindex metadata: ' + route)
+    # This additional endpoint belongs only to the feature preview, not the production manifest.
+    if 'api/songbook-search.php' not in base.API_FILES:
+        base.API_FILES.append('api/songbook-search.php')
     os.environ['ACTIVATE'] = 'false'
     before = fingerprints()
     deploy.main()
@@ -37,7 +40,7 @@ def main():
     summary = os.environ.get('GITHUB_STEP_SUMMARY')
     if summary:
         with open(summary, 'a', encoding='utf-8') as handle:
-            handle.write('### Songbook draft\n\n' + report['songbook_url'] + '\n\nReview: ' + report['review_url'] + '\n\nProduction routing unchanged. No main/develop merge or activation.\n')
+            handle.write('### Songbook second review\n\n' + report['songbook_url'] + '\n\nReview: ' + report['review_url'] + '\n\nProduction routing unchanged. No main/develop merge or activation.\n')
 
 if __name__ == '__main__':
     main()
