@@ -5,7 +5,7 @@ export const DEMO_KEY='mir-songbook-v2-demo';
 const initial=[...'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'];
 export const normalize=(v='')=>String(v).normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/[\p{P}\p{Z}\p{S}\s]/gu,'');
 export function initials(v=''){return [...v].map(c=>{const n=c.charCodeAt(0)-0xac00;return n>=0&&n<=11171?initial[Math.floor(n/588)]:c;}).join('');}
-export function matches(song,q=''){const text=[song.title,song.artist,...(song.aliases||[]),...(song.categories||[])].join(' ');return String(q).trim().split(/\s+/u).filter(Boolean).every(t=>/^[ㄱ-ㅎ]+$/u.test(t)?initials(text).includes(t):normalize(text).includes(normalize(t)));}
+export function matches(song,q=''){const text=[song.title,song.artist,...(song.aliases||[]),...(song.categories||[])].join(' ');return String(q||'').trim().split(/\s+/u).filter(Boolean).every(t=>/^[ㄱ-ㅎ]+$/u.test(t)?initials(text).includes(t):normalize(text).includes(normalize(t)));}
 export function stars(value){return Number.isInteger(value)&&value>=1&&value<=5?value:null;}
 export function videoUrl(value){try{const u=new URL(value);if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443'))return '';let id;
  if(['youtube.com','www.youtube.com'].includes(u.hostname)&&u.pathname==='/watch')id=u.searchParams.get('v');

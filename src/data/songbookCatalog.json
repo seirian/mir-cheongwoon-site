@@ -1,0 +1,5458 @@
+[
+  {
+    "id": "mir-2e091090e379",
+    "title": "200%",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/99906924",
+      "https://www.youtube.com/watch?v=lq8y-6Bndz0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0be18746efb1",
+    "title": "50%",
+    "artist": "히게단",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=lG06K2Dmkes"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-de8fdd4ef681",
+    "title": "8282",
+    "artist": "다비치",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=kZfkLsTqb3o"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-5c994f0e337e",
+    "title": "About Me",
+    "artist": "보컬로이드",
+    "aliases": [
+      "About Me 어바웃 미"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/120241981",
+      "https://www.youtube.com/watch?v=fL7x9HptkBo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1181243a2a68",
+    "title": "A Dream is a Wish a Heart Makes",
+    "artist": "신데렐라",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105579721",
+      "https://www.youtube.com/watch?v=PRaDuLdlOSo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f91d0aacb24e",
+    "title": "Ah-Choo",
+    "artist": "러블리즈",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109346657",
+      "https://www.youtube.com/watch?v=X4uWeXDEnzI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0f4a4db65d8a",
+    "title": "Alien ( 이수현 )",
+    "artist": "악동뮤지션",
+    "aliases": [
+      " 이수현 "
+    ],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/99466746",
+      "https://www.youtube.com/watch?v=tssXEVuLzXE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-67ac8816ca17",
+    "title": "A Million Dreams",
+    "artist": "위대한 쇼맨",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117382331",
+      "https://www.youtube.com/watch?v=3f2X_gIJ_u4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-938b1be1128b",
+    "title": "A Whole New World",
+    "artist": "알라딘",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/97400628",
+      "https://www.youtube.com/watch?v=jT-jNKrdjUg&t=8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-86d6cb14586d",
+    "title": "Believer",
+    "artist": "Imagine Dragon",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=J_hsYE5-Zqs",
+      "https://www.youtube.com/watch?v=bg46dxXzbA8&t=6"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f97eef65fb7e",
+    "title": "Blue",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105577696",
+      "https://www.youtube.com/watch?v=avh6FatRx2I"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d774e1e5ced6",
+    "title": "Blueming",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104484569",
+      "https://www.youtube.com/watch?v=4fVwpp77Ewo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b2db14bcabaf",
+    "title": "Bring Him Home",
+    "artist": "레미제라블",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121888491",
+      "https://www.youtube.com/watch?v=G_2LQFjdSWk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-bdf75bd76b8d",
+    "title": "Castle on a Cloud",
+    "artist": "레미제라블",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102370511",
+      "https://www.youtube.com/watch?v=_8Mq-8bStSE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-563bbc357bc6",
+    "title": "Celebrity",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102760083",
+      "https://www.youtube.com/watch?v=L9Ra2GIBd04"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-5233c70f6946",
+    "title": "CHEERS",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122505613"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7f0189ff7021",
+    "title": "CHEER UP",
+    "artist": "트와이스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102614726",
+      "https://www.youtube.com/watch?v=3sIQ5bhT2V0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-83dd5ca71b78",
+    "title": "Crescendo",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=WD9UKr37wSM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1fe0fb9a4d8b",
+    "title": "Cry Baby",
+    "artist": "오피셜히게단디즘",
+    "aliases": [
+      "Cry Baby 크라이 베이비"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110335809",
+      "https://www.youtube.com/watch?v=sN9jUB9dTRU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e470de0263aa",
+    "title": "Dancing Queen",
+    "artist": "ABBA",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108290489",
+      "https://www.youtube.com/watch?v=WHayJZ3eMcE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d023f90e44db",
+    "title": "Defying Gravity",
+    "artist": "위키드",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113763613",
+      "https://www.youtube.com/watch?v=Ik58t6MftAc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-89957dcb7bb1",
+    "title": "Dinosaur",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/106292675",
+      "https://www.youtube.com/watch?v=xgm9c01DGf8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-cbc6cdef9635",
+    "title": "Don't Look Back in Anger",
+    "artist": "Oasis",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113918105",
+      "https://www.youtube.com/watch?v=IWjydkUvgfs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a380660715f2",
+    "title": "Don't Rain on My Parade",
+    "artist": "화니걸",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/112610311",
+      "https://www.youtube.com/watch?v=4bLEJSOe3rI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b4b23f17d351",
+    "title": "Do you think of me? 방에 모기가 있어",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=wdMx6foEKt0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-56d25b27418c",
+    "title": "Dream Girls",
+    "artist": "아이오아이",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=_LxemiujFn4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e54851a41f31",
+    "title": "Energetic",
+    "artist": "워너원",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=_KY9R8YZcyQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7e0f36949a67",
+    "title": "Everglow",
+    "artist": "Coldplay",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115240595",
+      "https://www.youtube.com/watch?v=VCHZlD8jAhA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8abe1dcb46af",
+    "title": "Everything",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105576775"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b3cd8e72d224",
+    "title": "Firework",
+    "artist": "Katy Perry",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=KUKyy4r-BO4&t=8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-68a68899be1d",
+    "title": "Fix You",
+    "artist": "Coldplay",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122627355",
+      "https://www.youtube.com/watch?v=yI2T7_wvOJs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-755279ad19ef",
+    "title": "Freedom",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/106895316",
+      "https://www.youtube.com/watch?v=j5q95DNo-GM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-da67ba099fcc",
+    "title": "Galaxy",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113787787",
+      "https://www.youtube.com/watch?v=r98mmQUgo1c"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c24dc9a027d9",
+    "title": "give love",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/100224706",
+      "https://www.youtube.com/watch?v=y27JmSpkQO0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-15450763d259",
+    "title": "God Knows",
+    "artist": "하루히 OST",
+    "aliases": [
+      "God Knows 갓 노우즈"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/114178117",
+      "https://www.youtube.com/watch?v=3ddq1_5m22U"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-619dd3046ba8",
+    "title": "Happy Day",
+    "artist": "체리필터",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110147341",
+      "https://www.youtube.com/watch?v=EJfUHcaj7Y0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-35cacc7d2d67",
+    "title": "Happy Things",
+    "artist": "제이레빗",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105577322",
+      "https://www.youtube.com/watch?v=hGa_GdIJ6ig"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-221c3d75c8e1",
+    "title": "Help",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113918647",
+      "https://www.youtube.com/watch?v=dTztft6XT40"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-fab117dc6be3",
+    "title": "However 그러나",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102763527",
+      "https://www.youtube.com/watch?v=Z6W42gRLM10"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-32e6df0f86e9",
+    "title": "How Far I'll Go",
+    "artist": "모아나",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/103352208",
+      "https://www.youtube.com/watch?v=a5LOjg1EiAk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-45b7904d438f",
+    "title": "Hug Me 안아줘요",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=CFugKk4Ym5s"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d560afc8be31",
+    "title": "I",
+    "artist": "태연",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/97456522",
+      "https://www.youtube.com/watch?v=I3_Mm_-t8e4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3c6f9f8db8ea",
+    "title": "I Dream",
+    "artist": "15&",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/100696167",
+      "https://www.youtube.com/watch?v=Ob5WHHqOm90"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8f16745f6d07",
+    "title": "I Dreamed a Dream",
+    "artist": "레미제라블",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/98291620",
+      "https://www.youtube.com/watch?v=Z0vb9VP-uco"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-29f289353aca",
+    "title": "I Have a Dream",
+    "artist": "ABBA",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108289829",
+      "https://www.youtube.com/watch?v=n4yhmONZimc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7f7cd34eae19",
+    "title": "I love you ( 내 연애의 모든것 OST )",
+    "artist": "악동뮤지션",
+    "aliases": [
+      " 내 연애의 모든것 OST "
+    ],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=jKtGTLEK9_Q"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-90065f72c45b",
+    "title": "I'm the Greatest Star",
+    "artist": "화니걸",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110522698",
+      "https://www.youtube.com/watch?v=4y0FHUvXOTU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-76f1c1a5ba52",
+    "title": "Lascia ch'io pianga",
+    "artist": "성악",
+    "aliases": [],
+    "categories": [
+      "성악"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122105275",
+      "https://www.youtube.com/watch?v=VLhkkp6JDSk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a3a0192339a8",
+    "title": "Le Festin",
+    "artist": "라따뚜이",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105579513",
+      "https://www.youtube.com/watch?v=ZEhdo-RpUvc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7e08caf7c380",
+    "title": "Let It Go",
+    "artist": "겨울왕국",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/103352709",
+      "https://www.youtube.com/watch?v=z_opS_sz88g"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-423587ae59f4",
+    "title": "LOVE DIVE",
+    "artist": "아이브",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113487411",
+      "https://www.youtube.com/watch?v=Irto8j9ULZw"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1700cf621bf8",
+    "title": "Love of My Life",
+    "artist": "Queen",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115240735",
+      "https://www.youtube.com/watch?v=rGTHC4I_JPk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e6ba91bb0bb1",
+    "title": "Love Poem",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109947683",
+      "https://www.youtube.com/watch?v=C5OWxaWVxK0"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-9cf3a92f6265",
+    "title": "Love Wins All",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121302577",
+      "https://www.youtube.com/watch?v=L2vCogmqKQ0"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e97e072d9a33",
+    "title": "Lovin'(러빈)",
+    "artist": "미세스 그린애플",
+    "aliases": [
+      "러빈"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=L304G3OQLkY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-88d708bafd34",
+    "title": "lulu(루루)",
+    "artist": "미세스 그린애플",
+    "aliases": [
+      "루루"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=-TKD9_Zk1zY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-15be02753814",
+    "title": "MAKE ME WONDER",
+    "artist": "오피셜히게단디즘",
+    "aliases": [
+      "MAKE ME WONDER 메이크 미 원더"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=FkuGK702bRc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e26a348e4cd8",
+    "title": "Mattress 매트리스",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=HODyDSi4uJM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b2d5fa32505c",
+    "title": "Mela!",
+    "artist": "녹황색사회",
+    "aliases": [
+      "Mela! 멜라"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117642781",
+      "https://www.youtube.com/watch?v=AVDVU9bV3T8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-32caeaf0c9e0",
+    "title": "Mermaid",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104609854",
+      "https://www.youtube.com/watch?v=_-UCgaGlXaw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-cd62cd861dbe",
+    "title": "Midnight Radio",
+    "artist": "헤드윅",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104673305",
+      "https://www.youtube.com/watch?v=WpYYjriilHk&t=5"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2ab0a1c1bd5d",
+    "title": "Mixed nuts",
+    "artist": "오피셜히게단디즘",
+    "aliases": [
+      "Mixed nuts 믹스 너츠"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/135396355",
+      "https://www.youtube.com/watch?v=YsrBNZluAck"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-51b2f08724c5",
+    "title": "Modern Times",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/94499863",
+      "https://www.youtube.com/watch?v=e9ZmmOT-DSY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4115fedfd89d",
+    "title": "My darling",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109017640",
+      "https://www.youtube.com/watch?v=yL7MP6_5aKk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f8274310907d",
+    "title": "My Dearest",
+    "artist": "길티크라운OP",
+    "aliases": [
+      "My Dearest 마이 디어리스트"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102077042",
+      "https://www.youtube.com/watch?v=eFGoTLvwF1s"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-aba26a96ebe1",
+    "title": "My Favorite Things",
+    "artist": "사운드 오브 뮤직",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108289964",
+      "https://www.youtube.com/watch?v=wetIg4YwUfw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e429bdcead0b",
+    "title": "My man",
+    "artist": "다비치",
+    "aliases": [
+      "My Man"
+    ],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105264428",
+      "https://www.youtube.com/watch?v=3ZfASVnKsTA",
+      "https://www.youtube.com/watch?v=oPm819bTJOI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e17eaf21e46e",
+    "title": "My Self",
+    "artist": "달빛천사",
+    "aliases": [
+      "My Self 마이 셀프"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113918105",
+      "https://www.youtube.com/watch?v=ol6DpP6wTP8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f0fe5fd16822",
+    "title": "Nella fantasia",
+    "artist": "성악",
+    "aliases": [],
+    "categories": [
+      "성악"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119280775",
+      "https://www.youtube.com/watch?v=x9wQ86PV3yY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-25219fd007f8",
+    "title": "Never Enough",
+    "artist": "위대한 쇼맨",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102371101",
+      "https://www.youtube.com/watch?v=0nxmS92MiSM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2e7d33d1b053",
+    "title": "New Future",
+    "artist": "달빛천사",
+    "aliases": [
+      "New Future 뉴 퓨처"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/107814778",
+      "https://www.youtube.com/watch?v=W4ZZkAN1NuA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-667419688fe5",
+    "title": "No Surprises",
+    "artist": "Radiohead",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122259365",
+      "https://www.youtube.com/watch?v=Ukn0xjnsLko"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-dc211977e3d1",
+    "title": "Nothing Without You",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/98425580",
+      "https://www.youtube.com/watch?v=XU2Hti9Q6CU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d9c2e0e25692",
+    "title": "Once Upon A Dream",
+    "artist": "잠자는 숲속의 공주",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/123261595",
+      "https://www.youtube.com/watch?v=uDUxhbpcB9o"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4999ff2972e6",
+    "title": "Only Hope",
+    "artist": "Mandy Moore",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104671211",
+      "https://www.youtube.com/watch?v=arpSSvad-Uk"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-eb6b2266dfbd",
+    "title": "On My Own",
+    "artist": "레미제라블",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/106894988",
+      "https://www.youtube.com/watch?v=D-IxeojXPNk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6f9d8241b805",
+    "title": "OOH-AHH하게",
+    "artist": "트와이스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/98352650",
+      "https://www.youtube.com/watch?v=vPGFO2p4kkY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-be3db9a8708c",
+    "title": "Part of Your World (저곳으로)",
+    "artist": "인어공주",
+    "aliases": [
+      "저곳으로"
+    ],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119523387",
+      "https://www.youtube.com/watch?v=Stj5UIBr2so&t=5"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6d3738eed64e",
+    "title": "perfect",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113918785"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-58a43ff44b5a",
+    "title": "pet",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105576701",
+      "https://www.youtube.com/watch?v=GgJQ4tdHutc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-55be5342503a",
+    "title": "Pick Me",
+    "artist": "아이오아이",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=qQYmbmK-cyM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e70c5725214e",
+    "title": "Popular",
+    "artist": "위키드",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=p3_OMvvBxPw",
+      "https://www.youtube.com/watch?v=fpFjXqgTm6M"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0a7cde90e11e",
+    "title": "Pretender",
+    "artist": "오피셜히게단디즘",
+    "aliases": [
+      "Pretender 프리텐더"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122104835",
+      "https://www.youtube.com/watch?v=X9WUilVj1MA"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f6a6ddb02502",
+    "title": "Rain Drop",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104591010",
+      "https://www.youtube.com/watch?v=KTk1ALuiOpI"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-bedd2376e568",
+    "title": "RAY",
+    "artist": "가구야/범프오브치킨",
+    "aliases": [
+      "RAY 레이"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=m-eirzemUVs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6b2b72e99a3a",
+    "title": "Re-bye",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/100030014",
+      "https://www.youtube.com/watch?v=IVOg3zbeb_E"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3065062cacdd",
+    "title": "RE : WIND",
+    "artist": "이세계아이돌",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115498909",
+      "https://www.youtube.com/watch?v=I8zD64VNtPw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c1bc03714198",
+    "title": "RPG",
+    "artist": "세카이노오와리",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=T7I5Mip3Z0c"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7ddade97a828",
+    "title": "Rubia",
+    "artist": "붕괴3rd",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105264475",
+      "https://www.youtube.com/watch?v=z6IrC3nRFX4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b7ab746f473c",
+    "title": "SAME BLUE",
+    "artist": "오피셜히게단디즘",
+    "aliases": [
+      "SAME BLUE 세임 블루"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=on7PxW_AsZ8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d5925f191b06",
+    "title": "Shout Baby",
+    "artist": "녹황색사회",
+    "aliases": [
+      "Shout Baby 샤우트 베이비"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108519438",
+      "https://www.youtube.com/watch?v=h3QzS5qI3hQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6ddb061413e9",
+    "title": "snow halation(스노하레)",
+    "artist": "러브라이브",
+    "aliases": [
+      "스노하레"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=lQx3c2-_dmI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c2113f3ba81f",
+    "title": "Speechless",
+    "artist": "알라딘",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/112610389",
+      "https://www.youtube.com/watch?v=dcCi8YP4DYg&t=6"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-678f808cd9c4",
+    "title": "StaRt",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119534207",
+      "https://www.youtube.com/watch?v=4lvOHOoKpvE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a100e58f560e",
+    "title": "Stellar Stellar",
+    "artist": "호시마치 스이세이",
+    "aliases": [
+      "Stellar Stellar 스텔라 스텔라"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119358061",
+      "https://www.youtube.com/watch?v=0uBbDIU7ABQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2a9af06c03ca",
+    "title": "Straberrry Moon",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122259973",
+      "https://www.youtube.com/watch?v=oSd96d2oZsk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1755a517c090",
+    "title": "Subtitle 서브타이틀",
+    "artist": "오피셜히게단디즘",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=G88ZGbR65K4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-da1136ae1836",
+    "title": "Sweet Dreams My Dear",
+    "artist": "소향",
+    "aliases": [
+      "Sweet Dreams My Dear 스윗 드림"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=NXlRj3TXR88",
+      "https://www.youtube.com/watch?v=CWPfQ1aE4AE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a2174f2192ad",
+    "title": "Teenage Dream",
+    "artist": "Katy Perry",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=kUyhDgryS3g"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-81a88ac914d5",
+    "title": "Thank You for the Music",
+    "artist": "맘마미아",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102613851",
+      "https://www.youtube.com/watch?v=iXj62Mwqp18"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e2863f2f20ae",
+    "title": "The Great Escape",
+    "artist": "Boys Like Girls",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=fd-n-oqSivY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6e05e121de6c",
+    "title": "THE HERO",
+    "artist": "원펀맨",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113786541",
+      "https://www.youtube.com/watch?v=pzw1MIQ_6k8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-bd0e88a88ee3",
+    "title": "Think of Me",
+    "artist": "오페라의 유령",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105579434",
+      "https://www.youtube.com/watch?v=WmTALkNwjmc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a6ce424e7b0d",
+    "title": "Tot Musica",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117706985",
+      "https://www.youtube.com/watch?v=072TmXDKhy0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-943e4bdde231",
+    "title": "TT",
+    "artist": "트와이스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104591010",
+      "https://www.youtube.com/watch?v=Nb4cLBoE0NI"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ee4d6e49339f",
+    "title": "Unravel",
+    "artist": "티케이",
+    "aliases": [
+      "Unravel 언래블"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/118660199",
+      "https://www.youtube.com/watch?v=X-MASJ7GKXw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3fe9c5458d6c",
+    "title": "Wanna Be",
+    "artist": "워너원",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=DvdPFvk9XoI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-596bc44b6f2e",
+    "title": "Warriors",
+    "artist": "Imagine Dragon",
+    "aliases": [],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116759663",
+      "https://www.youtube.com/watch?v=bx0E6pdflXo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-923da0429534",
+    "title": "What is Love?",
+    "artist": "트와이스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/98354802",
+      "https://www.youtube.com/watch?v=eNdki1GziRE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ffd37d4e1048",
+    "title": "When You Wish Upon a Star",
+    "artist": "피노키오",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/107185330",
+      "https://www.youtube.com/watch?v=u8TImA1AyWI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d8a81ae8f369",
+    "title": "Where ever you are",
+    "artist": "원오크락",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/143674049",
+      "https://www.youtube.com/watch?v=prXKtrXO3Iw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-cd1c5ffbd36a",
+    "title": "Wicked Little Town",
+    "artist": "헤드윅",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/106894696",
+      "https://www.youtube.com/watch?v=QRLCTxsBzOQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ed2f0805d753",
+    "title": "World's Smallest Violin(한국어버전)",
+    "artist": "AJR",
+    "aliases": [
+      "한국어버전"
+    ],
+    "categories": [
+      "팝송"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=MNUt42in1gs",
+      "https://www.youtube.com/watch?v=45HSLb2rH3Q&t=5"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f2bb59e6bd8a",
+    "title": "Yesterday",
+    "artist": "오피셜히게단디즘",
+    "aliases": [
+      "Yesterday 예스터데이"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=TxwoNWY9GB0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f8ae861014dc",
+    "title": "가을아침",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122257507",
+      "https://www.youtube.com/watch?v=SeHLnsZX7w4"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ce199ea960f7",
+    "title": "가호진",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/148483611",
+      "https://www.youtube.com/watch?v=vkdt_zC_hQk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1ed5545d52af",
+    "title": "개막선언",
+    "artist": "노벨브라이트",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=ADw4kZTzIpU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-10aad4175d84",
+    "title": "겁쟁이 몽블랑",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109250607",
+      "https://www.youtube.com/watch?v=Q_fU07DGhto"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-00dceb741d03",
+    "title": "겨울아이",
+    "artist": "수지",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121688629",
+      "https://www.youtube.com/watch?v=cM-EqQM0h5M"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3cf8f982dca3",
+    "title": "곁에",
+    "artist": "아이돌마스터",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113308651",
+      "https://www.youtube.com/watch?v=93RlzPpRE34"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-76b16cce52d5",
+    "title": "고양이",
+    "artist": "선우정아",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105463584",
+      "https://www.youtube.com/watch?v=sPBYN2A4jcE"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ae7a97717b5f",
+    "title": "고쳐주세요",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/112177087",
+      "https://www.youtube.com/watch?v=DlI89Q4CcQo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a6345bd82cca",
+    "title": "괴수의 꽃노래",
+    "artist": "바운디",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=w5FIjCI4-Fo",
+      "https://www.youtube.com/watch?v=Fyot5QwacDA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8e305ad6407d",
+    "title": "군청",
+    "artist": "요아소비",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/123366365",
+      "https://www.youtube.com/watch?v=Z8MWZWX-6tw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4aa7d31baf5b",
+    "title": "귀여워서 미안해",
+    "artist": "허니웍스",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116927095",
+      "https://www.youtube.com/watch?v=3IjVW_nXizU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-beed484662cc",
+    "title": "그러므로",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/159161903",
+      "https://www.youtube.com/watch?v=jtRyEr189XI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d1454917d1cb",
+    "title": "그저 네게 맑아라",
+    "artist": "요루시카",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/107611846",
+      "https://www.youtube.com/watch?v=VuU8t4tAbAI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f667dfc5d3cb",
+    "title": "꽃길",
+    "artist": "김세정",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/103976280",
+      "https://www.youtube.com/watch?v=3H3txlCEnpc"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ddf3fb60e264",
+    "title": "나는 나는 음악",
+    "artist": "모차르트",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119123059",
+      "https://www.youtube.com/watch?v=UfILBBhWx6Y"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e30a1f592d86",
+    "title": "나는 나만의 것",
+    "artist": "엘리자벳",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104363965",
+      "https://www.youtube.com/watch?v=qWJEN5OlMGs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-bfd9488521ee",
+    "title": "나는 최강",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=0Ly3dvLN0Xk",
+      "https://www.youtube.com/watch?v=kV8BbbzwJ_o"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a86593488cca",
+    "title": "나들이 갈까",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117490893",
+      "https://www.youtube.com/watch?v=zqceUtnxxHA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1f772b7037a6",
+    "title": "나라는 것",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/134128731",
+      "https://www.youtube.com/watch?v=753V50bSGPM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-59fee3ddec75",
+    "title": "나에게로의 초대",
+    "artist": "정경화",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116872185",
+      "https://www.youtube.com/watch?v=vhV2LNv2IqY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e271e62628c3",
+    "title": "나의 마음을 담아",
+    "artist": "달빛천사",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/112338235",
+      "https://www.youtube.com/watch?v=Q6NRkovmvnI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1618a2b0fcf8",
+    "title": "나의 사춘기에게",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110242013",
+      "https://www.youtube.com/watch?v=lF8pdmJYWmk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e7bd869d4dda",
+    "title": "나의 클레마티스",
+    "artist": "에이스테",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105586672",
+      "https://www.youtube.com/watch?v=8j58holFaGs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ba4c9f538114",
+    "title": "난 너에게",
+    "artist": "다비치",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=zpw6HS0039I"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-797acaa54721",
+    "title": "낭만고양이",
+    "artist": "체리필터",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/100225624",
+      "https://www.youtube.com/watch?v=JrnnA3we3jI"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-70b34e2d8c08",
+    "title": "내 손을 잡아",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113136105",
+      "https://www.youtube.com/watch?v=8SvJ074SbD0"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-cfb5f8747f00",
+    "title": "내일의 밤하늘 초계반",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113045663",
+      "https://www.youtube.com/watch?v=DEcJTidALhM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e8182a3f0b94",
+    "title": "너랑 나",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/94131807",
+      "https://www.youtube.com/watch?v=A5-tvme6Bn8"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0f8e893b3686",
+    "title": "너를 태우고",
+    "artist": "천공의 섬 라퓨타",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/107611693",
+      "https://www.youtube.com/watch?v=NjIeo-l4hG0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3b1ab66cba1d",
+    "title": "너무너무너무",
+    "artist": "아이오아이",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115055569",
+      "https://www.youtube.com/watch?v=PKLUjFC4E1g"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-77df3b2a2bc7",
+    "title": "너의 의미",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=51y6B98P81g"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0121c3e80573",
+    "title": "네가 아니면 안 될 것 같아",
+    "artist": "오오이시 마사요시",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115239927",
+      "https://www.youtube.com/watch?v=D4Wi0L8L-dk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-24a7e26af92e",
+    "title": "네모의 꿈",
+    "artist": "WHITE",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102232757",
+      "https://www.youtube.com/watch?v=KU1KY7LsNto"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b518a3adb245",
+    "title": "뉴 마이 노멀",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/155521971",
+      "https://www.youtube.com/watch?v=RicNP4778rU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-477f44aaf5dd",
+    "title": "단 하나의 미래",
+    "artist": "프랑켄슈타인",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122945975",
+      "https://www.youtube.com/watch?v=u4Vmv4yE-s8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-251f6dee63d2",
+    "title": "달링",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/159162441",
+      "https://www.youtube.com/watch?v=JkFmKE5q_l0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3aef0c1aad70",
+    "title": "달빛소년",
+    "artist": "체리필터",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/114177527",
+      "https://www.youtube.com/watch?v=Omp8zTbKFmw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ad136456a21c",
+    "title": "대성당들의 시대",
+    "artist": "노트르담 드 파리",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104137813",
+      "https://www.youtube.com/watch?v=0kVlaAfhntU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-343b639f9c3b",
+    "title": "댄스홀",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119231277",
+      "https://www.youtube.com/watch?v=QexIJDfyEWo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4b6cabb7b0ca",
+    "title": "데스노트",
+    "artist": "데스노트",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113094981",
+      "https://www.youtube.com/watch?v=U1CrY0cMcZY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6bda2282a949",
+    "title": "도리도리쏭",
+    "artist": "nvn",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=e6XIDL7m_bw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-157ca325724c",
+    "title": "도리도리쏭",
+    "artist": "감자도리",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110147134"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2ddebcc4ec3d",
+    "title": "도쿄 테디베어",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/93743620",
+      "https://www.youtube.com/watch?v=gO9nnTnIFIQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-645dd1fb4f0c",
+    "title": "드라마",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122070329"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7df8302b88de",
+    "title": "드라마트루기",
+    "artist": "이브",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115240821",
+      "https://www.youtube.com/watch?v=IA3wrZFgcN0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1ad7f0887ec8",
+    "title": "드라우닝",
+    "artist": "우즈",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=kMJKBqodgNk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-32daa40e5f80",
+    "title": "라스트 스타더스트",
+    "artist": "에메",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=GQFS38G7gGY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f9427444ecd6",
+    "title": "라시사",
+    "artist": "오피셜히게단디즘",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=EaJ7tM65nTc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8377cca95add",
+    "title": "라일락",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/134124925",
+      "https://www.youtube.com/watch?v=YXTQYyvFJM8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2775055208ef",
+    "title": "러브 미 러브 유",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/161668319",
+      "https://www.youtube.com/watch?v=KV-9-ra-Puk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e544798e63c2",
+    "title": "로맨시티즘",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=CELuVWws65E"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3eb590e2cee6",
+    "title": "로스트원의 호곡",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/107962234",
+      "https://www.youtube.com/watch?v=aj9uht1qPZs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f8519e098833",
+    "title": "리얼리티",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102614726",
+      "https://www.youtube.com/watch?v=WiuaFQkXPUY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1f23e5505389",
+    "title": "마리아",
+    "artist": "김아중",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117495401",
+      "https://www.youtube.com/watch?v=FcFvbBj4oe0"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b5626c8c7251",
+    "title": "마법의 성",
+    "artist": "더클래식",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115239589",
+      "https://www.youtube.com/watch?v=9JEujYLPZW4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-80944eb96e23",
+    "title": "마음",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109947551",
+      "https://www.youtube.com/watch?v=vt2XgBF-2MU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-bfac6d140faf",
+    "title": "마음에 드시는대로",
+    "artist": "이브",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113045567",
+      "https://www.youtube.com/watch?v=fc5uFXvGLQ0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a510cf339e0d",
+    "title": "만찬가",
+    "artist": "츠키",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/135621485",
+      "https://www.youtube.com/watch?v=Fr6NAbCBelc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0dbeee1565c2",
+    "title": "말해줘",
+    "artist": "요루시카",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109250360",
+      "https://www.youtube.com/watch?v=VBA49inOYSc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-aeae7cb3ecd6",
+    "title": "매직",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=WELkELWbVmY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-9dad36d8fb02",
+    "title": "멜트",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102372666",
+      "https://www.youtube.com/watch?v=eHSTlX1Bo_s"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-5062dc40244a",
+    "title": "모자이크롤",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/93743620",
+      "https://www.youtube.com/watch?v=KM3wXb21WkI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7892891e9165",
+    "title": "무대에 서서",
+    "artist": "요아소비",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=1-rvN_kXkXE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6b2cb4d88320",
+    "title": "물거품 럴러바이",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/123589483",
+      "https://www.youtube.com/watch?v=J6pSZJjiQWE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e97b862e7e55",
+    "title": "바람의 노래",
+    "artist": "소향",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110241033",
+      "https://www.youtube.com/watch?v=lviwAvZUFUg"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2abe9815ccdf",
+    "title": "바람의 행방",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108290298",
+      "https://www.youtube.com/watch?v=biMxigUG98w"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-cdc701057e53",
+    "title": "밤 끝없는 밤",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=OEwBtvpXntA",
+      "https://www.youtube.com/watch?v=ve9zJChbpwQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-211fd7d1421e",
+    "title": "밤양갱",
+    "artist": "비비",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121303313",
+      "https://www.youtube.com/watch?v=yckntxi09C8"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0d52c97c0c8b",
+    "title": "밤편지",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121692595",
+      "https://www.youtube.com/watch?v=D67jNiKLWC8"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-84d8135c35bc",
+    "title": "버터플라이",
+    "artist": "디지몬",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113046181",
+      "https://www.youtube.com/watch?v=GWewp1QplR0"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-69cb0dca2173",
+    "title": "버터플라이",
+    "artist": "러브홀릭스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=sEciPdsugL4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-5f067d7e03b0",
+    "title": "범퍼카",
+    "artist": "한요한",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105029881",
+      "https://www.youtube.com/watch?v=G146z3FZ2_M"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7bac918fc52f",
+    "title": "벚꽃엔딩",
+    "artist": "버스커버스커",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=eSnErKHH6hQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-fcde918d85f6",
+    "title": "베텔기우스",
+    "artist": "유우리",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116930183",
+      "https://www.youtube.com/watch?v=9zj8OUkKQ7Q"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e1163563d017",
+    "title": "변하지 않는 것",
+    "artist": "시간을 달리는 소녀",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122257325",
+      "https://www.youtube.com/watch?v=kURMWHTZmaM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ef5a46e67f45",
+    "title": "별 보러 갈래?",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109501113",
+      "https://www.youtube.com/watch?v=3t945PrUEfI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-15e0668278f1",
+    "title": "별이 쏟아지는 바다",
+    "artist": "가구야",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=ypksW0lH31Y"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c47ebab15797",
+    "title": "복숭아",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121694923",
+      "https://www.youtube.com/watch?v=JzkveqHMQUg"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-49d70e5d3e19",
+    "title": "봄날",
+    "artist": "방탄소년단",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104708816",
+      "https://www.youtube.com/watch?v=_LC_VxB6Xos"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-03738f5dba8b",
+    "title": "봄이 좋냐??",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/103301239"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-40ab4c9188a9",
+    "title": "부엉이",
+    "artist": "KOKIA",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104551339",
+      "https://www.youtube.com/watch?v=i3CBe0al93s"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2f6814060cc6",
+    "title": "분홍신",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102992599",
+      "https://www.youtube.com/watch?v=N7_wy0chCKw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-740b95d90fa4",
+    "title": "블랙 록 슈터",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115499131",
+      "https://www.youtube.com/watch?v=p5GLQkKF22s"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4953488edcc8",
+    "title": "블랙 소로우 Black Sorrow",
+    "artist": "에이스테",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=ptg-kaN68bA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c7996ac65fc4",
+    "title": "비밀",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=vufwqCfucZo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1c5203dfb7fe",
+    "title": "비밀번호 486",
+    "artist": "윤하",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/163482343",
+      "https://www.youtube.com/watch?v=IGU4B-0IjjM"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-37f1175ec43a",
+    "title": "비밀의 화원",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110242013",
+      "https://www.youtube.com/watch?v=vhNRVx-IXmc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-9aec7f51632d",
+    "title": "비의 랩소디",
+    "artist": "최재훈",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115240411",
+      "https://www.youtube.com/watch?v=9P6cWVv4XTU"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7b7704490d6c",
+    "title": "비행선",
+    "artist": "유우리",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=wSyC8rXE4yo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4eeb411c5be5",
+    "title": "빌런",
+    "artist": "스텔라장",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105578800",
+      "https://www.youtube.com/watch?v=l0I7jt59hLk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-bd322e0b2af9",
+    "title": "빙크스의 술",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104426163",
+      "https://www.youtube.com/watch?v=YlCM-iXVMT0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8a0d8f77c2bb",
+    "title": "빛난다면",
+    "artist": "4월은 너의 거짓말",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113839515"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-895ed304e736",
+    "title": "사건의 지평선",
+    "artist": "윤하",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121687019",
+      "https://www.youtube.com/watch?v=orkkc1CH818"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e15c33b17507",
+    "title": "사람들이 움직이는 게",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109797306",
+      "https://www.youtube.com/watch?v=oucSB8qztDc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7b9a873cbdfa",
+    "title": "사랑 감기에 실려",
+    "artist": "바운디",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=uyyXKumKYLU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-eef5d37e7013",
+    "title": "사랑이었다",
+    "artist": "지코",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102614617",
+      "https://www.youtube.com/watch?v=lVK0f6oym7I"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d14201fd1f55",
+    "title": "사랑했나봐",
+    "artist": "윤도현",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102233783",
+      "https://www.youtube.com/watch?v=_XCZNHkHgbw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d73cce4888a2",
+    "title": "사마마 페스티벌",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/159164747",
+      "https://www.youtube.com/watch?v=_1y-mHmflLY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a5415b782dc0",
+    "title": "사소한 것에서",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113308651",
+      "https://www.youtube.com/watch?v=--S6RGxDvAs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0c05963b4e26",
+    "title": "산다는 거",
+    "artist": "프랑켄슈타인",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119529515",
+      "https://www.youtube.com/watch?v=0XlQd0M-YOU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-bb0c44b669ce",
+    "title": "삼촌",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117535967",
+      "https://www.youtube.com/watch?v=KrdXPinJfSQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-329b68750b5a",
+    "title": "상상",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102992703",
+      "https://www.youtube.com/watch?v=OO5W7RCghzo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d46fe3bc7b6b",
+    "title": "새삼스럽게 왜",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104425196",
+      "https://www.youtube.com/watch?v=H8sl3NF-6bw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-9e335dbabe33",
+    "title": "생명의 이름",
+    "artist": "센과 치히로의 행방불명",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105584448",
+      "https://www.youtube.com/watch?v=JgEawA8afDs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ae9b3fd6b202",
+    "title": "샤론",
+    "artist": "오피셜히게단디즘",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=W7RQTqGi0b4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7f3c34861272",
+    "title": "세계의 약속",
+    "artist": "하울의 움직이는 성",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108290298",
+      "https://www.youtube.com/watch?v=EYINK9qxR5U"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0b6055a3a2a3",
+    "title": "세계의 이어짐",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109797306",
+      "https://www.youtube.com/watch?v=XykqyNvaYrc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d2685ca5d640",
+    "title": "세빙",
+    "artist": "아이돌마스터",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=OB6MJbHkO7E"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-67e26d4b3892",
+    "title": "소나기",
+    "artist": "아이오아이",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102643294",
+      "https://www.youtube.com/watch?v=Oy3M_U8V1uc"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-61468b548edb",
+    "title": "소란지",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/132908587",
+      "https://www.youtube.com/watch?v=g7Qq7bPRSkM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ad30e633119c",
+    "title": "수고했어 오늘도",
+    "artist": "옥상달빛",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117348103",
+      "https://www.youtube.com/watch?v=gyoon-2Uwzo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3d4e51bfb10a",
+    "title": "숙명",
+    "artist": "오피셜히게단디즘",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=9E80vpJlskk",
+      "https://www.youtube.com/watch?v=0wZzzM2Fydw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a6d563135e6c",
+    "title": "순간심포니",
+    "artist": "가구야 / 40mP",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=pH3HSwZ4DNY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-05d453df8f80",
+    "title": "슈가송과 비터스텝",
+    "artist": "유니슨 스퀘어 가든",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113045775",
+      "https://www.youtube.com/watch?v=0yQfhfwFBow"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-fa41ef52a3a7",
+    "title": "스물다섯 스물하나",
+    "artist": "자우림",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121684777",
+      "https://www.youtube.com/watch?v=J-1D6AO83AA"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-9ee97c67a98f",
+    "title": "스물 셋",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102764176",
+      "https://www.youtube.com/watch?v=uTTPGBMOBAs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3cb8e775039b",
+    "title": "스즈메",
+    "artist": "스즈메의 문단속",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119758113",
+      "https://www.youtube.com/watch?v=gAF1IznAmIc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2433df264380",
+    "title": "스토커",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109346779",
+      "https://www.youtube.com/watch?v=x8Xp6sOA_LA"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d076411f4cc1",
+    "title": "스파클",
+    "artist": "래드윔프스",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105586672",
+      "https://www.youtube.com/watch?v=iVf5tfv9osM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-38a1aef854d4",
+    "title": "시간아 멈춰라",
+    "artist": "다비치",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=lKwpYq2gR2k"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b3577aeab02e",
+    "title": "시간을 달려서",
+    "artist": "여자친구",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102764176",
+      "https://www.youtube.com/watch?v=6X7GjZhXmNI"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-23e2cada8cae",
+    "title": "시간의 바깥",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122259637",
+      "https://www.youtube.com/watch?v=CPYjK_MYGIM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1ba35bbc2562",
+    "title": "신시대",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=OEwBtvpXntA",
+      "https://www.youtube.com/watch?v=-li3Nb8fPzM",
+      "https://www.youtube.com/watch?v=eZz-WimHGUQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-67275f59e9c8",
+    "title": "실루엣(Silhouette)",
+    "artist": "나루토 OST",
+    "aliases": [
+      "Silhouette"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122874127",
+      "https://www.youtube.com/watch?v=t7P6cZuXYp8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b6e33c116145",
+    "title": "심술",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102942822",
+      "https://www.youtube.com/watch?v=sSO-5nLJftE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-05bd666dc8a9",
+    "title": "심해소녀",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102359791",
+      "https://www.youtube.com/watch?v=bbG5nK7aNcU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1ebdb278cec6",
+    "title": "써머타임 레코드",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119526989",
+      "https://www.youtube.com/watch?v=Z-NnzJafab8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f65e980eac19",
+    "title": "쓰담쓰담 Sseudam Sseudam",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105576597",
+      "https://www.youtube.com/watch?v=B6KYAKnzRR8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-25a79f723177",
+    "title": "아니 근데 진짜",
+    "artist": "LUCY",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117574477",
+      "https://www.youtube.com/watch?v=YEimaKdRp9o"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c5c375e5ae16",
+    "title": "아무것도 아니야",
+    "artist": "래드윔프스",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104871926",
+      "https://www.youtube.com/watch?v=1798w5Xfctg"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-cc959accf403",
+    "title": "아아, 훌륭한 고양이의 삶",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105026445",
+      "https://www.youtube.com/watch?v=oxrqC3qvzQM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-81fc1264aa14",
+    "title": "아이돌",
+    "artist": "요아소비",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113308257",
+      "https://www.youtube.com/watch?v=ikJ4K3MUkDY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6852ab469196",
+    "title": "아이러브",
+    "artist": "오피셜히게단디즘",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=SbZ8mC85cUk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-49dcc4c7a4d8",
+    "title": "아이시테",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=O4XR6KYtKto"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-91d587726d93",
+    "title": "아이와 나의 바다",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=KG6W_vqCQxQ"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-cc2d20a2f144",
+    "title": "아카시아",
+    "artist": "범프 오브 치킨",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/147915141",
+      "https://www.youtube.com/watch?v=EeEEVEozmd0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-29f04d884545",
+    "title": "아프리오리",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=O9ceGIm548I"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-eec0a13530a3",
+    "title": "악마의 아이",
+    "artist": "히구치 아이",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/159161157",
+      "https://www.youtube.com/watch?v=82CwM-eSD0o"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e79939b0a40f",
+    "title": "안경",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=trU2KUj_SJY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d43afcafba63",
+    "title": "안녕, 곰인형",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/106894988",
+      "https://www.youtube.com/watch?v=sqC0kvCKwEA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-771a2ef3daec",
+    "title": "안테나",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=ToQFaoKLHko"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2074daef1362",
+    "title": "애정과 창끝",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=hci9JCXqXkg"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7611a7d42bc1",
+    "title": "애티튜드",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/159164375",
+      "https://www.youtube.com/watch?v=oscPctJAw88"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-491751c13073",
+    "title": "야생화",
+    "artist": "박효신",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/149750729",
+      "https://www.youtube.com/watch?v=d2DE-9Tz4fE"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b707f738b137",
+    "title": "약속",
+    "artist": "아이돌마스터",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104061556",
+      "https://www.youtube.com/watch?v=Hy3dQX9BvMw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-84cb3a28d926",
+    "title": "어디에도",
+    "artist": "앰씨더맥스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/156012171",
+      "https://www.youtube.com/watch?v=vhGwHQyW6lM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-53319030ef76",
+    "title": "어머나",
+    "artist": "장윤정",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=Gx5Gt9JgixA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-17a520ebb028",
+    "title": "어푸",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109168436",
+      "https://www.youtube.com/watch?v=ro1D18MFlpw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c835fa8bd1c4",
+    "title": "언제나 몇번이라도",
+    "artist": "센과 치히로의 행방불명",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/107012297",
+      "https://www.youtube.com/watch?v=EAkOagahe6g"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ecff54c74098",
+    "title": "얼음꽃",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108405145",
+      "https://www.youtube.com/watch?v=e8_5SupM7T8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-dcb81aa12818",
+    "title": "얼음들",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=61pT-m4yydw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-5981c177a7e3",
+    "title": "여우비",
+    "artist": "이선희",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104997358",
+      "https://www.youtube.com/watch?v=T7tQ53AfCxQ"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1c3f5ed9cfc6",
+    "title": "여행",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=jsxqVdecR28"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6100ca574729",
+    "title": "역광",
+    "artist": "아도",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=haP8XyqTS7c",
+      "https://www.youtube.com/watch?v=8n6SXD40otQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3851c8c91fed",
+    "title": "예뻤어",
+    "artist": "데이식스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109501113",
+      "https://www.youtube.com/watch?v=dr6ZUfe0loM"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-505d414fd553",
+    "title": "오늘부터 우리는",
+    "artist": "여자친구",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/112750507",
+      "https://www.youtube.com/watch?v=OMg2J2rVxcM"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4f58c968c91d",
+    "title": "오랜 날 오랜 밤",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=CA25aMektyo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2e6c7b2b19f0",
+    "title": "오렌지",
+    "artist": "스파이에어",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/146512691",
+      "https://www.youtube.com/watch?v=1caZEb3-2Rg"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-98e2f7519b43",
+    "title": "오르트구름",
+    "artist": "윤하",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116975059",
+      "https://www.youtube.com/watch?v=7wabTncRNWU"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-fcce0ee75706",
+    "title": "오리날다",
+    "artist": "체리필터",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110242373",
+      "https://www.youtube.com/watch?v=6cf7_lmamqQ"
+    ],
+    "difficulty": 5,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-223fb95e6417",
+    "title": "외국인의 고백",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105576934",
+      "https://www.youtube.com/watch?v=uPM8bYyPvAw"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d70af1e937e8",
+    "title": "요바나시 디세이브",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119527505",
+      "https://www.youtube.com/watch?v=u3jPkQ9coRI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d84a5e5b37da",
+    "title": "우르릉 쾅쾅쾅",
+    "artist": "스텔라장",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104742707",
+      "https://www.youtube.com/watch?v=eQTQdDzt_io"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-32b971ceb692",
+    "title": "우리의 꿈",
+    "artist": "원피스",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104138520",
+      "https://www.youtube.com/watch?v=ANdlcNgiYbk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-670dd46d0033",
+    "title": "우주를 줄게",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122079117",
+      "https://www.youtube.com/watch?v=aE3irDN5yqQ"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-73da50ffc586",
+    "title": "원령공주",
+    "artist": "원령공주",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116927095",
+      "https://www.youtube.com/watch?v=FlOIlBmoXY4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-474f814f7f43",
+    "title": "월드 이즈 마인 (World is Mine)",
+    "artist": "보컬로이드",
+    "aliases": [
+      "World is Mine"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105863093",
+      "https://www.youtube.com/watch?v=-GnnexzlhDE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-dd99642e64be",
+    "title": "유니버스",
+    "artist": "오피셜히게단디즘",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=zc5NKmlnpvY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b80bb87be998",
+    "title": "이럴거면 그러지말지",
+    "artist": "백아연",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/121688009",
+      "https://www.youtube.com/watch?v=x4di4zwe6Ug"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-5b010b65c2be",
+    "title": "이름에게",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104913863",
+      "https://www.youtube.com/watch?v=Z9_h09AOIKM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7ff677fb3115",
+    "title": "이메지네이션",
+    "artist": "스파이에어",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3acf2569c16c",
+    "title": "이상형",
+    "artist": "버스커버스커",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105576872",
+      "https://www.youtube.com/watch?v=XAXesL5M38M"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-87820f5e5a82",
+    "title": "이 지금",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108405196",
+      "https://www.youtube.com/watch?v=vwaHmpK4ToY"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a050d94e2b8b",
+    "title": "이터널 스노우",
+    "artist": "달빛천사",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/95011611",
+      "https://www.youtube.com/watch?v=7qZzo9YrCRA"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-c33b7768bedb",
+    "title": "인공잔디",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105576970",
+      "https://www.youtube.com/watch?v=LOMQIY8BPAI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4fc278134885",
+    "title": "인페르노",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/159167089",
+      "https://www.youtube.com/watch?v=kwUGrk-rFBs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-70aa987b3222",
+    "title": "입술사이 (50cm)",
+    "artist": "아이유",
+    "aliases": [
+      "50cm"
+    ],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=4m8V3VAcBFI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4119194f62df",
+    "title": "잊어야 한다는 마음으로",
+    "artist": "김광석",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122078203",
+      "https://www.youtube.com/watch?v=Sm1a56hcrDE"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7466b7b6a1f6",
+    "title": "작은별",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=Kl7F30m5xUs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-5a6f062a2aa5",
+    "title": "잔소리",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=W1vN6B59YZA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0dc97f9acaf0",
+    "title": "잔혹동화",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=az2rLpHvnjI"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ce370b1f0d30",
+    "title": "잔혹한 천사의 태제",
+    "artist": "신세기 에반게리온",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=95rgKA9ZIm4",
+      "https://www.youtube.com/watch?v=6Wa0l84xm7w"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-f8ef2ff26788",
+    "title": "장난감병정",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=wmmyu0bZnYo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1908117fa5f5",
+    "title": "장난기 기능",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116759663",
+      "https://www.youtube.com/watch?v=-Nxs7TUmtxs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-037cd1eb47b6",
+    "title": "전전전세",
+    "artist": "래드윔프스",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109250288",
+      "https://www.youtube.com/watch?v=N_eVLqIRpg8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-fc73c4760573",
+    "title": "절세생물",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=uJx5ujNdp90"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8986dd62cd64",
+    "title": "절취선",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105028085",
+      "https://www.youtube.com/watch?v=icFvdjY5DbA"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-373f3f010561",
+    "title": "좋다고 말해",
+    "artist": "볼빨간사춘기",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105263976",
+      "https://www.youtube.com/watch?v=DNNbPkjrzWU"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0d4a9be7238c",
+    "title": "좋은 날",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=NbmtT4n2hyk"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-552954afea0c",
+    "title": "좋지아니한가",
+    "artist": "유다빈밴드",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=1JWQx0en1lo"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-52d451f5db8d",
+    "title": "진흙 속에 피다",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=aXXSC5p6w10"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3e78be9f4ddb",
+    "title": "천국",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=fu4fozFOJfU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-54f61f8c51f1",
+    "title": "천년의 사랑",
+    "artist": "박완규",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/104484756",
+      "https://www.youtube.com/watch?v=7A4-jTwqH2k"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-81d46d04a7fe",
+    "title": "천성의 약함",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108519336",
+      "https://www.youtube.com/watch?v=vJZOcseoxj4"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-990697a9328c",
+    "title": "체스보드",
+    "artist": "오피셜히게단디즘",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/159168467",
+      "https://www.youtube.com/watch?v=usHpLeOQTJ0"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b8adaef2a40e",
+    "title": "초록창가",
+    "artist": "악동뮤지션",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113383851",
+      "https://www.youtube.com/watch?v=TGKx2KfszB8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-db583075d4c7",
+    "title": "친애하는 소년이여",
+    "artist": "험프백",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=zo1mn8oGg2Y"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ceb60728e8a2",
+    "title": "칠드런 레코드 (チルドレンレコード)",
+    "artist": "보컬로이드",
+    "aliases": [
+      "チルドレンレコード",
+      "칠드런 레코드"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=wI773ihf31k"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-ffe2851f8ef4",
+    "title": "캐릭터",
+    "artist": "녹황색사회",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=wBAaMuljjGk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8d268fd462af",
+    "title": "커튼콜",
+    "artist": "유우리",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=ZOUBni00Ssc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-05439fcada59",
+    "title": "케세라세라",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=Gh4PqvQVWRc",
+      "https://www.youtube.com/watch?v=5J_ZiaiDujs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-fbfe0559d55d",
+    "title": "코이",
+    "artist": "호시노 겐",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117705941",
+      "https://www.youtube.com/watch?v=GQQdx27LzQ8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8b73f0a5aa73",
+    "title": "쿄란 헤이 키즈",
+    "artist": "노라가미 아라고토",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122922031",
+      "https://www.youtube.com/watch?v=3eHGeOjBouU"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-e95895d2b779",
+    "title": "크로싱필드",
+    "artist": "리사",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/113047853",
+      "https://www.youtube.com/watch?v=xMmQR7ARV_k"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3090d5501212",
+    "title": "킥백 KICK BACK",
+    "artist": "요네즈 켄시",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117580575",
+      "https://www.youtube.com/watch?v=mzbS8TbFAbc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-9f9efee00818",
+    "title": "태어나서 처음으로 (For the First Time in Forever)",
+    "artist": "겨울왕국",
+    "aliases": [
+      "For the First Time in Forever"
+    ],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105580367",
+      "https://www.youtube.com/watch?v=v_OeZUbQrjk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0b0dc660d706",
+    "title": "테러",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=J_hsYE5-Zqs",
+      "https://www.youtube.com/watch?v=nhovlmfe4Lg"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-765c78d3bd14",
+    "title": "파티",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=54dM04k-1Cs"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-099b069c873d",
+    "title": "팬서비스",
+    "artist": "허니웍스",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/116085779",
+      "https://www.youtube.com/watch?v=CtOzFChC_HM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-af8be3e27ee0",
+    "title": "페어리 테일",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=v9GCZ6j_tDk"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-50e81006d587",
+    "title": "폰서트",
+    "artist": "10cm",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/103480841",
+      "https://www.youtube.com/watch?v=1QQEghu_qWc"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-38a66ad3ce87",
+    "title": "푸르름이 사는 곳 (青のすみか)",
+    "artist": "키타니 타츠야",
+    "aliases": [
+      "青のすみか",
+      "푸르름이 사는 곳"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/122921579",
+      "https://www.youtube.com/watch?v=rLO-AcDU-Ag"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-dfe60742654e",
+    "title": "푸름과 여름",
+    "artist": "미세스 그린애플",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=-J5M0fkntrw",
+      "https://www.youtube.com/watch?v=uVkvZ70ppeM"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-6fa4c523cd04",
+    "title": "프로미스",
+    "artist": "에픽세븐",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/110242373",
+      "https://www.youtube.com/watch?v=4h4z8cxrYkE&t=112s"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-0c38649de071",
+    "title": "프로미스 (에픽세븐 Promise)",
+    "artist": "라온",
+    "aliases": [
+      "에픽세븐 Promise"
+    ],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102762816",
+      "https://www.youtube.com/watch?v=4h4z8cxrYkE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-b573a333f551",
+    "title": "피차일반",
+    "artist": "음율",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=Gbs_rWRwnEQ",
+      "https://www.youtube.com/watch?v=4Pi4Zfhj2Sg"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-2eac46cea0b6",
+    "title": "하나아라시",
+    "artist": "이브",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=hF3wSvlX2tg"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-8f85012664d3",
+    "title": "하늘을 달리다",
+    "artist": "이적",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/108404980",
+      "https://www.youtube.com/watch?v=30An48x5q1Q"
+    ],
+    "difficulty": 3,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-7f4cac92dc1d",
+    "title": "하루 끝",
+    "artist": "아이유",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/102762616",
+      "https://www.youtube.com/watch?v=RM8SMbtakFE"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d6144b42083a",
+    "title": "하트 브레이커",
+    "artist": "지드래곤",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/117159835",
+      "https://www.youtube.com/watch?v=Sp6SEg6qIXQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d3d0242c1fe9",
+    "title": "한숨",
+    "artist": "이하이",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/105861441",
+      "https://www.youtube.com/watch?v=m_1sBfKVouQ"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-132f462624fa",
+    "title": "한 페이지가 될 수 있게",
+    "artist": "데이식스",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/115354015",
+      "https://www.youtube.com/watch?v=iSbVfZXiXMw"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-4e66f7da969d",
+    "title": "혜성",
+    "artist": "윤하",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119530519",
+      "https://www.youtube.com/watch?v=TpMb3j9AQCw"
+    ],
+    "difficulty": 4,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-9ac92c310695",
+    "title": "호시아이",
+    "artist": "보컬로이드",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://www.youtube.com/watch?v=QhMUFsWzdik"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-3e331d961409",
+    "title": "화성침공",
+    "artist": "히미츠",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/118120471",
+      "https://www.youtube.com/watch?v=FTbiYBnE-GQ"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-1f66656e34a0",
+    "title": "황금별",
+    "artist": "모차르트",
+    "aliases": [],
+    "categories": [
+      "뮤지컬 · 디즈니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/119125009",
+      "https://www.youtube.com/watch?v=GqW-_iCE1Yc"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-d1b2b47bd888",
+    "title": "히어로",
+    "artist": "LUCY",
+    "aliases": [],
+    "categories": [
+      "가요"
+    ],
+    "videoUrls": [
+      "https://vod.sooplive.co.kr/player/155518447",
+      "https://www.youtube.com/watch?v=WacWovqpi2c"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  },
+  {
+    "id": "mir-a0cafdf93a3f",
+    "title": "히치콕",
+    "artist": "요루시카",
+    "aliases": [],
+    "categories": [
+      "J-POP · 애니"
+    ],
+    "videoUrls": [
+      "https://vod.afreecatv.com/player/109168262",
+      "https://www.youtube.com/watch?v=UjDWI5ToPW8"
+    ],
+    "difficulty": null,
+    "proficiency": null,
+    "requestStatus": "unreviewed"
+  }
+]
