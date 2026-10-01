@@ -1,0 +1,143 @@
+name: Songbook preview
+on:
+  push:
+    branches: [feature/songbook]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - '.github/workflows/songbook-preview.yml'
+      - 'docs/reviews/songbook-draft.md'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: songbook-preview
+  cancel-in-progress: false
+jobs:
+  snapshot:
+    if: github.ref == 'refs/heads/feature/songbook'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Commit the reviewed public dataset once
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f src/data/songbookData.json ]; then
+            python -m pip install beautifulsoup4==4.13.4
+            gh run download 36884071998 --repo "$GITHUB_REPOSITORY" --name songbook-source-audit --dir /tmp/songbook-sources
+            python scripts/import-songbook.py --input /tmp/songbook-sources --output src/data/songbookData.json
+            git fetch origin feature/songbook
+            test "$(git rev-parse FETCH_HEAD)" = "$(git rev-parse HEAD)"
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add src/data/songbookData.json
+            git commit -m 'data(songbook): freeze reviewed 342-entry public source snapshot'
+            git push origin HEAD:feature/songbook
+          fi
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  review:
+    if: github.ref == 'refs/heads/feature/songbook'
+    needs: snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_COMMIT: ${{ needs.snapshot.outputs.commit }}
+      VITE_REVIEW_PREVIEW: 'true'
+      VITE_SONGBOOK_PREVIEW: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.snapshot.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify source, snapshot invariants and backend syntax
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+      - name: Install browser and staging dependencies
+        run: |
+          python -m pip install playwright==1.57.0 paramiko==5.0.0
+          if ! command -v google-chrome && ! command -v chromium; then
+            python -m playwright install --with-deps chromium
+          fi
+      - name: Test isolated local preview
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/songbook-vite.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
+          python scripts/songbook-browser-check.py --url http://127.0.0.1:5173/ --out songbook-local-report
+      - name: Prepare existing public read-only configuration
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: bash scripts/prepare-public-build-config.sh
+      - name: Build isolated noindex release
+        run: |
+          rid="r$(date -u +%Y%m%d%H%M%S)_${SOURCE_COMMIT:0:8}"
+          echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
+          npx vite build --base "/_yeop_releases/${rid}/"
+          RELEASE_ID="$rid" python - <<'PY'
+          import os
+          from pathlib import Path
+          marker = '<meta name="yeop-release" content="' + os.environ['RELEASE_ID'] + '" />'
+          for path in Path('dist').rglob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              assert text.count('</head>') == 1 and 'noindex, nofollow' in text, path
+              path.write_text(text.replace('</head>', marker + '\n</head>'), encoding='utf-8')
+          PY
+      - name: Stage only - never activate production
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+          DIST_DIR: dist
+          SERVER_SOURCE_DIR: server
+        run: python scripts/stage-songbook-preview.py
+      - name: Verify public routes, metadata and UI
+        run: |
+          python - <<'PY'
+          import json, urllib.request
+          from pathlib import Path
+          report = json.loads(Path('deploy_report.json').read_text())
+          checks = []
+          for url in (report['songbook_url'], report['review_url']):
+              with urllib.request.urlopen(url, timeout=30) as response:
+                  html = response.read().decode('utf-8')
+                  assert response.status == 200 and 'noindex, nofollow' in html
+                  assert html.count('<title>') == 1 and '<meta property="og:image"' in html
+                  checks.append({'url': url, 'status': response.status, 'noindex': True})
+          assert report['phase'] == 'staged' and report['production_routing_unchanged'] is True
+          Path('songbook-http-report.json').write_text(json.dumps(checks, indent=2))
+          PY
+          python scripts/songbook-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out songbook-live-report
+      - name: Save review screenshots and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songbook-preview-review
+          path: |
+            songbook-local-report/
+            songbook-live-report/
+            deploy_report.json
+            songbook-http-report.json
+            src/data/songbookData.json
+          retention-days: 14
+          if-no-files-found: warn
