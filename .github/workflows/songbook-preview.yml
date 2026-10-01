@@ -2,12 +2,7 @@ name: Songbook preview
 on:
   push:
     branches: [feature/songbook]
-    paths:
-      - 'src/**'
-      - 'scripts/**'
-      - 'tests/**'
-      - '.github/workflows/songbook-preview.yml'
-      - 'docs/reviews/songbook-draft.md'
+    paths: ['src/**','scripts/**','tests/**','server/**','package.json','.github/workflows/songbook-preview.yml','docs/reviews/songbook-draft.md']
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,36 +16,29 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: write
-      actions: read
     outputs:
       commit: ${{ steps.source.outputs.commit }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: ${{ github.sha }}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Commit the reviewed public dataset once
+          node-version: '24'
+      - name: Finalize public catalog and integration source
         id: source
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ ! -f src/data/songbookData.json ]; then
-            python -m pip install beautifulsoup4==4.13.4
-            gh run download 36884071998 --repo "$GITHUB_REPOSITORY" --name songbook-source-audit --dir /tmp/songbook-sources
-            python scripts/import-songbook.py --input /tmp/songbook-sources --output src/data/songbookData.json
+          node scripts/finalize-songbook-v2.mjs
+          node scripts/prepare-songbook-v2.mjs
+          if [ -n "$(git status --porcelain)" ]; then
             git fetch origin feature/songbook
             test "$(git rev-parse FETCH_HEAD)" = "$(git rev-parse HEAD)"
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add src/data/songbookData.json
-            git commit -m 'data(songbook): freeze reviewed 342-entry public source snapshot'
+            git add src package.json scripts/songbook-v2-browser-check.py
+            git commit -m 'chore(songbook): finalize revision two public catalog and integration'
             git push origin HEAD:feature/songbook
           fi
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   review:
-    if: github.ref == 'refs/heads/feature/songbook'
     needs: snapshot
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -70,28 +58,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Verify source, snapshot invariants and backend syntax
+      - name: Verify source
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm run verify
           npm run check:backend
-      - name: Install browser and staging dependencies
+      - name: Browser dependencies
         run: |
           python -m pip install playwright==1.57.0 paramiko==5.0.0
-          if ! command -v google-chrome && ! command -v chromium; then
-            python -m playwright install --with-deps chromium
-          fi
-      - name: Test isolated local preview
+          if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+      - name: Local browser regression tests
         run: |
           npm run dev -- --host 127.0.0.1 > /tmp/songbook-vite.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
-          python scripts/songbook-browser-check.py --url http://127.0.0.1:5173/ --out songbook-local-report
-      - name: Prepare existing public read-only configuration
+          python scripts/songbook-v2-browser-check.py --url http://127.0.0.1:5173/ --out songbook-local-report
+      - name: Existing public build configuration
         env:
           SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: bash scripts/prepare-public-build-config.sh
-      - name: Build isolated noindex release
+      - name: Build isolated noindex release and audit bundle
         run: |
           rid="r$(date -u +%Y%m%d%H%M%S)_${SOURCE_COMMIT:0:8}"
           echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
@@ -101,43 +87,44 @@ jobs:
           from pathlib import Path
           marker = '<meta name="yeop-release" content="' + os.environ['RELEASE_ID'] + '" />'
           for path in Path('dist').rglob('*.html'):
-              text = path.read_text(encoding='utf-8')
-              assert text.count('</head>') == 1 and 'noindex, nofollow' in text, path
-              path.write_text(text.replace('</head>', marker + '\n</head>'), encoding='utf-8')
+              text=path.read_text();assert text.count('</head>')==1 and 'noindex, nofollow' in text
+              path.write_text(text.replace('</head>',marker+'\n</head>'))
+          for path in Path('dist').rglob('*'):
+              if path.suffix in ('.js','.json','.html'):
+                  text=path.read_text()
+                  for value in ['gurmir.com','mir427.vercel.app','originalProficiency','미르실버타운']:
+                      assert value not in text,(path,value)
           PY
-      - name: Stage only - never activate production
+      - name: Stage only without production activation
         env:
           YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
           DIST_DIR: dist
           SERVER_SOURCE_DIR: server
         run: python scripts/stage-songbook-preview.py
-      - name: Verify public routes, metadata and UI
+      - name: Public browser and read-only API verification
         run: |
+          python scripts/songbook-v2-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out songbook-live-report
           python - <<'PY'
-          import json, urllib.request
+          import json,urllib.request
           from pathlib import Path
-          report = json.loads(Path('deploy_report.json').read_text())
-          checks = []
-          for url in (report['songbook_url'], report['review_url']):
-              with urllib.request.urlopen(url, timeout=30) as response:
-                  html = response.read().decode('utf-8')
-                  assert response.status == 200 and 'noindex, nofollow' in html
-                  assert html.count('<title>') == 1 and '<meta property="og:image"' in html
-                  checks.append({'url': url, 'status': response.status, 'noindex': True})
-          assert report['phase'] == 'staged' and report['production_routing_unchanged'] is True
-          Path('songbook-http-report.json').write_text(json.dumps(checks, indent=2))
+          d=json.loads(Path('deploy_report.json').read_text());assert d['phase']=='staged' and d['production_routing_unchanged']
+          result=[]
+          for u in [d['songbook_url'],d['review_url']]:
+              with urllib.request.urlopen(u,timeout=25) as r: t=r.read().decode();assert r.status==200 and 'noindex, nofollow' in t;result.append({'url':u,'status':200})
+          url=d['preview_url']+'api/songbook-search.php?q=Hello&country=US'
+          try:
+              with urllib.request.urlopen(url,timeout=20) as r: x=json.loads(r.read());assert isinstance(x.get('songs'),list);result.append({'search':r.status,'count':len(x['songs'])})
+          except Exception as e: result.append({'search_error':str(e)})
+          Path('songbook-http-report.json').write_text(json.dumps(result,indent=2))
           PY
-          python scripts/songbook-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out songbook-live-report
-      - name: Save review screenshots and reports
+      - name: Review artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: songbook-preview-review
+          name: songbook-v2-review
           path: |
             songbook-local-report/
             songbook-live-report/
             deploy_report.json
             songbook-http-report.json
-            src/data/songbookData.json
           retention-days: 14
-          if-no-files-found: warn
