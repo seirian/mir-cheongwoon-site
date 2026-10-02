@@ -82,7 +82,7 @@ with sync_playwright() as pw:
   expect(page.get_by_role('dialog').get_by_role('heading',name='검토용 새 노래',exact=True)).to_be_visible()
   page.reload(wait_until='networkidle');dialog=page.get_by_role('dialog')
   expect(dialog.get_by_role('heading',name='검토용 새 노래',exact=True)).to_be_visible()
-  expect(dialog.get_by_role('link',name='영상 1 새 탭에서 보기 ↗',exact=True)).to_have_attribute('href','https://www.youtube.com/watch?v=abcdefghijk')
+  expect(dialog.get_by_role('link',name='검토용 새 노래 YouTube VOD 새 탭에서 보기',exact=True)).to_have_attribute('href','https://www.youtube.com/watch?v=abcdefghijk')
   assert '신청 가능 상태: 가능' in dialog.inner_text() and 'Test Song' in dialog.inner_text()
   page.keyboard.press('Escape');checks.append('manual song add with category, aliases, video and status persisted')
   page.get_by_role('button',name='노래 추가',exact=True).click();dialog=page.get_by_role('dialog')
