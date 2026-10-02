@@ -1,3 +1,6 @@
+import { supabase } from './supabase';
+import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW } from './preview';
+import { songbookTables } from './usernameLogin';
 import { createClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import catalog from '../data/songbookCatalog.json';
@@ -7,11 +10,11 @@ const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 let storage;
 try { storage = window.sessionStorage; } catch { storage = undefined; }
-export const songbookClient = url && key ? createClient(url, key, {
+export const songbookClient = !IS_REVIEW_PREVIEW ? supabase : IS_SONGBOOK_PREVIEW && url && key ? createClient(url, key, {
   auth: { storageKey: 'mir-songbook-review-editor-v2', storage, persistSession: Boolean(storage), autoRefreshToken: true, detectSessionInUrl: false },
   global: { fetch: restrictedFetch(url, globalThis.fetch.bind(globalThis)) },
 }) : null;
-const tables = { entries: 'songbook_preview_entries', ratings: 'songbook_preview_ratings' };
+const tables = songbookTables(IS_SONGBOOK_PREVIEW);
 async function readTable(name) {
   let data = [];
   for (let page = 0; page < 20; page++) {
@@ -82,7 +85,7 @@ export function useSongbookStore(demo) {
         if (user.error || user.data.user?.id !== next.user.id) return;
         const [a, e] = await Promise.all([
           songbookClient.from('admins').select('user_id').eq('user_id', next.user.id).maybeSingle(),
-          songbookClient.from('songbook_preview_editors').select('role').eq('user_id', next.user.id).maybeSingle(),
+          songbookClient.from(tables.editors).select('role').eq('user_id', next.user.id).maybeSingle(),
         ]);
         if (active && generation === authGeneration.current && !a.error && !e.error) {
           setAdmin(Boolean(a.data)); setRole(e.data?.role || null);
@@ -98,8 +101,8 @@ export function useSongbookStore(demo) {
   }, [demo]);
 
   const songs = mergeSongs(catalog, entries, ratings);
-  const canEdit = ready && (demo || admin || Boolean(role));
-  const canRate = ready && (demo || role === 'owner');
+  const canEdit = ready && (!IS_REVIEW_PREVIEW || IS_SONGBOOK_PREVIEW) && (demo || admin || Boolean(role));
+  const canRate = ready && (!IS_REVIEW_PREVIEW || IS_SONGBOOK_PREVIEW) && (demo || role === 'owner');
   function persist(e, r) {
     localStorage.setItem(DEMO_KEY, JSON.stringify({ entries: e, ratings: r }));
     setEntries(e); setRatings(r);
@@ -142,7 +145,7 @@ export function useSongbookStore(demo) {
   async function setOwner(id) {
     if (!admin || demo) throw Error('관리자만 계정을 지정할 수 있습니다.');
     if (!/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)) throw Error('계정 ID 형식을 확인해주세요.');
-    const response = await songbookClient.from('songbook_preview_editors').upsert({ user_id: id, role: 'owner' });
+    const response = await songbookClient.from(tables.editors).upsert({ user_id: id, role: 'owner' });
     if (response.error) throw Error('계정이 없거나 이미 다른 소유자가 지정되어 있습니다.');
   }
   return { songs, session, role, admin, ready, error, saving, canEdit, canRate, saveSong, saveRating, setOwner, refresh, client: songbookClient };

@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import PerformanceDetailPage from './pages/PerformanceDetailPage';
 import ReviewPage, { PreviewAccountNotice } from './pages/ReviewPage';
-import { IS_REVIEW_PREVIEW } from './lib/preview';
+import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW } from './lib/preview';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import MirPage from './pages/MirPage';
@@ -29,7 +29,7 @@ export default function App() {
         <Route path="/history/:slug" element={<PerformanceDetailPage />} />
         <Route path="/review" element={IS_REVIEW_PREVIEW ? <ReviewPage /> : <Navigate to="/" replace />} />
         <Route path="/songbook" element={<Suspense fallback={songbookFallback}><SongbookPage /></Suspense>} />
-        <Route path="/songbook/review" element={<Suspense fallback={songbookFallback}><SongbookReviewPage /></Suspense>} />
+        <Route path="/songbook/review" element={IS_SONGBOOK_PREVIEW ? <Suspense fallback={songbookFallback}><SongbookReviewPage /></Suspense> : <Navigate to="/songbook" replace />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="/gallery/view" element={<GalleryDetailPage />} />

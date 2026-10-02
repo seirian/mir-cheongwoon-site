@@ -1,3 +1,4 @@
+import { loginWithUsername } from '../lib/usernameLogin';
 import { useEffect, useMemo, useState } from 'react';
 import { KeyRound, LogIn, LogOut, Mail, ShieldCheck, UserPlus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,7 +12,7 @@ const validPassword = (value) => value.length >= 8 && value.length <= 128;
 
 const authMessage = (code) => {
   if (code === 'email_not_confirmed') return '이메일 인증을 완료한 뒤 로그인해 주세요.';
-  if (code === 'invalid_credentials') return '아이디/이메일 또는 비밀번호를 확인해 주세요.';
+  if (code === 'invalid_credentials') return '아이디 또는 비밀번호를 확인해 주세요.';
   return '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.';
 };
 
@@ -104,32 +105,15 @@ export default function AccountPage() {
     setBusy(true);
     setMessage('');
 
-    const { data, error } = await supabase.functions.invoke('member-auth', {
-      body: {
-        action: 'login',
-        identifier: login.identifier.trim(),
-        password: login.password,
-      },
-    });
-
-    if (error || !data?.access_token || !data?.refresh_token) {
+    try {
+      await loginWithUsername(supabase, login.identifier, login.password);
+      setLogin(previous => ({ ...previous, password: '' }));
+      setMessage('로그인했습니다.');
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
       setBusy(false);
-      setMessage(authMessage(data?.error || 'invalid_credentials'));
-      return;
     }
-
-    const { error: sessionError } = await supabase.auth.setSession({
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-    });
-
-    setBusy(false);
-    if (sessionError) {
-      setMessage('로그인 세션을 생성하지 못했습니다. 다시 시도해 주세요.');
-      return;
-    }
-
-    setMessage('로그인했습니다.');
   };
 
   const handleSignup = async (event) => {
@@ -311,7 +295,7 @@ export default function AccountPage() {
         {(mode === 'login' || mode === 'password') && (
           <form className="account-auth-card" onSubmit={handleLogin}>
             <div className="account-auth-title"><LogIn size={20}/><strong>로그인</strong></div>
-            <label>아이디 또는 이메일<input value={login.identifier} onChange={(e) => setLogin({ ...login, identifier: e.target.value })} autoComplete="username" required /></label>
+            <label>아이디<input value={login.identifier} onChange={(e) => setLogin({ ...login, identifier: e.target.value })} type="text" name="username" autoCapitalize="none" spellCheck={false} maxLength={24} autoComplete="username" required /></label>
             <label>비밀번호<input type="password" value={login.password} onChange={(e) => setLogin({ ...login, password: e.target.value })} autoComplete="current-password" required /></label>
             <button className="btn btn-primary" disabled={busy}>{busy ? '로그인 중...' : '로그인'}</button>
           </form>
