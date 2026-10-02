@@ -1,0 +1,43 @@
+name: Songbook source audit
+on:
+  push:
+    branches: [feature/songbook]
+    paths: ['.github/workflows/songbook-source-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sources:
+    if: github.ref == 'refs/heads/feature/songbook'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read public sources with standard-library HTTP only
+        run: |
+          mkdir -p source-audit
+          git archive --format=tar HEAD -o source-audit/repository.tar
+          python - <<'PY'
+          import json, re, urllib.request
+          from pathlib import Path
+          sources = [('silver', 'https://mir427.vercel.app/songs'), ('gurmir', 'https://gurmir.com/songbook'), ('cafe', 'https://cafe.naver.com/alice427')]
+          for key, url in sources:
+              try:
+                  request = urllib.request.Request(url, headers={'User-Agent':'MIR-Songbook-Review/1.0 (+https://mir.yeop.net)'})
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      html = response.read(8000000).decode('utf-8', errors='replace')
+                      Path('source-audit/' + key + '.html').write_text(html, encoding='utf-8')
+                      print('SOURCE', key, 'STATUS', response.status, 'LENGTH', len(html))
+                      print('SCRIPTS', re.findall(r'<script[^>]+src="([^"]+)"', html))
+                      print('HEAD SAMPLE', html[:2000])
+              except Exception as error:
+                  print('SOURCE UNAVAILABLE', key, type(error).__name__, str(error)[:300])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-source-audit
+          path: source-audit/
+          retention-days: 7
