@@ -1,0 +1,33 @@
+name: Songbook live verification
+on:
+  workflow_run:
+    workflows: ['Deploy mir.yeop.net']
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  live:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Read-only production username and songbook smoke test
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python -m pip install playwright==1.57.0
+          if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+          python scripts/songbook-live-check.py --sha "$EXPECTED_SHA"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-live-production
+          path: songbook-live-production/
+          retention-days: 14

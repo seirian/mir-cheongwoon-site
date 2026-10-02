@@ -74,7 +74,7 @@ with sync_playwright() as pw:
   expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_be_visible()
   page.goto(base+'account/',wait_until='networkidle');expect(page.get_by_label('아이디',exact=True)).to_be_visible()
   page.get_by_label('아이디',exact=True).fill('mir.review');page.get_by_label('비밀번호',exact=True).fill(' test password ')
-  page.get_by_role('button',name='로그인',exact=True).click();expect(page.get_by_role('heading',name='mir.review',exact=True)).to_be_visible()
+  page.locator('form').get_by_role('button',name='로그인',exact=True).click();expect(page.get_by_role('heading',name='mir.review',exact=True)).to_be_visible()
   page.goto(base+'songbook/',wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible()
   checks.append('site and songbook share login, reload persistence, logout and login in both directions')
   page.locator('.sb2-toolbar').get_by_role('button',name='로그아웃',exact=True).click();expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_be_visible()
