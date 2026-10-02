@@ -21,7 +21,7 @@ def main():
     for route in ('index.html', 'songbook/index.html', 'songbook/review/index.html'):
         if 'noindex, nofollow' not in (dist / route).read_text(encoding='utf-8'):
             raise SystemExit('Missing noindex metadata: ' + route)
-    # These additional endpoints belong only to the feature preview, not the production manifest.
+    # Keep compatibility with older deploy helpers; production also includes these APIs.
     for endpoint in ('api/songbook-search.php', 'api/_songbook_localization.php', 'api/_songbook_korean_titles.php'):
         if endpoint not in base.API_FILES:
             base.API_FILES.append(endpoint)

@@ -18,6 +18,23 @@ for _daily_api in ("api/_fanart_daily.php", "api/naver-fanart-daily.php", "api/n
     if _daily_api not in base.API_FILES:
         base.API_FILES.append(_daily_api)
 
+# Songbook APIs must be present in both preview and production releases.
+SONGBOOK_API_FILES = ("api/songbook-search.php", "api/_songbook_localization.php", "api/_songbook_korean_titles.php")
+for endpoint in SONGBOOK_API_FILES:
+    if endpoint not in base.API_FILES:
+        base.API_FILES.append(endpoint)
+
+def songbook_api_smoke(rid: str):
+    # Invalid input is deterministic and exercises PHP without external music calls.
+    code, body, _ = base.http(CANONICAL_ORIGIN + PREFIX + rid + "/api/songbook-search.php?q=x")
+    try:
+        payload = json.loads(body)
+    except Exception:
+        payload = {}
+    if code != 400 or payload.get("error") != "query":
+        raise base.Stop("Songbook API is missing or invalid; release will not be activated")
+    return {"status": code, "invalid_query_rejected": True, "passed": True}
+
 PERSONAL_WEB = "/web"
 SITE_WEB = "/web/_mir_site"
 CANONICAL_ORIGIN = "https://mir.yeop.net"
@@ -485,6 +502,7 @@ def main():
 
         report["phase"] = "uploaded"
         report["preview_checks"] = preview_smoke(rid)
+        report["songbook_api_check"] = songbook_api_smoke(rid)
 
         if os.environ.get("ACTIVATE", "") != "true":
             report["phase"] = "staged"
