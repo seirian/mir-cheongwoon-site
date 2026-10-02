@@ -18,6 +18,12 @@ export function VodLinks({urls, title, detailed = false}) {
     })}
   </span>;
 }
+function MusicBadge({url, title}) {
+  const [failed, setFailed] = useState(false);
+  return <a className="sb3-store-badge" href={url} target="_blank" rel="noopener noreferrer" aria-label={`${title} Apple Music에서 보기`}>
+    {failed ? <span style={{fontSize:9, color:'#b7c9e8', display:'block'}}>음원 보기 ↗</span> : <img src="https://marketing.services.apple/api/storage/images/6408fe79bf4a430007e6828b/en-us-large%401x.png" alt="Listen on Apple Music" width="61" height="15" loading="lazy" onError={() => setFailed(true)}/>}
+  </a>;
+}
 export function SongCover({song}) {
   const cover = coverFor(song);
   const [failed, setFailed] = useState(false);
@@ -28,6 +34,6 @@ export function SongCover({song}) {
       <img width="64" height="64" loading="lazy" decoding="async" referrerPolicy="no-referrer" src={cover.url} alt={`${song.title} ${cover.label}`} onError={() => setFailed(true)}/>
       {cover.kind === 'video' && <span className="sb3-cover-kind" aria-hidden="true">VOD</span>}
     </a>
-    {cover.kind === 'album' && <a className="sb3-store-badge" href={cover.href} target="_blank" rel="noopener noreferrer" aria-label={`${song.title} iTunes에서 보기`}><img src="https://linkmaker.itunes.apple.com/assets/shared/badges/en-us/itunes-sm.svg" alt="Download on iTunes" width="61" height="15" loading="lazy"/></a>}
+    {cover.kind === 'album' && <MusicBadge url={cover.href} title={song.title}/>}
   </span>;
 }
