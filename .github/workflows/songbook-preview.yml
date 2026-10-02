@@ -2,7 +2,7 @@ name: Songbook preview
 on:
   push:
     branches: [feature/songbook]
-    paths: ['src/**','scripts/**','tests/**','server/**','package.json','.github/workflows/songbook-preview.yml','docs/reviews/songbook-draft.md']
+    paths: ['src/**','scripts/**','tests/**','server/**','package.json','.github/workflows/songbook-preview.yml','docs/reviews/songbook*.md']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,13 +20,15 @@ jobs:
       commit: ${{ steps.source.outputs.commit }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - name: Finalize public catalog and integration source
         id: source
         run: |
-          node scripts/finalize-songbook-v2.mjs
+          node scripts/finalize-songbook-v3.mjs
           node scripts/prepare-songbook-v2.mjs
           if [ -n "$(git status --porcelain)" ]; then
             git fetch origin feature/songbook
@@ -34,11 +36,12 @@ jobs:
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add src package.json scripts/songbook-v2-browser-check.py
-            git commit -m 'chore(songbook): finalize revision two public catalog and integration'
+            git commit -m 'chore(songbook): finalize revision three media and catalog integration'
             git push origin HEAD:feature/songbook
           fi
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   review:
+    if: github.ref == 'refs/heads/feature/songbook'
     needs: snapshot
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -58,11 +61,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Verify source
+      - name: Verify source and search parser
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           npm run verify
           npm run check:backend
+          php tests/songbook-search-test.php
       - name: Browser dependencies
         run: |
           python -m pip install playwright==1.57.0 paramiko==5.0.0
@@ -71,7 +75,7 @@ jobs:
         run: |
           npm run dev -- --host 127.0.0.1 > /tmp/songbook-vite.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
-          python scripts/songbook-v2-browser-check.py --url http://127.0.0.1:5173/ --out songbook-local-report
+          python scripts/songbook-v3-browser-check.py --url http://127.0.0.1:5173/ --out songbook-local-report
       - name: Existing public build configuration
         env:
           SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
@@ -101,27 +105,24 @@ jobs:
           DIST_DIR: dist
           SERVER_SOURCE_DIR: server
         run: python scripts/stage-songbook-preview.py
-      - name: Public browser and read-only API verification
+      - name: Public browser and live catalog verification
         run: |
-          python scripts/songbook-v2-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out songbook-live-report
+          python scripts/songbook-v3-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out songbook-live-report --live-catalog
           python - <<'PY'
           import json,urllib.request
           from pathlib import Path
           d=json.loads(Path('deploy_report.json').read_text());assert d['phase']=='staged' and d['production_routing_unchanged']
           result=[]
           for u in [d['songbook_url'],d['review_url']]:
-              with urllib.request.urlopen(u,timeout=25) as r: t=r.read().decode();assert r.status==200 and 'noindex, nofollow' in t;result.append({'url':u,'status':200})
-          url=d['preview_url']+'api/songbook-search.php?q=Hello&country=US'
-          try:
-              with urllib.request.urlopen(url,timeout=20) as r: x=json.loads(r.read());assert isinstance(x.get('songs'),list);result.append({'search':r.status,'count':len(x['songs'])})
-          except Exception as e: result.append({'search_error':str(e)})
+              with urllib.request.urlopen(u,timeout=25) as r:
+                  t=r.read().decode();assert r.status==200 and 'noindex, nofollow' in t;result.append({'url':u,'status':200})
           Path('songbook-http-report.json').write_text(json.dumps(result,indent=2))
           PY
       - name: Review artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: songbook-v2-review
+          name: songbook-v3-review
           path: |
             songbook-local-report/
             songbook-live-report/
