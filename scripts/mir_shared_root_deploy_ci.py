@@ -217,11 +217,12 @@ def site_root_htaccess(rid: str) -> bytes:
         f"RewriteRule ^api/(naver-fanart-(?:daily|backup|image)\\.php)$ _yeop_releases/{rid}/api/$1 [L,QSA]\n"
         f"RewriteRule ^$ _yeop_releases/{rid}/index.html [L]\n"
         # The frontend build emits a static HTML head for each public route.
-        f"RewriteRule ^(mir|band|history|schedule|gallery|account|admin)/?$ "
+        f"RewriteRule ^(mir|band|history|schedule|gallery|account|admin|songbook)/?$ "
         f"_yeop_releases/{rid}/$1/index.html [L,QSA]\n"
         f"RewriteRule ^history/([a-z0-9-]+)/?$ "
         f"_yeop_releases/{rid}/history/$1/index.html [L,QSA]\n"
         f"RewriteRule ^gallery/[^/]+/?$ _yeop_releases/{rid}/gallery/index.html [L,QSA]\n"
+        "RewriteRule ^songbook/review/?$ /songbook [R=302,L,NE]\n"
         f"RewriteRule ^review/?$ _yeop_releases/{rid}/index.html [L,QSA]\n"
         "# Release-scoped assets and APIs are served directly from disk.\n"
     ).encode("utf-8")
@@ -321,9 +322,9 @@ def redirect_status(url: str):
 def preview_smoke(rid: str):
     base_url = CANONICAL_ORIGIN + PREFIX + rid + "/"
     results = {}
-    for route in ["index.html", "api/health.php"]:
+    for route in ["index.html", "songbook/index.html", "api/health.php"]:
         code, body, _ = base.http(base_url + route)
-        if route == "index.html":
+        if route.endswith(".html"):
             ok = code == 200 and rid.encode() in body
         else:
             try:
@@ -339,7 +340,7 @@ def preview_smoke(rid: str):
 
 def canonical_smoke(rid: str):
     results = {}
-    for path in ["/", "/mir", "/band", "/history", "/schedule", "/gallery", "/account", "/admin"]:
+    for path in ["/", "/mir", "/band", "/history", "/schedule", "/gallery", "/account", "/admin", "/songbook", "/songbook/"]:
         code, body, _ = base.http(CANONICAL_ORIGIN + path)
         ok = code == 200 and rid.encode() in body
         results[path] = {"status": code, "passed": ok}
