@@ -1,0 +1,64 @@
+name: Finalize songbook production routing
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-route-fix.yml']
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Register songbook clean route and verify generated rules
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ast, re
+          p=Path('scripts/mir_shared_root_deploy_ci.py');s=p.read_text()
+          old='^(mir|band|history|schedule|gallery|account|admin)/?$'
+          assert s.count(old)==1;s=s.replace(old,'^(mir|band|history|schedule|gallery|account|admin|songbook)/?$',1)
+          old='        f"RewriteRule ^review/?$ _yeop_releases/{rid}/index.html [L,QSA]\\n"'
+          assert s.count(old)==1;s=s.replace(old,'        "RewriteRule ^songbook/review/?$ /songbook [R=302,L,NE]\\n"\n'+old,1)
+          old='for route in ["index.html", "api/health.php"]:'
+          assert s.count(old)==1;s=s.replace(old,'for route in ["index.html", "songbook/index.html", "api/health.php"]:',1)
+          old='if route == "index.html":'
+          assert s.count(old)==1;s=s.replace(old,'if route.endswith(".html"):',1)
+          old='"/gallery", "/account", "/admin"]:'
+          assert s.count(old)==1;s=s.replace(old,'"/gallery", "/account", "/admin", "/songbook", "/songbook/"]:',1)
+          p.write_text(s)
+          # Execute only the pure renderer, never import deployment code or access remote files.
+          module=ast.parse(s)
+          node=next(n for n in module.body if isinstance(n,ast.FunctionDef) and n.name=='site_root_htaccess')
+          scope={};exec(compile(ast.Module(body=[node],type_ignores=[]),'<route-test>','exec'),scope)
+          rules=scope['site_root_htaccess']('r20261002000000_aaaaaaaa').decode()
+          assert re.search(r'RewriteRule \^\([^\n]*songbook\)/\?\$',rules)
+          assert 'RewriteRule ^songbook/review/?$ /songbook [R=302,L,NE]' in rules
+          Path('tests/songbook-routing.test.js').write_text('''import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          test('songbook direct URLs and refresh are included in production routing and deployment smoke',()=>{
+            const source=readFileSync('scripts/mir_shared_root_deploy_ci.py','utf8');
+            assert.ok(source.includes('^(mir|band|history|schedule|gallery|account|admin|songbook)/?$'));
+            assert.ok(source.includes('RewriteRule ^songbook/review/?$ /songbook [R=302,L,NE]'));
+            assert.ok(source.includes('for route in ["index.html", "songbook/index.html", "api/health.php"]:'));
+            assert.ok(source.includes('"/songbook", "/songbook/"]'));
+          });
+          ''')
+          PY
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          git fetch origin develop
+          test "$(git rev-parse FETCH_HEAD)" = "$(git rev-parse HEAD)"
+          git rm .github/workflows/songbook-route-fix.yml
+          git add scripts/mir_shared_root_deploy_ci.py tests/songbook-routing.test.js
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(songbook): route clean URLs and verify both direct-load forms'
+          git push origin HEAD:develop
+          echo "Patched commit: $(git rev-parse HEAD)"
