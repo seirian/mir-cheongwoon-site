@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "predev": "node scripts/finalize-songbook-v3.mjs && node scripts/prepare-songbook-v2.mjs",
+    "predev": "node scripts/prepare-songbook-v2.mjs",
     "build": "vite build",
-    "prebuild": "node scripts/finalize-songbook-v3.mjs && node scripts/prepare-songbook-v2.mjs",
+    "prebuild": "node scripts/prepare-songbook-v2.mjs",
     "preview": "vite preview",
     "check": "node scripts/check-syntax.mjs",
     "check:backend": "python scripts/check-python.py && node scripts/check-syntax.mjs --php",
     "test": "node --test",
-    "pretest": "node scripts/finalize-songbook-v3.mjs && node scripts/prepare-songbook-v2.mjs",
+    "pretest": "node scripts/prepare-songbook-v2.mjs",
     "verify": "npm run check && npm test && npm run build"
   },
   "dependencies": {

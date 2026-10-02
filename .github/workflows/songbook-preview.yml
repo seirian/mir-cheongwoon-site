@@ -10,49 +10,18 @@ concurrency:
   group: songbook-preview
   cancel-in-progress: false
 jobs:
-  snapshot:
-    if: github.ref == 'refs/heads/feature/songbook'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-    outputs:
-      commit: ${{ steps.source.outputs.commit }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Finalize public catalog and integration source
-        id: source
-        run: |
-          node scripts/finalize-songbook-v3.mjs
-          node scripts/prepare-songbook-v2.mjs
-          if [ -n "$(git status --porcelain)" ]; then
-            git fetch origin feature/songbook
-            test "$(git rev-parse FETCH_HEAD)" = "$(git rev-parse HEAD)"
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add src package.json scripts/songbook-v2-browser-check.py
-            git commit -m 'chore(songbook): finalize revision three media and catalog integration'
-            git push origin HEAD:feature/songbook
-          fi
-          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   review:
     if: github.ref == 'refs/heads/feature/songbook'
-    needs: snapshot
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      SOURCE_COMMIT: ${{ needs.snapshot.outputs.commit }}
+      SOURCE_COMMIT: ${{ github.sha }}
       VITE_REVIEW_PREVIEW: 'true'
       VITE_SONGBOOK_PREVIEW: 'true'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.snapshot.outputs.commit }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -67,6 +36,7 @@ jobs:
           npm run verify
           npm run check:backend
           php tests/songbook-search-test.php
+          php tests/songbook-localization-test.php
       - name: Browser dependencies
         run: |
           python -m pip install playwright==1.57.0 paramiko==5.0.0
@@ -75,7 +45,7 @@ jobs:
         run: |
           npm run dev -- --host 127.0.0.1 > /tmp/songbook-vite.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ >/dev/null && break || sleep 1; done
-          python scripts/songbook-v3-browser-check.py --url http://127.0.0.1:5173/ --out songbook-local-report
+          python scripts/songbook-v4-browser-check.py --url http://127.0.0.1:5173/ --out songbook-local-report
       - name: Existing public build configuration
         env:
           SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
@@ -107,7 +77,7 @@ jobs:
         run: python scripts/stage-songbook-preview.py
       - name: Public browser and live catalog verification
         run: |
-          python scripts/songbook-v3-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out songbook-live-report --live-catalog
+          python scripts/songbook-v4-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out songbook-live-report --live-catalog
           python - <<'PY'
           import json,urllib.request
           from pathlib import Path
@@ -122,7 +92,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: songbook-v3-review
+          name: songbook-v4-review
           path: |
             songbook-local-report/
             songbook-live-report/
