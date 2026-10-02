@@ -1,0 +1,29 @@
+name: Songbook release source audit
+on:
+  push:
+    branches: [feature/songbook]
+    paths: ['.github/workflows/songbook-release-audit.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Record current source and branch status
+        run: |
+          git status --short
+          mkdir -p release-audit
+          git archive HEAD > release-audit/repository.tar
+          git rev-parse HEAD > release-audit/commit.txt
+          git log -1 --format='%H %s' origin/main origin/develop > release-audit/branches.txt
+          git diff --stat origin/main..origin/develop > release-audit/develop-main.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-release-source
+          path: release-audit/
+          retention-days: 3
