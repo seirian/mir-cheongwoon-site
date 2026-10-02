@@ -18,6 +18,23 @@ for _daily_api in ("api/_fanart_daily.php", "api/naver-fanart-daily.php", "api/n
     if _daily_api not in base.API_FILES:
         base.API_FILES.append(_daily_api)
 
+# Songbook APIs must be present in both preview and production releases.
+SONGBOOK_API_FILES = ("api/songbook-search.php", "api/_songbook_localization.php", "api/_songbook_korean_titles.php")
+for endpoint in SONGBOOK_API_FILES:
+    if endpoint not in base.API_FILES:
+        base.API_FILES.append(endpoint)
+
+def songbook_api_smoke(rid: str):
+    # Invalid input is deterministic and exercises PHP without external music calls.
+    code, body, _ = base.http(CANONICAL_ORIGIN + PREFIX + rid + "/api/songbook-search.php?q=x")
+    try:
+        payload = json.loads(body)
+    except Exception:
+        payload = {}
+    if code != 400 or payload.get("error") != "query":
+        raise base.Stop("Songbook API is missing or invalid; release will not be activated")
+    return {"status": code, "invalid_query_rejected": True, "passed": True}
+
 PERSONAL_WEB = "/web"
 SITE_WEB = "/web/_mir_site"
 CANONICAL_ORIGIN = "https://mir.yeop.net"
@@ -200,11 +217,12 @@ def site_root_htaccess(rid: str) -> bytes:
         f"RewriteRule ^api/(naver-fanart-(?:daily|backup|image)\\.php)$ _yeop_releases/{rid}/api/$1 [L,QSA]\n"
         f"RewriteRule ^$ _yeop_releases/{rid}/index.html [L]\n"
         # The frontend build emits a static HTML head for each public route.
-        f"RewriteRule ^(mir|band|history|schedule|gallery|account|admin)/?$ "
+        f"RewriteRule ^(mir|band|history|schedule|gallery|account|admin|songbook)/?$ "
         f"_yeop_releases/{rid}/$1/index.html [L,QSA]\n"
         f"RewriteRule ^history/([a-z0-9-]+)/?$ "
         f"_yeop_releases/{rid}/history/$1/index.html [L,QSA]\n"
         f"RewriteRule ^gallery/[^/]+/?$ _yeop_releases/{rid}/gallery/index.html [L,QSA]\n"
+        "RewriteRule ^songbook/review/?$ /songbook [R=302,L,NE]\n"
         f"RewriteRule ^review/?$ _yeop_releases/{rid}/index.html [L,QSA]\n"
         "# Release-scoped assets and APIs are served directly from disk.\n"
     ).encode("utf-8")
@@ -304,9 +322,9 @@ def redirect_status(url: str):
 def preview_smoke(rid: str):
     base_url = CANONICAL_ORIGIN + PREFIX + rid + "/"
     results = {}
-    for route in ["index.html", "api/health.php"]:
+    for route in ["index.html", "songbook/index.html", "api/health.php"]:
         code, body, _ = base.http(base_url + route)
-        if route == "index.html":
+        if route.endswith(".html"):
             ok = code == 200 and rid.encode() in body
         else:
             try:
@@ -322,7 +340,7 @@ def preview_smoke(rid: str):
 
 def canonical_smoke(rid: str):
     results = {}
-    for path in ["/", "/mir", "/band", "/history", "/schedule", "/gallery", "/account", "/admin"]:
+    for path in ["/", "/mir", "/band", "/history", "/schedule", "/gallery", "/account", "/admin", "/songbook", "/songbook/"]:
         code, body, _ = base.http(CANONICAL_ORIGIN + path)
         ok = code == 200 and rid.encode() in body
         results[path] = {"status": code, "passed": ok}
@@ -485,6 +503,7 @@ def main():
 
         report["phase"] = "uploaded"
         report["preview_checks"] = preview_smoke(rid)
+        report["songbook_api_check"] = songbook_api_smoke(rid)
 
         if os.environ.get("ACTIVATE", "") != "true":
             report["phase"] = "staged"
