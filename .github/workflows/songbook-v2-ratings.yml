@@ -1,0 +1,52 @@
+name: Songbook v2 difficulty references
+on:
+  push:
+    branches: [feature/songbook]
+    paths: ['.github/workflows/songbook-v2-ratings.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python -m pip install beautifulsoup4==4.13.4
+      - name: Compare publicly visible difficulty fields
+        run: |
+          mkdir -p rating-audit
+          python - <<'PY'
+          import json, re, time, urllib.request, pathlib, concurrent.futures
+          from bs4 import BeautifulSoup
+          out=pathlib.Path('rating-audit')
+          def fetch(url):
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (compatible; SongbookReview/2.0)'})
+                  with urllib.request.urlopen(req,timeout=20) as r: text=r.read(6000000).decode('utf-8')
+                  soup=BeautifulSoup(text,'html.parser'); songs=[]
+                  for card in soup.select('article[data-song-card]'):
+                      name=card.select_one('.musicbook-song-title'); artist=card.select_one('.musicbook-song-artist'); rating=card.select_one('[aria-label^="난이도 "]')
+                      if name and artist and rating:
+                          value=re.fullmatch(r'난이도 ([1-5])점',rating.get('aria-label',''))
+                          if value: songs.append({'title':name.get_text(' ',strip=True).removesuffix(' 상세 보기'),'artist':artist.get_text(' ',strip=True),'difficulty':int(value[1]),'url':url.split('?')[0]+'#channel-song-card-'+card.get('data-song-id','')})
+                  return {'url':url,'songs':songs,'text':soup.get_text(' ',strip=True)[:400]}
+              except Exception as e:return {'url':url,'error':str(e),'songs':[]}
+              finally:time.sleep(.25)
+          urls=[]
+          for channel,pages in [('gondra',2),('hiro',11),('eso',15),('aarann_',10),('a_suuuuuuu',9)]:
+              urls.extend(f'https://onestage.kr/@{channel}/musicbook?page={i}' for i in range(1,pages+1))
+          with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool: results=list(pool.map(fetch,urls))
+          out.joinpath('ratings.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
+          for name,url in [('update','https://onestage.kr/support/notices/2'),('app','https://cdn.onestage.kr/app/02cccc36c81a05b4bd6522b684e396f5dda5ce7f/assets/app.js'),('changelog','https://supabase.com/changelog.md')]:
+              try:
+                  with urllib.request.urlopen(url,timeout=20) as r:out.joinpath(name+'.txt').write_bytes(r.read(5000000))
+              except Exception as e:out.joinpath(name+'.txt').write_text(str(e))
+          print('Pages checked:',len(results),'rated entries:',sum(len(r['songs']) for r in results))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-v2-ratings
+          path: rating-audit/
+          retention-days: 7

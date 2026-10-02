@@ -1,0 +1,56 @@
+name: Songbook v4 metadata audit
+on:
+  push:
+    branches: [feature/songbook]
+    paths: ['.github/workflows/songbook-v4-audit.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/feature/songbook'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Inspect current branch and public Korean metadata
+        run: |
+          git status --short
+          mkdir -p v4-audit
+          git rev-parse HEAD > v4-audit/commit.txt
+          git archive HEAD > v4-audit/repository.tar
+          npm ci --ignore-scripts --no-audit --no-fund
+          tar -cf v4-audit/node_modules.tar node_modules
+          python - <<'PY'
+          import json, urllib.request, urllib.parse, concurrent.futures
+          from pathlib import Path
+          urls = {
+            'bugs-search': 'https://music.bugs.co.kr/search/track?q='+urllib.parse.quote('영물이다'),
+            'bugs-other': 'https://music.bugs.co.kr/search/track?q='+urllib.parse.quote('밤편지'),
+            'bugs-album': 'https://music.bugs.co.kr/album/4135649',
+            'bugs-robots': 'https://music.bugs.co.kr/robots.txt',
+            'itunes': 'https://itunes.apple.com/search?'+urllib.parse.urlencode({'term':'영물이다','country':'US','entity':'song','limit':5}),
+          }
+          def read(item):
+              name,url=item
+              try:
+                  request=urllib.request.Request(url,headers={'User-Agent':'MirSongbook/4.0 (https://mir.yeop.net)','Accept-Language':'ko-KR,ko;q=0.9,en;q=0.5'})
+                  with urllib.request.urlopen(request, timeout=12) as r:
+                      body=r.read(2500000)
+                      Path('v4-audit/'+name+'.txt').write_bytes(body)
+                      return {'name':name,'status':r.status,'bytes':len(body),'url':r.url}
+              except Exception as e: return {'name':name,'error':str(e)}
+          results=list(concurrent.futures.ThreadPoolExecutor(max_workers=3).map(read,urls.items()))
+          Path('v4-audit/results.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
+          print(json.dumps(results,ensure_ascii=False))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-v4-audit
+          path: v4-audit/
+          retention-days: 3

@@ -1,0 +1,50 @@
+name: Songbook production verification
+on:
+  push:
+    branches: [feature/songbook, develop]
+    paths: ['src/**','scripts/**','tests/**','server/**','supabase/songbook*','docs/reviews/songbook-release.md','.github/workflows/songbook-production-verify.yml']
+  pull_request:
+    branches: [develop, main]
+permissions:
+  contents: read
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VITE_REVIEW_PREVIEW: 'false'
+      VITE_SONGBOOK_PREVIEW: 'false'
+      VITE_SUPABASE_URL: https://songbook-test.supabase.co
+      VITE_SUPABASE_ANON_KEY: fixture-anon
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Finalize pending integration in fixture checkout only
+        run: |
+          if [ -f scripts/finalize-songbook-release.py ]; then python scripts/finalize-songbook-release.py; fi
+      - name: Verify source and search parsers
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          php tests/songbook-search-test.php
+          php tests/songbook-localization-test.php
+      - name: Production build and isolated username login browser checks
+        run: |
+          python -m pip install playwright==1.57.0
+          if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+          npx vite build --base /_test_release/
+          npx vite preview --host 127.0.0.1 --port 4173 --base /_test_release/ > /tmp/songbook-production.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/_test_release/ >/dev/null && break || sleep 1; done
+          python scripts/songbook-production-browser-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-production-checks
+          path: songbook-production-report/
+          retention-days: 14

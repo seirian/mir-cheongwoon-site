@@ -1,0 +1,18 @@
+{
+  "searchedAt": "2026-10-02",
+  "cafeUrl": "https://cafe.naver.com/alice427",
+  "queries": ["노래책", "세트리스트", "노래"],
+  "coverage": "각 검색어의 공개 검색 1페이지 표본입니다. 카페 전체·전 기간 검색 완료를 뜻하지 않습니다.",
+  "status": "공개 검색 제목과 게시일 확인. 본문·첨부 영상·가창일은 대조 전입니다.",
+  "originalSongbookUrl": "https://meloming.com/channel/mir/musicbook",
+  "originalSongbookAccess": "카페 메뉴에서 주소 확인. 이번 익명 환경의 원본 주소 조회는 403 응답으로 중단했습니다.",
+  "findings": [
+    {"articleId": 76810, "title": "[공지]미르콘 블루드 세트리스트", "publishedAt": "2025-08-10", "url": "https://cafe.naver.com/f-e/cafes/31003156/articles/76810", "kind": "공연 세트리스트 후보", "verification": "search-result-only"},
+    {"articleId": 148959, "title": "[미르]노래책 추가 노래 연습뱅 미르님 노래 모음 (7곡)", "publishedAt": "2026-07-06", "url": "https://cafe.naver.com/f-e/cafes/31003156/articles/148959", "kind": "노래책 보완 후보", "verification": "search-result-only"},
+    {"articleId": 165076, "title": "2026/9/27 미미득 싱크룸 노래뱅 노래 모음 (13곡)", "publishedAt": "2026-09-28", "url": "https://cafe.naver.com/f-e/cafes/31003156/articles/165076", "kind": "합방 모음 · 보컬 구분 필요", "verification": "search-result-only"},
+    {"articleId": 165005, "title": "[미미득노래사무소] [싱크룸] 미르님 - 아니 근데 진짜 (LUCY)", "publishedAt": "2026-09-28", "url": "https://cafe.naver.com/f-e/cafes/31003156/articles/165005", "kind": "미르 가창 후보 · 기존 수록곡", "songHint": "아니 근데 진짜", "verification": "search-result-only"},
+    {"articleId": 165001, "title": "[미미득노래사무소] [싱크룸] 미르님 - Last Stardust (aimer)", "publishedAt": "2026-09-28", "url": "https://cafe.naver.com/f-e/cafes/31003156/articles/165001", "kind": "미르 가창 후보 · 표기 대조 필요", "songHint": "라스트 스타더스트", "verification": "search-result-only"},
+    {"articleId": 164998, "title": "[미미득노래사무소] [싱크룸] 미르님 - 오렌지 (spyair)", "publishedAt": "2026-09-28", "url": "https://cafe.naver.com/f-e/cafes/31003156/articles/164998", "kind": "미르 가창 후보", "songHint": "오렌지", "verification": "search-result-only"},
+    {"articleId": 164995, "title": "[미미득노래사무소] [싱크룸] 미르님 - 샤론 (Official髭男dism)", "publishedAt": "2026-09-28", "url": "https://cafe.naver.com/f-e/cafes/31003156/articles/164995", "kind": "미르 가창 후보 · 목록 보완 대상", "songHint": "샤론", "verification": "search-result-only"}
+  ]
+}

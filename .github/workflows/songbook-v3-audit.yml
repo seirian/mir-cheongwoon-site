@@ -1,0 +1,48 @@
+name: Songbook v3 research
+on:
+  push:
+    branches: [feature/songbook]
+    paths: ['.github/workflows/songbook-v3-audit.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/feature/songbook'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Capture source and probe public music catalogs read-only
+        run: |
+          mkdir -p /tmp/songbook-v3-audit
+          git archive HEAD > /tmp/songbook-v3-audit/repository.tar
+          git rev-parse HEAD > /tmp/songbook-v3-audit/commit.txt
+          python - <<'PY'
+          import json, time, urllib.request, urllib.parse
+          from pathlib import Path
+          out=Path('/tmp/songbook-v3-audit')
+          urls={}
+          for region in ('kr','jp','us'):
+              urls['itunes-'+region]='https://itunes.apple.com/search?'+urllib.parse.urlencode({'term':'영물이다','country':region,'media':'music','entity':'song','limit':30})
+          urls['musicbrainz']='https://musicbrainz.org/ws/2/recording/?'+urllib.parse.urlencode({'query':'영물이다','fmt':'json','limit':20})
+          urls['deezer']='https://api.deezer.com/search?'+urllib.parse.urlencode({'q':'영물이다','limit':10})
+          results=[]
+          for name,url in urls.items():
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':'MirSongbookReview/3.0 (https://mir.yeop.net)','Accept':'application/json'})
+                  with urllib.request.urlopen(req,timeout=18) as r:
+                      data=r.read(2000000).decode('utf-8'); status=r.status
+                  (out/(name+'.json')).write_text(data)
+                  results.append({'name':name,'status':status,'bytes':len(data)})
+              except Exception as e: results.append({'name':name,'error':str(e)})
+              time.sleep(1.1)
+          (out/'results.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
+          print(json.dumps(results,ensure_ascii=False))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-v3-research
+          path: /tmp/songbook-v3-audit/
+          retention-days: 3
