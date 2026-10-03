@@ -1,0 +1,109 @@
+name: Songbook difficulty audit
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-difficulty-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Current source snapshot and bounded public rating research
+        run: |
+          mkdir -p difficulty-audit
+          git status --short > difficulty-audit/worktree.txt
+          git rev-parse HEAD > difficulty-audit/commit.txt
+          git archive HEAD > difficulty-audit/repository.tar
+          python -m pip install beautifulsoup4==4.13.4
+          python -u - <<'PY'
+          import json,time,re,math,hashlib,urllib.request,urllib.error,urllib.parse,urllib.robotparser
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+          out=Path('difficulty-audit');origin='https://onestage.kr';agent='MirSongbookReferenceReview/1.0';count=0;start=time.monotonic();log=[];rp=None
+          def get(url):
+              global count
+              if count>=360 or time.monotonic()-start>1000: raise RuntimeError('research budget reached')
+              if rp and not rp.can_fetch(agent,url): return None
+              count+=1;time.sleep(.4)
+              try:
+                  req=urllib.request.Request(url,headers={'User-Agent':agent,'Accept':'text/html'})
+                  with urllib.request.urlopen(req,timeout=12) as response:
+                      body=response.read(8000000);status=response.status
+                  if len(body)>=8000000: raise RuntimeError('oversized response')
+                  log.append({'url':url,'status':status,'sha256':hashlib.sha256(body).hexdigest()})
+                  return body.decode('utf-8','replace')
+              except urllib.error.HTTPError as e:
+                  log.append({'url':url,'status':e.code})
+                  if e.code in (403,429): raise RuntimeError('public access/rate limit; stop without bypass')
+                  return None
+              except (TimeoutError,OSError) as e:
+                  log.append({'url':url,'error':str(e)[:120]});return None
+          catalogs={};rows=[];summaries=[]
+          try:
+              robot=get(origin+'/robots.txt')
+              if robot:
+                  (out/'robots.txt').write_text(robot);rp=urllib.robotparser.RobotFileParser();rp.parse(robot.splitlines())
+              for page in range(1,38):
+                  text=get(origin+'/channels?page='+str(page))
+                  if not text:continue
+                  soup=BeautifulSoup(text,'html.parser')
+                  for a in soup.select('a[href]'):
+                      href=a['href']
+                      if not re.fullmatch(r'https://onestage\.kr/@[^/?#]+/musicbook',href):continue
+                      parent=a.find_parent('article') or a.parent.parent
+                      match=re.search(r'노래\s*([\d,]+)곡',parent.get_text(' ',strip=True))
+                      if match:catalogs[href]=int(match[1].replace(',',''))
+              def parse(text,url):
+                  soup=BeautifulSoup(text,'html.parser');found=[]
+                  for card in soup.select('article[data-song-card]'):
+                      title=card.select_one('.musicbook-song-title');artist=card.select_one('.musicbook-song-artist')
+                      label=card.select_one('[aria-label^="난이도 "]')
+                      rating=re.fullmatch(r'난이도 ([1-5])점',label.get('aria-label','')) if label else None
+                      if not(title and artist and rating):continue
+                      for sr in title.select('.sr-only'):sr.decompose()
+                      found.append({'title':title.get_text(' ',strip=True),'artist':artist.get_text(' ',strip=True),'difficulty':int(rating[1]),'url':url.split('?')[0]+'#'+card.get('id',''),'catalog':url.split('?')[0]})
+                  return found
+              ordered=sorted(catalogs,key=lambda u:(-catalogs[u],u))
+              ordered=['https://onestage.kr/@gondra/musicbook']+[u for u in ordered if u!='https://onestage.kr/@gondra/musicbook' and catalogs[u]>=100][:89]
+              eligible=[]
+              for url in ordered:
+                  text=get(url);found=parse(text,url) if text else []
+                  ratings={r['difficulty'] for r in found}
+                  n=catalogs.get(url,70)
+                  summary={'url':url,'advertised':n,'sample_ratings':sorted(ratings),'sample_rows':len(found),'eligible':len(ratings)>=2,'pages_read':1};summaries.append(summary)
+                  if summary['eligible']:
+                      rows+=found;eligible.append((url,n,summary))
+                  print('PROBE',url,n,sorted(ratings),flush=True)
+              # Round-robin paging avoids spending the budget on a single performer.
+              for page in range(2,61):
+                  active=False
+                  for url,n,summary in eligible:
+                      if page>math.ceil(n/40):continue
+                      active=True;text=get(url+'?page='+str(page));found=parse(text,url) if text else []
+                      rows+=found;summary['pages_read']+=1
+                  if not active:break
+          except RuntimeError as e:
+              (out/'stop.txt').write_text(str(e));print('STOP',e,flush=True)
+          finally:
+              unique={r['url']:r for r in rows}
+              (out/'ratings.json').write_text(json.dumps(list(unique.values()),ensure_ascii=False,indent=2))
+              (out/'catalogs.json').write_text(json.dumps(summaries,ensure_ascii=False,indent=2))
+              (out/'requests.json').write_text(json.dumps(log,ensure_ascii=False,indent=2))
+              (out/'directory.json').write_text(json.dumps(catalogs,ensure_ascii=False,indent=2))
+              print('TOTAL requests',count,'eligible',sum(s['eligible'] for s in summaries),'ratings',len(unique),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-difficulty-audit
+          path: difficulty-audit/
+          retention-days: 30
