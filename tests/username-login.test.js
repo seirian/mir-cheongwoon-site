@@ -59,7 +59,8 @@ test('production shares site auth; review labels and demo remain preview-only', 
   const store = readFileSync(new URL('../src/lib/songbookStore.js', import.meta.url), 'utf8');
   assert.match(store, /!IS_REVIEW_PREVIEW \? supabase/);
   const page = readFileSync(new URL('../src/pages/SongbookV2Page.jsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(page, /signInWithPassword|type="email"/);
-  assert.match(page, /loginWithUsername\(store.client,identifier,password\)/);
+  assert.doesNotMatch(page, /signInWithPassword|type="email"|LoginPanel|loginWithUsername/);
+  const account = readFileSync(new URL('../src/pages/AccountPage.jsx', import.meta.url), 'utf8');
+  assert.match(account, /loginWithUsername\(supabase, login.identifier, login.password\)/);
   assert.match(page, /IS_SONGBOOK_PREVIEW&&params.get\('demo'\)/);
 });
