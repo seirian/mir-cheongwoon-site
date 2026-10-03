@@ -32,10 +32,11 @@ with sync_playwright() as pw:
   expect(page.locator('.songbook-page input[type=password]')).to_have_count(0)
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
   expect(page.locator('.sb2-toolbar button')).to_have_count(0)
+  expect(page.get_by_role('link',name='노래 찾아보기',exact=True)).to_have_count(0)
   assert '4차 검토안' not in page.locator('body').inner_text()
   assert not re.search('gurmir|mir427[.]vercel|원본 출처',page.locator('body').inner_text(),re.I)
   expect(page.locator('.sb2-error')).to_have_count(0)
-  checks.append('production songbook has no duplicate login UI, anonymous editing denied and acquisition labels absent')
+  checks.append('production songbook has no account buttons or redundant search link, anonymous editing denied and acquisition labels absent')
   for w in [1440,1024,768,390]:
    page.set_viewport_size({'width':w,'height':1050});page.wait_for_timeout(200)
    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')

@@ -2,7 +2,7 @@ name: Songbook production verification
 on:
   push:
     branches: [feature/songbook, develop]
-    paths: ['src/**','scripts/**','tests/**','server/**','supabase/songbook*','docs/reviews/songbook-release.md','.github/workflows/songbook-production-verify.yml']
+    paths: ['src/**','scripts/**','tests/**','server/**','supabase/songbook*','supabase/ops/songbook*','docs/reviews/songbook-release.md','.github/workflows/songbook-production-verify.yml']
   pull_request:
     branches: [develop, main]
 permissions:
@@ -11,7 +11,22 @@ jobs:
   production:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: local-test-only
+          POSTGRES_DB: songbook_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
     env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: local-test-only
+      PGDATABASE: songbook_test
       VITE_REVIEW_PREVIEW: 'false'
       VITE_SONGBOOK_PREVIEW: 'false'
       VITE_SUPABASE_URL: https://songbook-test.supabase.co
@@ -24,9 +39,6 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Finalize pending integration in fixture checkout only
-        run: |
-          if [ -f scripts/finalize-songbook-release.py ]; then python scripts/finalize-songbook-release.py; fi
       - name: Verify source and search parsers
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
@@ -34,8 +46,17 @@ jobs:
           npm run check:backend
           php tests/songbook-search-test.php
           php tests/songbook-localization-test.php
+          python scripts/reconcile-songbook-difficulty.py --self-test
+      - name: Verify site-admin database permissions in isolated PostgreSQL
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-admin-bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/songbook-production.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_admin_access.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-admin-assertions.sql
       - name: Production build and isolated username login browser checks
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
           python -m pip install playwright==1.57.0
           if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
           npx vite build --base /_test_release/
