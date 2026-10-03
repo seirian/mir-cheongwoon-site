@@ -81,7 +81,7 @@ export default function SongEditor({song, store, categories, close, saved, Modal
       <label>연결 영상 · 한 줄에 한 주소<textarea rows={4} value={draft.videoUrls.join('\n')} onChange={e=>setDraft({...draft,videoUrls:e.target.value.split('\n')})} placeholder="YouTube 또는 SOOP VOD 주소를 모두 입력해주세요"/></label>
       <VodLinks urls={draft.videoUrls} title={draft.title || '등록할 곡'} detailed/>
       <div className="sb2-form-grid"><div><StarPicker label="난이도" value={draft.difficulty} onChange={v=>setDraft({...draft,difficulty:v})}/><button type="button" className="sb-reset" onClick={()=>setDraft({...draft,difficulty:null})}>미정으로 설정</button></div><label>신청 가능 상태<select aria-label="신청 가능 상태" value={draft.requestStatus} onChange={e=>setDraft({...draft,requestStatus:e.target.value})}><option value="unreviewed">확인 전</option><option value="available">신청 가능</option><option value="unavailable">신청 불가</option></select></label></div>
-      <p className="sb-note">곡 정보 등록이 미르님의 가창 기록을 확정하지는 않습니다. 숙련도는 미르님 지정 계정에서 별도로 평가합니다.</p>
+      <p className="sb-note">곡 정보 등록이 미르님의 가창 기록을 확정하지는 않습니다. 숙련도는 미르님의 평가를 관리자 계정으로 별도 등록합니다.</p>
       {error && <p role="alert" className="sb2-error">{error}</p>}
       <button type="submit" className="sb-button sb-primary" disabled={store.saving}>{store.saving?'저장 중…':draft.id?'변경사항 저장':'노래책에 추가'}</button>
     </form>

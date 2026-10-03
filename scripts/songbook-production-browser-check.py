@@ -32,7 +32,7 @@ with sync_playwright() as pw:
     table=path.split('/')[-1];tables.append(table)
     assert 'songbook_preview' not in table, 'production touched preview tables'
     if req.method not in ('GET','HEAD','OPTIONS'):
-     assert table=='songbook_ratings' and req.method=='POST' and permission['role']=='owner'
+     assert table=='songbook_ratings' and req.method=='POST' and permission['admin']
      r={**req.post_data_json,'revision':1};ratings.append(r);changes.append({'table':table,'proficiency':r['proficiency']});return reply(r,201)
     obj='vnd.pgrst.object' in req.headers.get('accept','')
     if table=='songbook_editors':
@@ -51,6 +51,10 @@ with sync_playwright() as pw:
   expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_have_count(0)
   expect(page.get_by_role('dialog',name='노래책 편집 로그인',exact=True)).to_have_count(0)
   expect(page.locator('.songbook-page input[type=password]')).to_have_count(0)
+  expect(page.locator('.sb2-toolbar').get_by_role('button',name='로그아웃',exact=True)).to_have_count(0)
+  expect(page.locator('.sb2-toolbar').get_by_role('button',name='관리자',exact=True)).to_have_count(0)
+  expect(page.get_by_role('link',name='노래 찾아보기',exact=True)).to_have_count(0)
+  expect(page.get_by_role('button',name='계정 연결',exact=True)).to_have_count(0)
  def visit_songbook():
   page.goto(base+'songbook/',wait_until='networkidle')
   expect(page.locator('.sb2-song')).to_have_count(24)
@@ -84,7 +88,8 @@ with sync_playwright() as pw:
   checks.append('existing footer account entry and wrong-password handling remain functional')
   account_login();visit_songbook()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible()
-  expect(page.locator('.sb2-picker')).to_have_count(0)
+  expect(page.locator('.sb2-picker')).to_have_count(24)
+  expect(page.locator('.sb2-toolbar button')).to_have_count(1)
   page.get_by_role('button',name='노래 추가',exact=True).click();expect(page.get_by_role('dialog')).to_be_visible()
   page.keyboard.press('Escape');expect(page.get_by_role('dialog')).to_have_count(0)
   page.locator('.sb2-title').first.click()
@@ -94,7 +99,7 @@ with sync_playwright() as pw:
   page.keyboard.press('Escape')
   expect(page.get_by_role('button',name='곡 정보 편집',exact=True)).to_be_visible()
   page.keyboard.press('Escape');expect(page.get_by_role('dialog')).to_have_count(0)
-  checks.append('existing site administrator can add/edit songs without separate login, but cannot rate for Mir')
+  checks.append('existing site administrator can add/edit songs without separate login, and can register Mir proficiency using the same admin grant')
   page.reload(wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible();no_duplicate_login()
   for width in [1440,390]:
    page.set_viewport_size({'width':width,'height':1000});page.evaluate('window.scrollTo(0,0)')
@@ -105,7 +110,7 @@ with sync_playwright() as pw:
   expect(page.locator('.sb2-toolbar button')).to_have_count(0);no_duplicate_login()
   checks.append('shared admin session persists on reload and site logout removes edit controls without restoring duplicate login')
   permission.update(admin=False,role=None);account_login();visit_songbook()
-  expect(page.get_by_role('button',name='계정 연결',exact=True)).to_be_visible()
+  expect(page.locator('.sb2-toolbar button')).to_have_count(0)
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
   expect(page.locator('.sb2-picker')).to_have_count(0)
   page.locator('.sb2-title').first.click()
@@ -115,22 +120,30 @@ with sync_playwright() as pw:
   page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click()
   expect(page.get_by_role('link',name='로그인 / 회원가입',exact=True)).to_be_visible()
   checks.append('ordinary site member remains read-only without any increase in permissions')
-  permission.update(admin=False,role='owner');account_login();visit_songbook()
+  permission.update(admin=True,role=None);account_login();visit_songbook()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible()
   page.locator('.sb2-song').first.get_by_role('button',name='미르 숙련도 4점으로 설정').click()
   expect(page.locator('.sb2-message')).to_contain_text('숙련도를 저장')
   assert changes==[{'table':'songbook_ratings','proficiency':4}]
   page.reload(wait_until='networkidle')
   expect(page.locator('.sb2-song').first.get_by_role('button',name='미르 숙련도 4점으로 설정')).to_have_attribute('aria-pressed','true')
-  no_duplicate_login();page.locator('.sb2-toolbar').get_by_role('button',name='로그아웃',exact=True).click()
+  no_duplicate_login();page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);no_duplicate_login()
-  checks.append('owner-only proficiency and songbook-to-site logout remain functional in isolated API fixture')
+  checks.append('admin proficiency persists and logout is only provided by the shared site menu')
   page.goto(base+'songbook/?demo=1',wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0);no_duplicate_login()
   page.goto(base+'songbook/review/',wait_until='networkidle');expect(page).to_have_url(base+'songbook');no_duplicate_login()
   checks.append('demo query cannot enable production editing; review path remains redirected')
+  for legacy in ['owner', 'manager']:
+   permission.update(admin=False,role=legacy);account_login();visit_songbook()
+   expect(page.locator('.sb2-toolbar button')).to_have_count(0)
+   expect(page.locator('.sb2-picker')).to_have_count(0)
+   page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click()
+   expect(page.get_by_role('link',name='로그인 / 회원가입',exact=True)).to_be_visible()
+  checks.append('legacy songbook roles without the site-admin grant cannot edit or rate')
   assert not direct_password and not errors
-  assert len(logins)==4 and all(x['identifier']=='mir.review' for x in logins)
-  checks.append('all four logins used existing username entrypoint; no direct password auth or JavaScript exceptions')
+  assert 'songbook_editors' not in tables, 'production still queries the obsolete editor membership'
+  assert len(logins)==6 and all(x['identifier']=='mir.review' for x in logins)
+  checks.append('all six logins used existing username entrypoint; no direct password auth or JavaScript exceptions')
   (out/'report.json').write_text(json.dumps({'checks':checks,'javascript_errors':errors,'mock_logins':len(logins),'mock_changes':changes,'tables':sorted(set(tables))},ensure_ascii=False,indent=2))
  except Exception:
   traceback.print_exc()

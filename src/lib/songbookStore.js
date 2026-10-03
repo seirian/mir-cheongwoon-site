@@ -1,3 +1,4 @@
+import { songbookEditAccess } from './songbookAccess.js';
 import { supabase } from './supabase';
 import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW } from './preview';
 import { songbookTables } from './usernameLogin';
@@ -85,7 +86,7 @@ export function useSongbookStore(demo) {
         if (user.error || user.data.user?.id !== next.user.id) return;
         const [a, e] = await Promise.all([
           songbookClient.from('admins').select('user_id').eq('user_id', next.user.id).maybeSingle(),
-          songbookClient.from(tables.editors).select('role').eq('user_id', next.user.id).maybeSingle(),
+          IS_SONGBOOK_PREVIEW ? songbookClient.from(tables.editors).select('role').eq('user_id', next.user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
         ]);
         if (active && generation === authGeneration.current && !a.error && !e.error) {
           setAdmin(Boolean(a.data)); setRole(e.data?.role || null);
@@ -101,8 +102,7 @@ export function useSongbookStore(demo) {
   }, [demo]);
 
   const songs = mergeSongs(catalog, entries, ratings);
-  const canEdit = ready && (!IS_REVIEW_PREVIEW || IS_SONGBOOK_PREVIEW) && (demo || admin || Boolean(role));
-  const canRate = ready && (!IS_REVIEW_PREVIEW || IS_SONGBOOK_PREVIEW) && (demo || role === 'owner');
+  const { canEdit, canRate } = songbookEditAccess({ ready, admin, role, demo, reviewPreview: IS_REVIEW_PREVIEW, songbookPreview: IS_SONGBOOK_PREVIEW });
   function persist(e, r) {
     localStorage.setItem(DEMO_KEY, JSON.stringify({ entries: e, ratings: r }));
     setEntries(e); setRatings(r);
@@ -130,7 +130,7 @@ export function useSongbookStore(demo) {
     } finally { writeLock.current = false; setSaving(false); }
   }
   async function saveRating(id, value) {
-    if (!canRate || writeLock.current) throw Error('미르님으로 지정된 계정만 숙련도를 저장할 수 있습니다. 저장 중에는 잠시 후 다시 눌러주세요.');
+    if (!canRate || writeLock.current) throw Error('숙련도 편집 권한이 없거나 저장 중입니다. 관리자 로그인 상태를 확인해 주세요.');
     if (!songs.some(s => s.id === id) || (value !== null && !stars(value))) throw Error('숙련도를 확인해주세요.');
     writeLock.current = true; setSaving(true);
     try {
@@ -142,11 +142,5 @@ export function useSongbookStore(demo) {
       }
     } finally { writeLock.current = false; setSaving(false); }
   }
-  async function setOwner(id) {
-    if (!admin || demo) throw Error('관리자만 계정을 지정할 수 있습니다.');
-    if (!/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(id)) throw Error('계정 ID 형식을 확인해주세요.');
-    const response = await songbookClient.from(tables.editors).upsert({ user_id: id, role: 'owner' });
-    if (response.error) throw Error('계정이 없거나 이미 다른 소유자가 지정되어 있습니다.');
-  }
-  return { songs, session, role, admin, ready, error, saving, canEdit, canRate, saveSong, saveRating, setOwner, refresh, client: songbookClient };
+  return { songs, session, role, admin, ready, error, saving, canEdit, canRate, saveSong, saveRating, refresh, client: songbookClient };
 }
