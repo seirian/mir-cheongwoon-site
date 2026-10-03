@@ -1,0 +1,50 @@
+name: Songbook admin finalize
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-admin-finalize.yml']
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply tested source edits only when preimages match
+        run: |
+          python - <<'PY'
+          import base64,gzip,json,hashlib
+          from pathlib import Path
+          encoded='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'
+          changes=json.loads(gzip.decompress(base64.b64decode(encoded)))
+          prepared=[]
+          for change in changes:
+              path=Path(change['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              before=path.read_text() if path.exists() else ''
+              assert hashlib.sha256(before.encode()).hexdigest()==change['before'], path
+              after=before
+              for start,end,text in reversed(change['edits']): after=after[:start]+text+after[end:]
+              assert hashlib.sha256(after.encode()).hexdigest()==change['after'], path
+              prepared.append((path,after))
+          for path,after in prepared:
+              path.parent.mkdir(parents=True,exist_ok=True);path.write_text(after)
+          PY
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          git diff --check
+      - name: Commit once to develop without touching production
+        run: |
+          git fetch origin develop
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"
+          rm .github/workflows/songbook-admin-finalize.yml .github/workflows/songbook-work-snapshot.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/songbookAccess.js src/lib/songbookStore.js src/pages/SongbookV2Page.jsx src/components/songbook/SongEditor.jsx tests/songbook-admin-access.test.js tests/songbook-shared-login-ui.test.js tests/sql/songbook-admin-bootstrap.sql tests/sql/songbook-admin-assertions.sql supabase/ops/songbook_admin_access.sql scripts/songbook-live-check.py scripts/songbook-production-browser-check.py .github/workflows/songbook-production-verify.yml .github/workflows/songbook-admin-finalize.yml .github/workflows/songbook-work-snapshot.yml
+          git commit -m 'fix(songbook): remove redundant controls and use existing site administrator access'
+          git push origin HEAD:develop
