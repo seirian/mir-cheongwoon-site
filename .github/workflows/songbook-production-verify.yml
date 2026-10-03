@@ -46,6 +46,7 @@ jobs:
           npm run check:backend
           php tests/songbook-search-test.php
           php tests/songbook-localization-test.php
+          python scripts/reconcile-songbook-difficulty.py --self-test
       - name: Verify site-admin database permissions in isolated PostgreSQL
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-admin-bootstrap.sql
@@ -54,6 +55,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-admin-assertions.sql
       - name: Production build and isolated username login browser checks
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
           python -m pip install playwright==1.57.0
           if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
           npx vite build --base /_test_release/
