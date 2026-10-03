@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require __DIR__.'/../server/api/_core.php';
 require __DIR__.'/../server/api/_cache.php';
+require __DIR__.'/../server/api/_fanart_daily.php';
 use YeopMigration\Client;
 use YeopMigration\SharedCache;
 use function YeopMigration\articleImages;
@@ -43,6 +44,34 @@ foreach ([['isReadable'=>false],['isBlind'=>true],['id'=>999]] as $invalid) {
     try { fanart(new Client($sender),today:'2026-09-30');check(false,'restricted or mismatched article must fail'); }
     catch(\YeopMigration\UpstreamError $e) { check(in_array($e->getMessage(),['upstream_http_403','article_identity_mismatch'],true),'restricted or unrelated body rejected'); }
 }
+$dailyDir=sys_get_temp_dir().'/mir-fanart-daily-retry-'.bin2hex(random_bytes(6));mkdir($dailyDir,0700);
+file_put_contents($dailyDir.'/.htaccess', "Require all denied\nOptions -Indexes\n");
+$retryNow=strtotime('2026-10-04T01:00:00+09:00');$retryCalls=0;
+try {
+    $store=new \YeopMigration\DailyFanartStore($dailyDir, static function() use (&$retryNow): int { return $retryNow; });
+    $collect=static function() use (&$retryCalls): array {
+        ++$retryCalls;
+        if ($retryCalls===1) throw new RuntimeException('upstream_backoff_active');
+        return [
+            'status'=>'ok','fallback'=>false,'stale'=>false,'articleId'=>321,
+            'articleUrl'=>'https://cafe.naver.com/f-e/cafes/31003156/articles/321',
+            'title'=>'재시도 팬아트','author'=>'테스트 작가','sourceDate'=>'2026-10-04',
+            'imageUrls'=>['/api/naver-fanart-image.php?url='.rawurlencode('https://phinf.pstatic.net/retry.png')],
+        ];
+    };
+    $download=static fn(string $source): array => ['body'=>base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aLVcAAAAASUVORK5CYII=',true),'mime'=>'image/png'];
+    $first=$store->refresh($collect,$download);
+    check($first['status']==='failed' && $retryCalls===1,'failed daily run recorded');
+    $retryNow+=60;
+    $early=$store->refresh($collect,$download);
+    check(($early['reused']??false)===true && isset($early['retryAfter']) && $retryCalls===1,'failed daily retry respects cooldown');
+    $retryNow+=1800;
+    $recovered=$store->refresh($collect,$download);
+    check($recovered['status']==='success' && $retryCalls===2,'failed daily run retries after cooldown');
+    $again=$store->refresh($collect,$download);
+    check(($again['reused']??false)===true && $again['status']==='success' && $retryCalls===2,'successful retry stays idempotent');
+} finally { foreach(glob($dailyDir.'/*') as $path)unlink($path); rmdir($dailyDir); }
+
 $dir=sys_get_temp_dir().'/mir-fanart-test-'.bin2hex(random_bytes(6));mkdir($dir,0700);
 try {
  $cache=new SharedCache($dir);$calls=0;

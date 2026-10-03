@@ -105,7 +105,21 @@ final class DailyFanartStore {
         if (!flock($lock, LOCK_EX | LOCK_NB)) { fclose($lock); return ['status'=>'running','batchDate'=>$date]; }
         try {
             $runs = $this->read('runs.php');
-            if (($runs['lastRun']['batchDate'] ?? '') === $date) return $runs['lastRun'] + ['reused'=>true];
+            $lastRun = $runs['lastRun'] ?? null;
+            if (is_array($lastRun) && ($lastRun['batchDate'] ?? '') === $date) {
+                $lastStatus = (string)($lastRun['status'] ?? '');
+                if (in_array($lastStatus, ['success','running'], true)) return $lastRun + ['reused'=>true];
+                $attemptsToday = count(array_filter(
+                    $runs['history'] ?? [],
+                    static fn($item): bool => is_array($item) && ($item['batchDate'] ?? '') === $date
+                ));
+                if ($attemptsToday >= 4) return $lastRun + ['reused'=>true,'retryExhausted'=>true];
+                $finishedAt = $lastRun['finishedAt'] ?? null;
+                $finishedTs = is_string($finishedAt) ? strtotime($finishedAt) : false;
+                if ($finishedTs !== false && $now - $finishedTs < 1800) {
+                    return $lastRun + ['reused'=>true,'retryAfter'=>gmdate('c', $finishedTs + 1800)];
+                }
+            }
             $run = ['status'=>'running','batchDate'=>$date,'startedAt'=>gmdate('c', $now)];
             $this->json('runs.php', ['lastRun'=>$run,'history'=>$runs['history'] ?? []]);
             try {
