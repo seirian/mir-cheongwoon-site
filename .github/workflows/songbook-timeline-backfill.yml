@@ -1,0 +1,44 @@
+name: Songbook timeline initial backfill
+on:
+  workflow_run:
+    workflows: ['Deploy mir.yeop.net']
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+concurrency:
+  group: songbook-timeline-initial-backfill
+  cancel-in-progress: false
+jobs:
+  backfill:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')) ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Reuse bounded first-pass public timeline audit when still available
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: songbook-timeline-audit
+          run-id: 37135056211
+          github-token: ${{ github.token }}
+          path: timeline-audit/
+      - name: Import complete timelines through scoped workload identity
+        run: node scripts/songbook-timeline-backfill.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-timeline-result
+          path: songbook-timeline-report/
+          retention-days: 30

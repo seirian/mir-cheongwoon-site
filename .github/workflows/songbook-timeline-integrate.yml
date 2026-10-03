@@ -1,0 +1,44 @@
+name: Songbook timeline integrate
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-timeline-integrate.yml']
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply locally verified integration with exact preimages
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          changes=json.loads(Path('.work/songbook-timeline-integration.json').read_text())
+          prepared=[]
+          for c in changes:
+            p=Path(c['path']);before=p.read_text()
+            assert hashlib.sha256(before.encode()).hexdigest()==c['before'], p
+            after=before
+            for i,j,s in reversed(c['edits']):after=after[:i]+s+after[j:]
+            assert hashlib.sha256(after.encode()).hexdigest()==c['after'], p
+            prepared.append((p,after))
+          for p,s in prepared:p.write_text(s)
+          Path('.work/songbook-timeline-integration.json').unlink()
+          PY
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          git diff --check
+          git fetch origin develop
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/songbookStore.js src/pages/SongbookV2Page.jsx src/components/songbook/SongEditor.jsx scripts/songbook-production-browser-check.py .work/songbook-timeline-integration.json
+          git commit -m 'feat(songbook): connect automatic songs, timeline history and admin review without overwriting manual data'
+          git push origin HEAD:develop
