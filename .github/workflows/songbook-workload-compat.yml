@@ -1,0 +1,41 @@
+name: Songbook workload compatibility patch
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-workload-compat.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Match the observed signed self-reference without allowing foreign workflows
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('supabase/functions/songbook-timeline-sync/core.js')
+          s=p.read_text();old='return !p.job_workflow_ref && p.repository_id===';new='return (!p.job_workflow_ref || p.job_workflow_ref === p.workflow_ref) && p.repository_id==='
+          assert s.count(old)==1;p.write_text(s.replace(old,new))
+          p=Path('supabase/functions/songbook-timeline-sync/index.ts');s=p.read_text()
+          start=s.index('if(!validGithubClaims(claims))');end=s.index('\n  const owner=',start)
+          assert 'songbook_workload_claim_mismatch' in s[start:end]
+          p.write_text(s[:start]+"if(!validGithubClaims(claims))return reply(403,{error:'untrusted_workflow'});"+s[end:])
+          p=Path('docs/reviews/songbook-timeline-sync.md')
+          s=p.read_text();s+='\n## 실제 워크로드 호환성\n실제 GitHub가 서명한 일반 작업의 job_workflow_ref는 비어 있지 않고 workflow_ref와 동일했습니다. 두 값이 정확히 같은 경우만 추가로 허용하며, 다른 재사용 워크플로·저장소·브랜치·이벤트는 계속 거절합니다. JWT 서명, 발급자, audience, 시간과 불변 저장소/소유자 ID 검증은 유지합니다. 진단 시 토큰이나 자격 증명은 출력하지 않았고 임시 진단 로그 코드는 제거했습니다.\n';p.write_text(s)
+          PY
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          git diff --check
+          git fetch origin develop
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/functions/songbook-timeline-sync/core.js supabase/functions/songbook-timeline-sync/index.ts docs/reviews/songbook-timeline-sync.md
+          git commit -m 'fix(songbook): support exact GitHub job self-reference while retaining scoped workload authorization'
+          git push origin HEAD:develop
