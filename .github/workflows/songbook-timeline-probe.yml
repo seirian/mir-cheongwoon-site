@@ -1,0 +1,83 @@
+name: Songbook timeline contract probe
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-timeline-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Capture current source and public page responses only
+        run: |
+          mkdir -p timeline-probe
+          git status --short > timeline-probe/status.txt
+          git rev-parse HEAD > timeline-probe/commit.txt
+          git archive HEAD > timeline-probe/repository.tar
+          python -m pip install playwright==1.57.0
+          if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+          python - <<'PY'
+          import json, shutil, urllib.request, urllib.error, re, time
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          from playwright.sync_api import sync_playwright
+          out=Path('timeline-probe');summary=[]
+          urls=[('station','https://www.sooplive.com/station/alice427'),('robots','https://www.sooplive.com/robots.txt'),('legacy-list','https://chapi.sooplive.co.kr/api/alice427/vods?per_page=20&page=1&type=REVIEW&orderby=reg_date'),('supabase-changelog','https://supabase.com/changelog.md')]
+          for name,url in urls:
+            try:
+              with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'MirSongbookTimelineResearch/1.0 (https://mir.yeop.net)'}),timeout=20) as r:
+                body=r.read(2500000);out.joinpath(name+'.txt').write_bytes(body);summary.append({'name':name,'url':r.url,'status':r.status,'length':len(body)})
+            except Exception as e:summary.append({'name':name,'error':str(e)[:200]})
+          with sync_playwright() as pw:
+            b=pw.chromium.launch(executable_path=shutil.which('google-chrome') or shutil.which('chromium'),args=['--no-sandbox'])
+            ctx=b.new_context(viewport={'width':1440,'height':1080},locale='ko-KR');page=ctx.new_page();captured=[];blocked=[]
+            def guard(route):
+              req=route.request;host=urlsplit(req.url).hostname or ''
+              if req.resource_type in ('media','image','font') or re.search(r'google-analytics|doubleclick|googlesyndication|adservice',host):return route.abort()
+              if req.method not in ('GET','HEAD','OPTIONS'):
+                blocked.append({'url':req.url,'method':req.method,'body':(req.post_data or '')[:500]});return route.abort()
+              return route.continue_()
+            ctx.route('**/*',guard)
+            def capture(res):
+              try:
+                if res.request.resource_type not in ('xhr','fetch'):return
+                h=urlsplit(res.url).hostname or ''
+                if not ('soop' in h or 'afreeca' in h):return
+                data=res.body()
+                i=len(captured);fname=f'response-{i:03d}.txt'
+                if len(data)<=2500000:out.joinpath(fname).write_bytes(data)
+                captured.append({'url':res.url,'status':res.status,'type':res.headers.get('content-type'),'file':fname,'bytes':len(data)})
+              except Exception:pass
+            page.on('response',capture)
+            try:
+              page.goto('https://www.sooplive.com/station/alice427',wait_until='domcontentloaded',timeout=40000);page.wait_for_timeout(6000)
+              out.joinpath('station-browser.txt').write_text(page.locator('body').inner_text())
+              links=page.locator('a').evaluate_all('(xs)=>xs.map(x=>({text:x.textContent,href:x.href})).filter(x=>x.href)');out.joinpath('station-links.json').write_text(json.dumps(links,ensure_ascii=False))
+              # Public replay tab; no sign-in, no streaming media, no writes.
+              tabs=page.get_by_text('다시보기',exact=True)
+              if tabs.count():
+                tabs.first.click(timeout=10000);page.wait_for_timeout(4000)
+              out.joinpath('replay-browser.txt').write_text(page.locator('body').inner_text())
+              links=page.locator('a').evaluate_all('(xs)=>xs.map(x=>({text:x.textContent,href:x.href})).filter(x=>x.href)');out.joinpath('replay-links.json').write_text(json.dumps(links,ensure_ascii=False))
+              vids=[x['href'] for x in links if re.search(r'(?:/player/|/vod/)([0-9]+)',x['href'])]
+              if vids:
+                page.goto(vids[0],wait_until='domcontentloaded',timeout=30000);page.wait_for_timeout(4000);page.evaluate('window.scrollTo(0,document.body.scrollHeight)');page.wait_for_timeout(3000)
+                out.joinpath('vod-browser.txt').write_text(page.locator('body').inner_text());out.joinpath('vod.html').write_text(page.content());page.screenshot(path=str(out/'vod.png'))
+            except Exception as e:summary.append({'browser_error':str(e)[:500]})
+            out.joinpath('network.json').write_text(json.dumps({'responses':captured,'blocked':blocked},ensure_ascii=False,indent=2));b.close()
+          out.joinpath('summary.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2));print(json.dumps(summary,ensure_ascii=False))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-timeline-probe
+          path: timeline-probe/
+          retention-days: 7
