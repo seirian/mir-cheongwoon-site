@@ -5,7 +5,7 @@ import {SongCover, VodLinks} from './SongMedia';
 
 const blank = () => ({title:'', artist:'', categories:[], aliases:[], videoUrls:[], difficulty:null, requestStatus:'unreviewed', artworkUrl:'', musicUrl:'', album:''});
 export default function SongEditor({song, store, categories, close, saved, Modal, StarPicker}) {
-  const [draft, setDraft] = useState(() => song ? {...song} : blank());
+  const [draft, setDraft] = useState(() => song ? {...song,videoUrls:song.manualVideoUrls||song.videoUrls} : blank());
   const [q, setQ] = useState(''), [region, setRegion] = useState('AUTO');
   const [results, setResults] = useState([]), [searched, setSearched] = useState('');
   const [searchMessage, setSearchMessage] = useState(''), [error, setError] = useState('');
@@ -38,7 +38,8 @@ export default function SongEditor({song, store, categories, close, saved, Modal
   }
   function select(result) {
     const found = existingMatch(store.songs, result);
-    setDraft(selectionDraft(found, result, blank()));
+    const selected=selectionDraft(found, result, blank());
+    setDraft({...selected,videoUrls:selected.manualVideoUrls||selected.videoUrls});
     setSuggestedTitle(result.suggestedTitle || '');
     setError('');
   }
@@ -54,7 +55,7 @@ export default function SongEditor({song, store, categories, close, saved, Modal
       </form>
       {hasSearched && <div className="sb3-search-panels">
         <section className="sb2-results sb3-existing" aria-label="기존 노래책 검색 결과"><h4>이미 노래책에 있는 곡 <small>{existing.length}</small></h4>
-          {existing.length ? existing.slice(0,10).map(s=><button key={s.id} type="button" onClick={()=>{setDraft({...s}); setSuggestedTitle(''); setError('');}}>{s.title} · {s.artist}<small>등록됨 · 기존 곡 편집</small></button>) : <p className="sb-note">현재 노래책에는 일치하는 곡이 없습니다.</p>}
+          {existing.length ? existing.slice(0,10).map(s=><button key={s.id} type="button" onClick={()=>{setDraft({...s,videoUrls:s.manualVideoUrls||s.videoUrls}); setSuggestedTitle(''); setError('');}}>{s.title} · {s.artist}<small>등록됨 · 기존 곡 편집</small></button>) : <p className="sb-note">현재 노래책에는 일치하는 곡이 없습니다.</p>}
         </section>
         <section className="sb3-external" aria-label="외부 음악 검색 결과"><h4>다른 음악 목록에서 찾은 곡 <small>{results.length}</small></h4>
           {busy && <p role="status">외부 음악 목록을 검색하는 중…</p>}

@@ -1,0 +1,22 @@
+/** Explicit spelling variants reviewed against the existing repertoire; not a fuzzy title translator. */
+export const titleAliases = [
+ ['mir-aeae7cb3ecd6','매직','미세스 그린애플',['Magic']],
+ ['mir-b518a3adb245','뉴 마이 노멀','미세스 그린애플',['New My Normal']],
+ ['mir-2775055208ef','러브 미 러브 유','미세스 그린애플',['Love Me, Love You']],
+ ['mir-29f04d884545','아프리오리','미세스 그린애플',['A Priori']],
+ ['mir-7611a7d42bc1','애티튜드','미세스 그린애플',['Attitude']],
+ ['mir-765c78d3bd14','파티','미세스 그린애플',['Party']],
+ ['mir-343b639f9c3b','댄스홀','미세스 그린애플',['Dance Hall']],
+ ['mir-8377cca95add','라일락','미세스 그린애플',['Lilac']],
+ ['mir-6852ab469196','아이러브','오피셜히게단디즘',['I Love','I Love...']],
+ ['mir-ae9b3fd6b202','샤론','오피셜히게단디즘',['Sharon']],
+ ['mir-dd99642e64be','유니버스','오피셜히게단디즘',['Universe']],
+ ['mir-990697a9328c','체스보드','오피셜히게단디즘',['Chessboard']],
+ ['mir-1755a517c090','Subtitle 서브타이틀','오피셜히게단디즘',['Subtitle','서브타이틀']],
+ ['mir-2e6c7b2b19f0','오렌지','스파이에어',['Orange']],
+ ['mir-1ad7f0887ec8','드라우닝','우즈',['Drowning']],
+ ['mir-e6ba91bb0bb1','Love Poem','아이유',['러브 포엠']],
+ ['mir-fbfe0559d55d','코이','호시노 겐',['Koi']],
+ ['mir-eec0a13530a3','악마의 아이','히구치 아이',['Akuma no ko']],
+ ['mir-32daa40e5f80','라스트 스타더스트','에메',['Last Stardust','Last Star Dust']],
+ ];

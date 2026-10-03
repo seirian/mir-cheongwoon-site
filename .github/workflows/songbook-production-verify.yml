@@ -2,7 +2,7 @@ name: Songbook production verification
 on:
   push:
     branches: [feature/songbook, develop]
-    paths: ['src/**','scripts/**','tests/**','server/**','supabase/songbook*','supabase/ops/songbook*','docs/reviews/songbook-release.md','.github/workflows/songbook-production-verify.yml']
+    paths: ['src/**','scripts/**','tests/**','server/**','supabase/songbook*','supabase/ops/songbook*','supabase/functions/songbook-timeline-sync/**','docs/reviews/songbook-release.md','.github/workflows/songbook-production-verify.yml']
   pull_request:
     branches: [develop, main]
 permissions:
@@ -10,7 +10,7 @@ permissions:
 jobs:
   production:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     services:
       postgres:
         image: postgres:17
@@ -39,6 +39,9 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.5.4
       - name: Verify source and search parsers
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
@@ -47,12 +50,16 @@ jobs:
           php tests/songbook-search-test.php
           php tests/songbook-localization-test.php
           python scripts/reconcile-songbook-difficulty.py --self-test
+          deno check --config supabase/functions/songbook-timeline-sync/deno.json supabase/functions/songbook-timeline-sync/index.ts
       - name: Verify site-admin database permissions in isolated PostgreSQL
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-admin-bootstrap.sql
           psql -v ON_ERROR_STOP=1 -f supabase/songbook-production.sql
           psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_admin_access.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-admin-assertions.sql
+          psql -v ON_ERROR_STOP=1 -c 'CREATE ROLE service_role NOLOGIN BYPASSRLS; GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT SELECT ON public.admins TO service_role;'
+          psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_timeline_sync.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-timeline-assertions.sql
       - name: Production build and isolated username login browser checks
         run: |
           sudo apt-get update -qq
