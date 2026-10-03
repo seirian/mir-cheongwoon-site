@@ -1,0 +1,55 @@
+name: Songbook timeline sample
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-timeline-sample.yml']
+permissions:
+  contents: read
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read public replay metadata and timeline comment samples
+        run: |
+          python - <<'PY'
+          import json,time,urllib.request,urllib.parse,urllib.error
+          from pathlib import Path
+          p=Path('timeline-sample');p.mkdir();logs=[]
+          def fetch(url,body=None):
+            time.sleep(0.6)
+            req=urllib.request.Request(url,data=urllib.parse.urlencode(body).encode() if body else None,headers={'User-Agent':'MirSongbook/1.0 (https://mir.yeop.net)','Referer':'https://vod.sooplive.com/','Content-Type':'application/x-www-form-urlencoded'})
+            with urllib.request.urlopen(req,timeout=20) as r:
+              raw=r.read(2500001);assert len(raw)<=2500000;logs.append({'host':urllib.parse.urlsplit(url).netloc,'status':r.status});return raw
+          for name,host in [('comments','https://stbbs.sooplive.com'),('list','https://chapi.sooplive.co.kr')]:
+            try:p.joinpath(name+'-robots.txt').write_bytes(fetch(host+'/robots.txt'))
+            except Exception as e:logs.append({'robots_error':str(e)[:180]})
+          inventory=[];boundary=False
+          for page in range(1,41):
+            raw=fetch('https://chapi.sooplive.co.kr/api/alice427/vods?'+urllib.parse.urlencode({'page':page,'per_page':60,'type':'REVIEW','orderby':'reg_date'}));d=json.loads(raw)
+            assert isinstance(d.get('data'),list) and d.get('meta',{}).get('current_page')==page
+            p.joinpath('list-'+str(page)+'.json').write_bytes(raw)
+            for r in d['data']:
+              assert r.get('user_id')=='alice427' and r.get('station_no')==24957466
+              if r['reg_date']<'2025-01-01 00:00:00':boundary=True;continue
+              if r.get('ucc',{}).get('file_type')=='REVIEW':inventory.append(r)
+            if boundary or not d['data'] or page>=d['meta']['last_page']:break
+          p.joinpath('inventory.json').write_text(json.dumps(inventory,ensure_ascii=False))
+          candidates=[r for r in inventory if r.get('count',{}).get('comment_cnt',0)>0]
+          sample=candidates[:8]+candidates[len(candidates)//2:len(candidates)//2+2]+candidates[-2:]
+          for r in sample:
+            args={'nStationNo':r['station_no'],'nBbsNo':r['bbs_no'],'nTitleNo':r['title_no'],'bj_id':'alice427','nPageNo':1,'nOrderNo':1,'nBoardType':105,'szAction':'get','nVod':1,'nLastNo':0}
+            try:p.joinpath('comments-'+str(r['title_no'])+'.json').write_bytes(fetch('https://stbbs.sooplive.com/api/bbs_memo_action.php',args))
+            except Exception as e:logs.append({'vod':r['title_no'],'error':str(e)[:180]})
+          p.joinpath('summary.json').write_text(json.dumps({'vods':len(inventory),'pages':page,'boundary':boundary,'with_comments':len(candidates),'requests':logs},ensure_ascii=False,indent=2))
+          print('inventory',len(inventory),'pages',page,'with comments',len(candidates),'boundary reached',boundary)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-timeline-sample
+          path: timeline-sample/
+          retention-days: 7
