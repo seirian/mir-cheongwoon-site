@@ -1,0 +1,60 @@
+name: Songbook timeline replies probe
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-timeline-replies-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read public player script and replay reply requests
+        run: |
+          mkdir -p timeline-replies
+          python -m pip install playwright==1.57.0
+          python - <<'PY'
+          import json,re,shutil,urllib.request
+          from pathlib import Path
+          from urllib.parse import urlsplit,parse_qs
+          from playwright.sync_api import sync_playwright
+          p=Path('timeline-replies')
+          u='https://static.sooplive.com/asset/app/vodplayer/view/static/js/main.b9adf0b2.js'
+          with urllib.request.urlopen(u,timeout=30) as r:p.joinpath('player.js').write_bytes(r.read(12000000))
+          with sync_playwright() as pw:
+            b=pw.chromium.launch(executable_path=shutil.which('google-chrome') or shutil.which('chromium'),args=['--no-sandbox']);ctx=b.new_context(locale='ko-KR',viewport={'width':1440,'height':1000});page=ctx.new_page();calls=[]
+            def guard(route):
+              req=route.request;u=urlsplit(req.url)
+              if req.resource_type in ('image','font','media') or re.search('google|facebook|tiktok|doubleclick|analytics|deapi',u.netloc):return route.abort()
+              if req.method not in ('GET','HEAD','OPTIONS'):
+                args=parse_qs(req.post_data or '')
+                safe=(u.netloc=='api.m.sooplive.com' and u.path=='/station/video/a/view') or (u.netloc=='stbbs.sooplive.com' and u.path=='/api/bbs_memo_action.php' and str(args.get('szAction',[''])[0]).startswith('get'))
+                calls.append({'url':req.url,'body':req.post_data,'permitted_read':safe})
+                if not safe:return route.abort()
+              return route.continue_()
+            ctx.route('**/*',guard)
+            def save(res):
+              if 'bbs_memo_action' in res.url or '/station/video/a/view' in res.url:
+                try:
+                  data=res.body();i=len(list(p.glob('api-*.json')));p.joinpath(f'api-{i}.json').write_bytes(data);calls.append({'response':res.url,'status':res.status,'file':f'api-{i}.json','body':res.request.post_data})
+                except Exception:pass
+            page.on('response',save)
+            try:
+              page.goto('https://vod.sooplive.com/player/208288651',wait_until='domcontentloaded');page.wait_for_timeout(5000);page.evaluate('window.scrollTo(0,1500)');page.wait_for_timeout(2000)
+              p.joinpath('before.txt').write_text(page.locator('body').inner_text());p.joinpath('before.html').write_text(page.content())
+              matches=page.get_by_text(re.compile(r'^답글\s*[0-9]'))
+              if matches.count():matches.first.click();page.wait_for_timeout(3000)
+              p.joinpath('after.txt').write_text(page.locator('body').inner_text());p.joinpath('after.html').write_text(page.content())
+            except Exception as e:calls.append({'error':str(e)[:500]})
+            p.joinpath('network.json').write_text(json.dumps(calls,ensure_ascii=False,indent=2));b.close()
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-timeline-replies
+          path: timeline-replies/
+          retention-days: 7
