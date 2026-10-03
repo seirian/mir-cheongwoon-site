@@ -198,7 +198,7 @@ export function publicVod(row) {
     public:Number(row.auth_no)===101 && Number(u.grade)===0 && !u.paid_ppv,comment_count:Number(row.count?.comment_cnt||0)};
 }
 export function validGithubClaims(p) {
-  return !p.job_workflow_ref && p.repository_id==='1366316295' && p.repository_owner_id==='1607031' && p.repository==='seirian/mir-cheongwoon-site' &&
+  return (!p.job_workflow_ref || p.job_workflow_ref === p.workflow_ref) && p.repository_id==='1366316295' && p.repository_owner_id==='1607031' && p.repository==='seirian/mir-cheongwoon-site' &&
     ['refs/heads/main','refs/heads/develop'].includes(p.ref) && ['workflow_run','workflow_dispatch'].includes(p.event_name) &&
     p.workflow_ref===`seirian/mir-cheongwoon-site/.github/workflows/songbook-timeline-backfill.yml@${p.ref}` &&
     p.runner_environment==='github-hosted' && /^\d+$/.test(String(p.run_id)) && /^\d+$/.test(String(p.run_attempt));
