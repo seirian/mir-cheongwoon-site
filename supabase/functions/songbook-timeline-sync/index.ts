@@ -73,7 +73,7 @@ Deno.serve(async req=>{
   // Backfill has workload identity, never a long-lived Supabase key in GitHub or in the browser.
   const token=req.headers.get('x-github-oidc')||'';if(!token)return reply(401,{error:'unauthorized'});
   let claims:any;try{claims=(await jwtVerify(token,jwks,{issuer:'https://token.actions.githubusercontent.com',audience:GH_AUDIENCE,algorithms:['RS256'],maxTokenAge:'10m'})).payload;}catch{return reply(401,{error:'unauthorized'});}
-  if(!validGithubClaims(claims))return reply(403,{error:'untrusted_workflow'});
+  if(!validGithubClaims(claims)){console.warn('songbook_workload_claim_mismatch',JSON.stringify(Object.fromEntries(['repository_id','repository_owner_id','repository','ref','event_name','workflow_ref','job_workflow_ref','runner_environment','run_id','run_attempt'].map(k=>[k,claims[k]]))));return reply(403,{error:'untrusted_workflow'});}
   const owner=`github:${claims.run_id}:${claims.run_attempt}`;
   if(body.action==='catalog_seed'){
    if(!Array.isArray(body.songs)||body.songs.length<1||body.songs.length>5000||body.songs.some((s:any)=>!/^mir-[a-f0-9]{12}$/.test(s.id)||typeof s.title!=='string'||!s.title||s.title.length>200||typeof s.artist!=='string'||!s.artist||s.artist.length>200||!Array.isArray(s.aliases)||s.aliases.some((a:any)=>typeof a!=='string'||a.length>200)))return reply(400,{error:'catalog_contract'});
