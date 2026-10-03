@@ -1,3 +1,4 @@
+import { timelineSongs } from './songbookTimeline.js';
 import { songbookEditAccess } from './songbookAccess.js';
 import { supabase } from './supabase';
 import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW } from './preview';
@@ -29,6 +30,9 @@ async function readTable(name) {
 export function useSongbookStore(demo) {
   const [entries, setEntries] = useState([]);
   const [ratings, setRatings] = useState([]);
+  const [automatic, setAutomatic] = useState([]);
+  const [media, setMedia] = useState([]);
+  const [autoError, setAutoError] = useState('');
   const [session, setSession] = useState(null);
   const [role, setRole] = useState(null);
   const [admin, setAdmin] = useState(false);
@@ -47,9 +51,12 @@ export function useSongbookStore(demo) {
     setError('');
     try {
       if (!songbookClient) throw Error('No configuration');
-      const [e, r] = await Promise.all([readTable(tables.entries), readTable(tables.ratings)]);
+      const [e, r, a] = await Promise.all([readTable(tables.entries), readTable(tables.ratings),
+        IS_REVIEW_PREVIEW ? Promise.resolve({rows:[],media:[]}) : Promise.all([readTable('songbook_auto_entries'),readTable('songbook_auto_media')]).then(([rows,media])=>({rows,media})).catch(()=>null)]);
       if (mode.current || generation !== readGeneration.current) return;
       setEntries(e); setRatings(r); setReady(true);
+      if(a){setAutomatic(a.rows);setMedia(a.media);setAutoError('');}
+      else setAutoError('자동 갱신 목록을 불러오지 못했습니다. 기존 목록과 수동 편집은 계속 사용할 수 있습니다.');
     } catch {
       if (mode.current || generation !== readGeneration.current) return;
       setReady(false); setEntries([]); setRatings([]);
@@ -58,7 +65,7 @@ export function useSongbookStore(demo) {
   }, [demo]);
 
   useEffect(() => {
-    setEntries([]); setRatings([]); setReady(false); setError('');
+    setEntries([]); setRatings([]); setAutomatic([]); setMedia([]); setAutoError(''); setReady(false); setError('');
     if (demo) {
       try {
         const value = JSON.parse(localStorage.getItem(DEMO_KEY) || '{}');
@@ -101,7 +108,7 @@ export function useSongbookStore(demo) {
     return () => { active = false; ++authGeneration.current; data.subscription.unsubscribe(); };
   }, [demo]);
 
-  const songs = mergeSongs(catalog, entries, ratings);
+  const songs = timelineSongs(catalog, entries, ratings, automatic, media);
   const { canEdit, canRate } = songbookEditAccess({ ready, admin, role, demo, reviewPreview: IS_REVIEW_PREVIEW, songbookPreview: IS_SONGBOOK_PREVIEW });
   function persist(e, r) {
     localStorage.setItem(DEMO_KEY, JSON.stringify({ entries: e, ratings: r }));
@@ -142,5 +149,5 @@ export function useSongbookStore(demo) {
       }
     } finally { writeLock.current = false; setSaving(false); }
   }
-  return { songs, session, role, admin, ready, error, saving, canEdit, canRate, saveSong, saveRating, refresh, client: songbookClient };
+  return { songs, session, role, admin, ready, error, autoError, saving, canEdit, canRate, saveSong, saveRating, refresh, client: songbookClient };
 }
