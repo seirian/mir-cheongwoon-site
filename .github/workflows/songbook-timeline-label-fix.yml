@@ -1,0 +1,32 @@
+name: Songbook timeline selector label
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-timeline-label-fix.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add the missing selector label only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/components/songbook/TimelinePanel.jsx')
+          before=p.read_text()
+          old='<label>연결할 곡<select value={songId}'
+          new='<label>연결할 곡<select aria-label="연결할 곡" value={songId}'
+          assert before.count(old)==1
+          p.write_text(before.replace(old,new))
+          PY
+          git diff --check
+          git fetch origin develop
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/songbook/TimelinePanel.jsx
+          git commit -m 'fix(songbook): explicitly label the timeline target song selector'
+          git push origin HEAD:develop
