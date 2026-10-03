@@ -1,0 +1,25 @@
+name: Songbook work snapshot
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-work-snapshot.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: |
+          mkdir snapshot
+          git status --short > snapshot/status.txt
+          git rev-parse HEAD > snapshot/commit.txt
+          git archive HEAD > snapshot/repository.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-work-source
+          path: snapshot/
+          retention-days: 3
