@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Production-mode ID login and shared session regression. Supabase is fully mocked."""
-import argparse, base64, json, shutil, time, traceback
+"""Shared account login and songbook permissions; all auth/DB requests are fixtures."""
+import argparse, base64, json, re, shutil, time, traceback
 from pathlib import Path
 from urllib.parse import urlsplit
 from playwright.sync_api import sync_playwright, expect
@@ -11,6 +11,7 @@ user = {'id': uid, 'aud': 'authenticated', 'role': 'authenticated', 'email': 'fi
 def enc(data): return base64.urlsafe_b64encode(json.dumps(data).encode()).decode().rstrip('=')
 token = enc({'alg': 'HS256', 'typ': 'JWT'}) + '.' + enc({'sub': uid, 'exp': int(time.time())+3600, 'aud': 'authenticated', 'role': 'authenticated'}) + '.fixture'
 checks = []; errors = []; logins = []; changes = []; direct_password = []; tables = []; ratings = []
+permission = {'admin': True, 'role': None}
 with sync_playwright() as pw:
  browser = pw.chromium.launch(executable_path=shutil.which('google-chrome') or shutil.which('chromium'), args=['--no-sandbox'])
  ctx = browser.new_context(viewport={'width':1440, 'height':1000}); page = ctx.new_page(); page.on('pageerror', lambda e: errors.append(str(e)))
@@ -31,11 +32,13 @@ with sync_playwright() as pw:
     table=path.split('/')[-1];tables.append(table)
     assert 'songbook_preview' not in table, 'production touched preview tables'
     if req.method not in ('GET','HEAD','OPTIONS'):
-     assert table=='songbook_ratings' and req.method=='POST'
+     assert table=='songbook_ratings' and req.method=='POST' and permission['role']=='owner'
      r={**req.post_data_json,'revision':1};ratings.append(r);changes.append({'table':table,'proficiency':r['proficiency']});return reply(r,201)
     obj='vnd.pgrst.object' in req.headers.get('accept','')
-    if table=='songbook_editors': return reply({'role':'owner'} if obj else [{'role':'owner'}])
-    if table=='admins': return reply(None if obj else [])
+    if table=='songbook_editors':
+     rows=[{'role':permission['role']}] if permission['role'] else []
+     return reply((rows[0] if rows else None) if obj else rows)
+    if table=='admins': return reply(({'user_id':uid} if obj else [{'user_id':uid}]) if permission['admin'] else (None if obj else []))
     if table=='member_profiles': return reply({'username':'mir.review','email':user['email']} if obj else [{'username':'mir.review','email':user['email']}])
     if table=='songbook_ratings': return reply(ratings)
     return reply([])
@@ -44,51 +47,84 @@ with sync_playwright() as pw:
   if u.hostname in ('127.0.0.1','localhost'): return route.continue_()
   return route.abort()
  ctx.route('**/*',intercept)
- try:
+ def no_duplicate_login():
+  expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_have_count(0)
+  expect(page.get_by_role('dialog',name='노래책 편집 로그인',exact=True)).to_have_count(0)
+  expect(page.locator('.songbook-page input[type=password]')).to_have_count(0)
+ def visit_songbook():
   page.goto(base+'songbook/',wait_until='networkidle')
   expect(page.locator('.sb2-song')).to_have_count(24)
+  no_duplicate_login()
+ def account_login():
+  page.goto(base+'account/',wait_until='networkidle')
+  expect(page.get_by_label('아이디',exact=True)).to_have_attribute('type','text')
+  expect(page.locator('form input[type=email]')).to_have_count(0)
+  page.get_by_label('아이디',exact=True).fill('  Mir.Review  ')
+  page.get_by_label('비밀번호',exact=True).fill(' test password ')
+  page.locator('form').get_by_role('button',name='로그인',exact=True).click()
+  expect(page.get_by_role('heading',name='mir.review',exact=True)).to_be_visible()
+ try:
+  visit_songbook()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
+  expect(page.locator('.sb2-toolbar button')).to_have_count(0)
   assert '4차 검토안' not in page.locator('body').inner_text()
   expect(page.get_by_role('link',name='4차 변경점 보기 ↗')).to_have_count(0)
-  checks.append('production list visible; review labels absent; anonymous editing hidden')
-  page.get_by_role('button',name='편집 로그인',exact=True).click();d=page.get_by_role('dialog')
-  expect(d.get_by_label('아이디',exact=True)).to_have_attribute('type','text')
-  expect(d.locator('input[type=email]')).to_have_count(0)
-  d.get_by_label('아이디',exact=True).fill('  Mir.Review  ');d.get_by_label('비밀번호',exact=True).fill('wrong password')
-  d.get_by_role('button',name='로그인',exact=True).click();expect(d.get_by_role('alert')).to_contain_text('아이디 또는 비밀번호')
-  expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
-  checks.append('wrong ID password yields sanitized failure without editing rights')
+  for width in [1440,1024,768,390]:
+   page.set_viewport_size({'width':width,'height':1000});page.wait_for_timeout(150)
+   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+   no_duplicate_login();page.screenshot(path=str(out/f'no-editor-login-{width}.png'))
+  checks.append('anonymous songbook has no login form/button or edit controls at four viewport sizes')
+  page.get_by_role('link',name='로그인 / 회원가입',exact=True).click()
+  expect(page.get_by_label('아이디',exact=True)).to_have_attribute('type','text')
+  expect(page.locator('form input[type=email]')).to_have_count(0)
+  page.get_by_label('아이디',exact=True).fill('mir.review');page.get_by_label('비밀번호',exact=True).fill('wrong password')
+  page.locator('form').get_by_role('button',name='로그인',exact=True).click()
+  expect(page.get_by_text('로그인에 실패했습니다. 아이디 또는 비밀번호를 확인해 주세요.',exact=True)).to_be_visible()
+  visit_songbook();expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
+  checks.append('existing footer account entry and wrong-password handling remain functional')
+  account_login();visit_songbook()
+  expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible()
+  expect(page.locator('.sb2-picker')).to_have_count(0)
+  page.get_by_role('button',name='노래 추가',exact=True).click();expect(page.get_by_role('dialog')).to_be_visible()
+  page.keyboard.press('Escape');expect(page.get_by_role('dialog')).to_have_count(0)
+  page.locator('.sb2-title').first.click()
+  expect(page.get_by_role('button',name='곡 정보 편집',exact=True)).to_be_visible()
+  page.get_by_role('button',name='곡 정보 편집',exact=True).click();expect(page.get_by_role('dialog')).to_be_visible()
+  page.keyboard.press('Escape');page.keyboard.press('Escape')
+  checks.append('existing site administrator can add/edit songs without separate login, but cannot rate for Mir')
+  page.reload(wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible();no_duplicate_login()
   for width in [1440,390]:
-   page.set_viewport_size({'width':width,'height':1000});page.screenshot(path=str(out/f'id-login-{width}.png'))
-  d.get_by_label('비밀번호',exact=True).fill(' test password ');d.get_by_role('button',name='로그인',exact=True).click()
-  expect(page.get_by_role('dialog')).to_have_count(0)
+   page.set_viewport_size({'width':width,'height':1000});page.evaluate('window.scrollTo(0,0)')
+   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+   page.screenshot(path=str(out/f'shared-admin-{width}.png'))
+  page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click()
+  expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
+  expect(page.locator('.sb2-toolbar button')).to_have_count(0);no_duplicate_login()
+  checks.append('shared admin session persists on reload and site logout removes edit controls without restoring duplicate login')
+  permission.update(admin=False,role=None);account_login();visit_songbook()
+  expect(page.get_by_role('button',name='계정 연결',exact=True)).to_be_visible()
+  expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
+  expect(page.locator('.sb2-picker')).to_have_count(0)
+  page.locator('.sb2-title').first.click();expect(page.get_by_role('button',name='곡 정보 편집',exact=True)).to_have_count(0)
+  page.keyboard.press('Escape');page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click()
+  expect(page.get_by_role('link',name='로그인 / 회원가입',exact=True)).to_be_visible()
+  checks.append('ordinary site member remains read-only without any increase in permissions')
+  permission.update(admin=False,role='owner');account_login();visit_songbook()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible()
   page.locator('.sb2-song').first.get_by_role('button',name='미르 숙련도 4점으로 설정').click()
   expect(page.locator('.sb2-message')).to_contain_text('숙련도를 저장')
   assert changes==[{'table':'songbook_ratings','proficiency':4}]
-  checks.append('username login installs server session and owner writes production-only rating table in fixture')
-  page.goto(base+'account/',wait_until='networkidle');expect(page.get_by_role('heading',name='mir.review',exact=True)).to_be_visible()
-  page.goto(base+'songbook/',wait_until='networkidle');expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_have_count(0)
+  page.reload(wait_until='networkidle')
   expect(page.locator('.sb2-song').first.get_by_role('button',name='미르 숙련도 4점으로 설정')).to_have_attribute('aria-pressed','true')
-  page.locator('.sb2-toolbar').get_by_role('button',name='로그아웃',exact=True).click()
-  expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_be_visible()
-  page.goto(base+'account/',wait_until='networkidle');expect(page.get_by_label('아이디',exact=True)).to_be_visible()
-  page.get_by_label('아이디',exact=True).fill('mir.review');page.get_by_label('비밀번호',exact=True).fill(' test password ')
-  page.locator('form').get_by_role('button',name='로그인',exact=True).click();expect(page.get_by_role('heading',name='mir.review',exact=True)).to_be_visible()
-  page.goto(base+'songbook/',wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible()
-  checks.append('site and songbook share login, reload persistence, logout and login in both directions')
-  page.locator('.sb2-toolbar').get_by_role('button',name='로그아웃',exact=True).click();expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_be_visible()
-  page.goto(base+'songbook/?demo=1',wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0)
-  page.goto(base+'songbook/review/',wait_until='networkidle');expect(page).to_have_url(base+'songbook')
-  checks.append('demo query cannot enable production editing; review route redirects to songbook')
-  for width in [1440,1024,768,390]:
-   page.set_viewport_size({'width':width,'height':1000});page.wait_for_timeout(150)
-   assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
-   page.screenshot(path=str(out/f'production-songbook-{width}.png'))
-  checks.append('production responsive layouts without horizontal overflow')
+  no_duplicate_login();page.locator('.sb2-toolbar').get_by_role('button',name='로그아웃',exact=True).click()
+  expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);no_duplicate_login()
+  checks.append('owner-only proficiency and songbook-to-site logout remain functional in isolated API fixture')
+  page.goto(base+'songbook/?demo=1',wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0);no_duplicate_login()
+  page.goto(base+'songbook/review/',wait_until='networkidle');expect(page).to_have_url(base+'songbook');no_duplicate_login()
+  checks.append('demo query cannot enable production editing; review path remains redirected')
   assert not direct_password and not errors
-  assert len(logins)==3 and all(x['identifier']=='mir.review' for x in logins)
-  checks.append('no direct email/password auth, no JavaScript exceptions, all auth/network calls isolated')
+  assert len(logins)==4 and all(x['identifier']=='mir.review' for x in logins)
+  checks.append('all four logins used existing username entrypoint; no direct password auth or JavaScript exceptions')
   (out/'report.json').write_text(json.dumps({'checks':checks,'javascript_errors':errors,'mock_logins':len(logins),'mock_changes':changes,'tables':sorted(set(tables))},ensure_ascii=False,indent=2))
  except Exception:
   traceback.print_exc()
@@ -98,4 +134,4 @@ with sync_playwright() as pw:
   except Exception: pass
   raise
  finally: browser.close()
-print('PASS:',len(checks),'production login/browser groups')
+print('PASS:',len(checks),'shared-login/browser groups')
