@@ -1,0 +1,61 @@
+name: Songbook difficulty finalize
+on:
+  push:
+    branches: [develop]
+    paths: ['.github/workflows/songbook-difficulty-finalize.yml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply reviewed offline match without altering existing ratings
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 37131104709 --repo "$GITHUB_REPOSITORY" --name songbook-difficulty-complete --dir /tmp/songbook-references
+          python scripts/reconcile-songbook-difficulty.py --self-test
+          python scripts/reconcile-songbook-difficulty.py --reference-dir /tmp/songbook-references --write
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          git diff --check
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('docs/reviews/songbook-difficulty-audit.json').read_text())
+          assert report['added']==90 and report['remaining_unrated']==203
+          catalog=json.loads(Path('src/data/songbookCatalog.json').read_text())
+          assert sum(s['difficulty'] is not None for s in catalog)==139
+          assert all(s['proficiency'] is None for s in catalog)
+          for path in Path('dist').rglob('*'):
+              if path.suffix in ('.js','.json','.html'):
+                  text=path.read_text()
+                  for forbidden in ('onestage.kr/@','reference_sha256','excluded_default_dominated_catalogs','gurmir.com','mir427.vercel.app'):
+                      assert forbidden not in text, (path,forbidden)
+          PY
+      - name: Commit source data only
+        run: |
+          git fetch origin develop
+          test "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/data/songbookDifficulty.json src/data/songbookCatalog.json docs/reviews/songbook-difficulty-audit.json
+          test -z "$(git diff --cached --name-only -- .github/)"
+          git commit -m 'data(songbook): add 90 reference difficulties after reviewing all 293 unset entries'
+          git push origin HEAD:develop
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-difficulty-import
+          path: |
+            docs/reviews/songbook-difficulty-audit.json
+            src/data/songbookDifficulty.json
+            src/data/songbookCatalog.json
+          retention-days: 30
