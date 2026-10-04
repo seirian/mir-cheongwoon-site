@@ -1,3 +1,4 @@
+import {pruneTimelineCandidates} from './triage.js';
 import {titleAliases} from './aliases.js';
 /** Pure timeline rules shared by the scheduled worker, import endpoint and tests. */
 export const CHANNEL = 'alice427';
@@ -5,7 +6,7 @@ export const STATION = 24957466;
 export const BBS = 90135165;
 export const SINCE = Date.parse('2025-01-01T00:00:00+09:00');
 export const DELAY = 7 * 86400000;
-export const PARSER_VERSION = '1.0.0';
+export const PARSER_VERSION = '1.1.0';
 export const norm = value => String(value || '').normalize('NFKC').toLocaleLowerCase('ko').replace(/[\p{P}\p{Z}\p{S}\s]+/gu, '');
 const SONG_ID = /^(?:mir-[a-f0-9]{12}|custom-[a-f0-9-]{36})$/;
 const NOTES = /[🎵🎶🎤♪♫]/u;
@@ -210,7 +211,7 @@ export async function newSongIdentity(title,artist) {
   return {id,identity_key,title,artist,create:true};
 }
 export async function prepareCandidates(vod,comments,catalog,trustedAuthors) {
-  const list=await identifyCandidates(parseTimeline(vod,comments,catalog,trustedAuthors));
+  const list=await identifyCandidates(pruneTimelineCandidates(parseTimeline(vod,comments,catalog,trustedAuthors),comments,textOnly));
   for(const c of list) {
     if(c.decision==='auto'&&!c.song_id)c.new_song=await newSongIdentity(c.title,c.artist);
     // Only minimal song evidence enters the database; author hashes are used in memory for trust matching.
