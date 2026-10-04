@@ -36,6 +36,7 @@ export function useSongbookStore(demo) {
   const [session, setSession] = useState(null);
   const [role, setRole] = useState(null);
   const [admin, setAdmin] = useState(false);
+  const [authChecking, setAuthChecking] = useState(false);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -81,35 +82,46 @@ export function useSongbookStore(demo) {
   }, [demo, refresh]);
 
   useEffect(() => {
-    setRole(null); setAdmin(false);
+    setRole(null); setAdmin(false); setAuthChecking(false);
     if (!songbookClient || demo) return undefined;
-    let active = true;
-    const resolve = async next => {
+    let active = true, accountId = null;
+    const resolve = next => {
+      if (!active) return;
       const generation = ++authGeneration.current;
-      setSession(next); setRole(null); setAdmin(false);
-      if (!next) return;
-      try {
-        const user = await songbookClient.auth.getUser();
-        if (user.error || user.data.user?.id !== next.user.id) return;
-        const [a, e] = await Promise.all([
-          songbookClient.from('admins').select('user_id').eq('user_id', next.user.id).maybeSingle(),
-          IS_SONGBOOK_PREVIEW ? songbookClient.from(tables.editors).select('role').eq('user_id', next.user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
-        ]);
-        if (active && generation === authGeneration.current && !a.error && !e.error) {
-          setAdmin(Boolean(a.data)); setRole(e.data?.role || null);
+      const nextId = next?.user?.id || null;
+      // A refocus/refresh event for the same account is not a logout. Keep the
+      // verified UI mounted; disable writes while rechecking server permission.
+      if (nextId !== accountId || !nextId) { setRole(null); setAdmin(false); }
+      accountId = nextId; setSession(next); setAuthChecking(Boolean(nextId));
+      if (!nextId) return;
+      setTimeout(async () => {
+        if (!active || generation !== authGeneration.current) return;
+        let verifiedAdmin = false, verifiedRole = null;
+        try {
+          const user = await songbookClient.auth.getUser();
+          if (!user.error && user.data.user?.id === nextId) {
+            const [a, e] = await Promise.all([
+              songbookClient.from('admins').select('user_id').eq('user_id', nextId).maybeSingle(),
+              IS_SONGBOOK_PREVIEW ? songbookClient.from(tables.editors).select('role').eq('user_id', nextId).maybeSingle() : Promise.resolve({ data: null, error: null }),
+            ]);
+            if (!a.error && !e.error) { verifiedAdmin = Boolean(a.data); verifiedRole = e.data?.role || null; }
+          }
+        } catch { /* Fail closed on a completed failed verification. */ }
+        if (active && generation === authGeneration.current) {
+          setAdmin(verifiedAdmin); setRole(verifiedRole); setAuthChecking(false);
         }
-      } catch { /* Fail closed; server RLS is authoritative. */ }
+      }, 0);
     };
-    songbookClient.auth.getSession().then(({ data }) => active && resolve(data.session)).catch(() => {});
-    const { data } = songbookClient.auth.onAuthStateChange((_event, next) => {
-      ++authGeneration.current; setRole(null); setAdmin(false); setSession(next);
-      setTimeout(() => active && resolve(next), 0);
-    });
+    const initialGeneration = authGeneration.current;
+    songbookClient.auth.getSession().then(({ data }) => {
+      if (active && initialGeneration === authGeneration.current) resolve(data.session);
+    }).catch(() => {});
+    const { data } = songbookClient.auth.onAuthStateChange((_event, next) => resolve(next));
     return () => { active = false; ++authGeneration.current; data.subscription.unsubscribe(); };
   }, [demo]);
 
   const songs = timelineSongs(catalog, entries, ratings, automatic, media);
-  const { canEdit, canRate } = songbookEditAccess({ ready, admin, role, demo, reviewPreview: IS_REVIEW_PREVIEW, songbookPreview: IS_SONGBOOK_PREVIEW });
+  const { canEdit, canRate } = songbookEditAccess({ ready: ready && !authChecking, admin, role, demo, reviewPreview: IS_REVIEW_PREVIEW, songbookPreview: IS_SONGBOOK_PREVIEW });
   function persist(e, r) {
     localStorage.setItem(DEMO_KEY, JSON.stringify({ entries: e, ratings: r }));
     setEntries(e); setRatings(r);
@@ -149,5 +161,5 @@ export function useSongbookStore(demo) {
       }
     } finally { writeLock.current = false; setSaving(false); }
   }
-  return { songs, session, role, admin, ready, error, autoError, saving, canEdit, canRate, saveSong, saveRating, refresh, client: songbookClient };
+  return { songs, session, role, admin, authChecking, ready, error, autoError, saving, canEdit, canRate, saveSong, saveRating, refresh, client: songbookClient };
 }

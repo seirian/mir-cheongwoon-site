@@ -12,6 +12,8 @@ export const reviewReasons = {
  performer_uncertain:'미르님 가창 여부 확인',singing_marker_required:'노래 표시 확인',new_song_requires_review:'새 곡 정보 확인',
  unconfirmed_timeline_author:'새 타임라인 작성자의 기록 확인',section_timestamp_only:'곡별 시간이 없는 노래 구간 목록',
  unstructured_comment:'타임라인 형식 확인',ambiguous_title:'동명곡 확인',ambiguous_credit:'가수 확인',ensemble:'합창·듀엣 확인',clear_timeline:'자동 반영',
+ non_song_activity:'게임·소통·레슨 설명 (가창곡 아님)',playback_context:'다른 영상·축하 영상·음원 감상',already_listed_section:'이미 등록된 곡 · 곡별 시간 없는 중복 기록',
+ other_performer:'다른 출연자의 가창',playback_or_outro:'음원 재생·감상',description_not_song:'곡이 아닌 설명',
 };
 export function timeLabel(n){n=Math.max(0,Math.floor(Number(n)||0));return [Math.floor(n/3600),Math.floor(n/60)%60,n%60].map((v,i)=>i?String(v).padStart(2,'0'):v).join(':');}
 export function timelineUrl(vod,seconds){return /^\d{6,12}$/.test(String(vod))&&Number.isInteger(seconds)&&seconds>=0&&seconds<=172800?`https://vod.sooplive.com/player/${vod}?change_second=${seconds}`:null;}
