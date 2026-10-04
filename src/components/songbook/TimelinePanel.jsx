@@ -1,6 +1,8 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {reviewReasons,timeLabel,timelineUrl} from '../../lib/songbookTimeline';
 import {reviewPage,reviewNotice,savedReviewView,saveReviewView,REVIEW_PAGE_SIZE} from '../../lib/songbookReviewState';
+import {formatPlaybackPosition,parsePlaybackPosition} from '../../lib/playbackPosition.js';
+import PlaybackPositionInput from './PlaybackPositionInput.jsx';
 import {IS_REVIEW_PREVIEW} from '../../lib/preview';
 import {VodLinks} from './SongMedia';
 import '../../songbook-timeline.css';
@@ -25,7 +27,7 @@ export default function TimelinePanel({store}) {
  const [open,setOpen]=useState(false),[tab,setTab]=useState('pending'),[page,setPage]=useState(0);
  const [rows,setRows]=useState([]),[count,setCount]=useState(0),[run,setRun]=useState(null);
  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
- const [selected,setSelected]=useState(null),[title,setTitle]=useState(''),[artist,setArtist]=useState(''),[songId,setSongId]=useState(''),[search,setSearch]=useState(''),[seconds,setSeconds]=useState('');
+ const [selected,setSelected]=useState(null),[title,setTitle]=useState(''),[artist,setArtist]=useState(''),[songId,setSongId]=useState(''),[search,setSearch]=useState(''),[position,setPosition]=useState('');
  const request=useRef(0),lock=useRef(false),owner=useRef(null),mounted=useRef(true),currentUser=useRef(null);
  const userId=store.session?.user?.id||null;currentUser.current=userId;
  const canReview=Boolean(store.admin&&!store.authChecking);
@@ -59,12 +61,14 @@ export default function TimelinePanel({store}) {
   return()=>{clearInterval(timer);window.removeEventListener('focus',check);document.removeEventListener('visibilitychange',check);};
  },[load,selected]);
  if(IS_REVIEW_PREVIEW||!store.admin)return null;
- function choose(c){setSelected(c);setTitle(c.title);setArtist(c.artist);setSongId(c.song_id||'');setSearch('');setSeconds(['section_timestamp_only','already_listed_section'].includes(c.reason)&&c.approved_seconds==null?'':String(c.approved_seconds??c.seconds));setError('');}
+ function choose(c){setSelected(c);setTitle(c.title);setArtist(c.artist);setSongId(c.song_id||'');setSearch('');setPosition(['section_timestamp_only','already_listed_section'].includes(c.reason)&&c.approved_seconds==null?'':formatPlaybackPosition(c.approved_seconds??c.seconds));setError('');}
  async function decide(c,decision){
   if(lock.current||!canReview)return;
+  const parsedPosition=parsePlaybackPosition(position);
+  if(decision==='approved'&&parsedPosition.error){setError(parsedPosition.error);return;}
   lock.current=true;++request.current;setBusy(true);setLoading(false);setError('');const actingUser=userId;
   try {
-   const {error:failed,data}=await store.client.functions.invoke('songbook-timeline-sync',{body:{action:'review',id:c.id,revision:c.revision,decision,...(decision==='approved'?{song_id:songId||undefined,title,artist,seconds:Number(seconds)}:{})}});
+   const {error:failed,data}=await store.client.functions.invoke('songbook-timeline-sync',{body:{action:'review',id:c.id,revision:c.revision,decision,...(decision==='approved'?{song_id:songId||undefined,title,artist,seconds:parsedPosition.seconds}:{})}});
    if(failed||data?.status!==decision)throw Error('저장하지 못했습니다. 권한 또는 다른 화면의 변경사항을 확인해 주세요. 항목은 삭제하지 않았습니다.');
    if(!mounted.current||actingUser!==currentUser.current)return;
    setSelected(null);setNotice(reviewNotice(c.title,decision));
@@ -88,7 +92,7 @@ export default function TimelinePanel({store}) {
    <div className="sb-actions"><a className="sb-button" href={timelineUrl(c.vod_id,c.approved_seconds??c.seconds)||undefined} target="_blank" rel="noopener noreferrer">VOD 확인 ↗</a><button type="button" className="sb-button" onClick={()=>choose(c)} disabled={busy||!canReview}>정보 확인·연결</button>{c.decision!=='rejected'&&<button type="button" className="sb-reset" onClick={()=>decide(c,'rejected')} disabled={busy||!canReview}>제외</button>}</div>
    {selected?.id===c.id&&<form className="sb2-form sb-auto-form" onSubmit={e=>{e.preventDefault();decide(selected,'approved');}}>
     <p className="sb-note">곡과 미르님 가창 여부를 영상을 통해 확인한 뒤 저장해 주세요. 기존 곡에 연결하면 제목·난이도·숙련도는 변경하지 않습니다.</p><blockquote>{c.line}</blockquote>
-    <label>확인한 가창 시작 시간 · 초<input type="number" min="0" max="172800" step="1" required value={seconds} onChange={e=>setSeconds(e.target.value)}/></label><p className="sb-note">곡별 시간이 없는 구간 목록은 영상을 보고 정확한 시작 시간을 입력해야 반영됩니다.</p>
+    <PlaybackPositionInput key={c.id} value={position} onChange={setPosition} vodId={c.vod_id} disabled={busy||!canReview}/><p className="sb-note">곡별 시간이 없는 구간 목록은 영상을 보고 정확한 시작 위치를 입력해야 반영됩니다.</p>
     <label>기존 곡 찾기<input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="곡명 또는 가수"/></label>
     <label>연결할 곡<select aria-label="연결할 곡" value={songId} onChange={e=>setSongId(e.target.value)}><option value="">새 노래로 등록</option>{songId&&!options.some(s=>s.id===songId)&&store.songs.filter(s=>s.id===songId).map(s=><option key={s.id} value={s.id}>{s.title} — {s.artist}</option>)}{options.map(s=><option key={s.id} value={s.id}>{s.title} — {s.artist}</option>)}</select></label>
     {!songId&&<><label>곡명<input value={title} onChange={e=>setTitle(e.target.value)} maxLength={150} required/></label><label>가수<input value={artist} onChange={e=>setArtist(e.target.value)} maxLength={150} required/></label><p className="sb-note">새 곡은 ‘기타’ 분류·신청 확인 전으로 추가됩니다. 등록 후 곡 정보에서 수정할 수 있습니다.</p></>}
