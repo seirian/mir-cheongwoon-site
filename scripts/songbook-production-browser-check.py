@@ -30,7 +30,7 @@ with sync_playwright() as pw:
     return reply({'access_token':token,'refresh_token':'fixture-refresh','user_id':uid})
    if path == '/functions/v1/songbook-timeline-sync':
     assert permission['admin'];body=req.post_data_json;assert body['action']=='review' and body['id']==candidate['id']
-    if body['decision']=='approved':assert body['seconds']==180 and body['song_id']==auto_song['id']
+    if body['decision']=='approved':assert body['seconds']==4350 and body['song_id']==auto_song['id']
     auto_fixture['reviews'].append({'decision':body['decision'],'seconds':body.get('seconds')});candidate['decision']=body['decision'];candidate['revision']+=1;candidate['approved_seconds']=body.get('seconds',candidate['approved_seconds'])
     return reply({'status':body['decision'],'song_id':auto_song['id']})
    if path == '/auth/v1/user': return reply(user)
@@ -147,7 +147,7 @@ with sync_playwright() as pw:
   no_duplicate_login();page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);no_duplicate_login()
   checks.append('admin proficiency persists and logout is only provided by the shared site menu')
-  page.goto(base+'songbook/?demo=1',wait_until='networkidle');expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0);no_duplicate_login()
+  page.goto(base+'songbook/?demo=1',wait_until='networkidle');expect(page.locator('.sb2-song')).to_have_count(24);expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0);no_duplicate_login()
   page.goto(base+'songbook/review/',wait_until='networkidle');expect(page).to_have_url(base+'songbook');no_duplicate_login()
   checks.append('demo query cannot enable production editing; review path remains redirected')
   for legacy in ['owner', 'manager']:
@@ -171,19 +171,21 @@ with sync_playwright() as pw:
   permission.update(admin=True,role=None);account_login();visit_songbook()
   panel=page.locator('.sb-auto-admin');panel.locator('summary').click();expect(panel.locator('.sb-auto-candidate')).to_have_count(1)
   panel.get_by_role('button',name='정보 확인·연결',exact=True).click()
-  field=panel.get_by_label('확인한 가창 시작 시간 · 초',exact=True);expect(field).to_have_value('')
+  field=panel.get_by_label('VOD에서 노래 시작 위치',exact=True);expect(field).to_have_value('')
   panel.get_by_label('기존 곡 찾기',exact=True).fill(auto_song['title']);panel.get_by_label('연결할 곡',exact=True).select_option(auto_song['id'])
-  field.fill('180')
+  field.fill('01:12:30')
+  expect(panel.get_by_role('link',name='입력한 위치에서 VOD 확인 ↗',exact=True)).to_have_attribute('href','https://vod.sooplive.com/player/208100000?change_second=4350')
   for width in [1440,390]:
    page.set_viewport_size({'width':width,'height':1000});panel.scroll_into_view_if_needed()
    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
    page.screenshot(path=str(out/f'timeline-review-{width}.png'))
   panel.get_by_role('button',name='가창 확인 후 반영',exact=True).click();expect(panel.locator('.sb-auto-candidate')).to_have_count(0)
-  assert auto_fixture['reviews']==[{'decision':'approved','seconds':180}]
+  assert auto_fixture['reviews']==[{'decision':'approved','seconds':4350}]
   panel.get_by_role('button',name='확인 완료',exact=True).click();expect(panel.locator('.sb-auto-candidate')).to_have_count(1)
+  panel.get_by_role('button',name='정보 확인·연결',exact=True).click();expect(panel.get_by_label('VOD에서 노래 시작 위치',exact=True)).to_have_value('01:12:30')
   panel.get_by_role('button',name='제외',exact=True).click();expect(panel.locator('.sb-auto-candidate')).to_have_count(0)
   panel.get_by_role('button',name='제외한 항목',exact=True).click();expect(panel.locator('.sb-auto-candidate')).to_have_count(1)
-  checks.append('existing administrator can correct section-only timestamp and explicitly link/reject candidate, with responsive review UI')
+  checks.append('existing administrator enters h:m:s, submits integer seconds, reopens the saved position and can reject without changing permissions')
   page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click();expect(page.locator('.sb-auto-admin')).to_have_count(0)
   checks.append('private timeline evidence disappears on shared logout; no extra admin/login controls return')
   assert not direct_password and not errors

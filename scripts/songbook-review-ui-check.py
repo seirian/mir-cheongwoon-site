@@ -16,7 +16,7 @@ with sync_playwright() as pw:
   panel.get_by_role('button',name='다음 항목',exact=True).click();expect(panel.get_by_test_id('review-pagination')).to_have_text('2 / 3')
   expect(panel.locator('[data-candidate-id="9"]')).to_be_visible()
   row=panel.locator('[data-candidate-id="9"]');row.get_by_role('button',name='정보 확인·연결',exact=True).click()
-  row.get_by_label('곡명',exact=True).fill('확인 중인 제목');row.get_by_label('확인한 가창 시작 시간 · 초').fill('456')
+  row.get_by_label('곡명',exact=True).fill('확인 중인 제목');row.get_by_label('VOD에서 노래 시작 위치').fill('07:36')
   link=row.get_by_role('link',name='VOD 확인 ↗',exact=True);expect(link).to_have_attribute('target','_blank');assert 'change_second=128' in link.get_attribute('href')
   # Do not contact the real VOD service. Exercise a real new tab with about:blank.
   link.evaluate("e=>e.addEventListener('click',event=>{event.preventDefault();window.open('about:blank','_blank')},{once:true})")
@@ -26,7 +26,7 @@ with sync_playwright() as pw:
   expect(panel).to_have_attribute('open','');expect(row.get_by_role('button',name='제외',exact=True)).to_be_disabled()
   assert page.evaluate("window.reviewNode===document.querySelector('.sb-auto-admin')")
   control('권한 재확인 완료');expect(row.get_by_role('button',name='제외',exact=True)).to_be_enabled()
-  expect(row.get_by_label('곡명',exact=True)).to_have_value('확인 중인 제목');expect(row.get_by_label('확인한 가창 시작 시간 · 초')).to_have_value('456');expect(panel.get_by_test_id('review-pagination')).to_have_text('2 / 3')
+  expect(row.get_by_label('곡명',exact=True)).to_have_value('확인 중인 제목');expect(row.get_by_label('VOD에서 노래 시작 위치')).to_have_value('00:07:36');expect(panel.get_by_test_id('review-pagination')).to_have_text('2 / 3')
   assert abs(page.evaluate('scrollY')-pos)<30
   checks.append('new-tab return and same-account permission recheck preserve panel, page, draft and scroll; writes pause')
   for w in [1440,390]:
@@ -52,6 +52,48 @@ with sync_playwright() as pw:
   checks.append('manual and automatic exclusion archives are accessible without exposing an invalid delete action')
   control('권한 회수');expect(panel).to_have_count(0);assert not errors
   checks.append('confirmed permission removal clears private review content')
+
+  # Fresh in-memory fixture: test the real time input and submitted integer seconds.
+  page=ctx.new_page();page.on('pageerror',lambda e:errors.append(str(e)));panel=page.locator('.sb-auto-admin')
+  page.set_content(Path(a.fixture).read_text(),wait_until='domcontentloaded');expect(panel).to_be_visible();panel.locator('summary').click()
+  expect(panel.locator('.sb-auto-candidate')).to_have_count(8)
+  row=panel.locator('[data-candidate-id="1"]');row.get_by_role('button',name='정보 확인·연결',exact=True).click()
+  field=row.get_by_label('VOD에서 노래 시작 위치',exact=True)
+  expect(field).to_have_attribute('type','text');expect(field).to_have_value('00:02:00')
+  expect(row.get_by_label('확인한 가창 시작 시간 · 초',exact=True)).to_have_count(0)
+  field.fill('01:12:30');preview=row.get_by_role('link',name='입력한 위치에서 VOD 확인 ↗',exact=True)
+  expect(preview).to_have_attribute('href','https://vod.sooplive.com/player/208123456?change_second=4350');expect(preview).to_have_attribute('target','_blank')
+  for w in [1440,390]:
+   page.set_viewport_size({'width':w,'height':1000});row.locator('.sb-playback-position').scroll_into_view_if_needed();assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1');page.screenshot(path=str(out/f'playback-position-{w}.png'))
+  checks.append('stored seconds display as h:m:s; pasted player time produces the exact new-tab preview at desktop/mobile widths')
+  for value in ['', '00:60:00', '03:99', '48:00:01', '4350', '1:2:']:
+   field.fill(value);row.get_by_role('button',name='가창 확인 후 반영',exact=True).click()
+   expect(field).to_have_attribute('aria-invalid','true');expect(row.locator('.sb-playback-position').get_by_role('alert')).to_be_visible()
+   expect(preview).to_have_count(0);assert page.evaluate('window.reviewRequests.length')==0
+  row.locator('form').evaluate("f=>f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))")
+  assert page.evaluate('window.reviewRequests.length')==0
+  expect(row).to_be_visible();expect(panel).to_have_attribute('open','')
+  checks.append('empty/malformed/out-of-range values block native and programmatic approval without any request or false timestamp zero')
+  row.get_by_role('button',name='제외',exact=True).click();expect(row).to_have_count(0)
+  assert page.evaluate('window.reviewRequests.map(x=>x.decision)')==['rejected']
+  expect(panel).to_have_attribute('open','');expect(panel.locator('.sb-auto-notice')).to_contain_text('삭제했습니다')
+  checks.append('invalid time does not prevent excluding a non-singing item and preserves removal feedback')
+  row=panel.locator('[data-candidate-id="2"]');row.get_by_role('button',name='정보 확인·연결',exact=True).click()
+  field=row.get_by_label('VOD에서 노래 시작 위치',exact=True);expect(field).to_have_value('')
+  field.fill('03:20');field.press('Tab');expect(field).to_have_value('00:03:20')
+  row.get_by_role('button',name='가창 확인 후 반영',exact=True).click();expect(row).to_have_count(0)
+  assert page.evaluate('window.reviewRequests.at(-1).seconds')==200
+  panel.get_by_role('button',name='확인 완료',exact=True).click();row=panel.locator('[data-candidate-id="2"]');expect(row).to_be_visible()
+  row.get_by_role('button',name='정보 확인·연결',exact=True).click();expect(row.get_by_label('VOD에서 노래 시작 위치',exact=True)).to_have_value('00:03:20')
+  checks.append('section-only timestamp remains empty until confirmed; m:s approval sends 200 integer seconds and reopens as 00:03:20')
+  panel.get_by_role('button',name='확인 대기',exact=True).click()
+  for cid,value,total in [('3','01:12:30',4350),('4','00:00:00',0),('5','48:00:00',172800)]:
+   row=panel.locator(f'[data-candidate-id="{cid}"]');expect(row).to_be_visible();row.get_by_role('button',name='정보 확인·연결',exact=True).click()
+   row.get_by_label('VOD에서 노래 시작 위치',exact=True).fill(value);row.get_by_role('button',name='가창 확인 후 반영',exact=True).click();expect(row).to_have_count(0)
+   assert page.evaluate('window.reviewRequests.at(-1).seconds')==total
+   expect(panel).to_have_attribute('open','')
+  assert not errors
+  checks.append('h:m:s, explicit VOD start and 48-hour boundary submit exact integer seconds while review remains open')
   (out/'report.json').write_text(json.dumps({'checks':checks,'javascript_errors':errors,'external_requests_allowed':0,'live_writes':0},ensure_ascii=False,indent=2))
  except Exception:
   (out/'error.txt').write_text(traceback.format_exc());(out/'failure.txt').write_text(page.locator('body').inner_text());page.screenshot(path=str(out/'failure.png'));raise
