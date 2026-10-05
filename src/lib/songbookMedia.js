@@ -34,6 +34,10 @@ export function vodInfo(value) {
 export function vodLinks(urls = []) {
   const seen = new Set(), counts = {};
   const values = urls.map(vodInfo).filter(v => v && !seen.has(v.url) && seen.add(v.url));
+  // Presentation only: YouTube first, preserving the original order within each platform.
+  // Sort the derived array, never the stored URLs or automatic timeline history.
+  const priority = { youtube: 0, soop: 1 };
+  values.sort((a, b) => priority[a.platform] - priority[b.platform]);
   for (const v of values) counts[v.platform] = (counts[v.platform] || 0) + 1;
   const index = {};
   return values.map(v => ({ ...v, number: (index[v.platform] = (index[v.platform] || 0) + 1), total: counts[v.platform] }));
