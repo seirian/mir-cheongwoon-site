@@ -1,0 +1,93 @@
+name: Songbook platform search preview
+on:
+  push:
+    branches: [feature/songbook-platform-search]
+    paths: ['src/**','server/api/songbook-platform-search.php','scripts/**','tests/**','.github/workflows/songbook-platform-preview.yml','docs/reviews/songbook-platform-search.md']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: songbook-platform-preview
+  cancel-in-progress: false
+jobs:
+  preview:
+    if: github.ref == 'refs/heads/feature/songbook-platform-search'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_COMMIT: ${{ github.sha }}
+      VITE_REVIEW_PREVIEW: 'true'
+      VITE_SONGBOOK_PREVIEW: 'true'
+      VITE_SONGBOOK_PLATFORM_PREVIEW: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Source and endpoint regression checks
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          php tests/songbook-platform-search-test.php
+          php tests/songbook-search-test.php
+          php tests/songbook-localization-test.php
+      - name: Browser dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
+          python -m pip install playwright==1.57.0 paramiko==5.0.0
+          if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+      - name: Isolated editor tests with mock metadata and local-only saves
+        run: |
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/songbook-platform-preview.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python scripts/songbook-platform-browser-check.py --url http://127.0.0.1:4173/ --out platform-report/local
+      - name: Existing public build configuration
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: bash scripts/prepare-public-build-config.sh
+      - name: Build isolated noindex release
+        run: |
+          rid="r$(date -u +%Y%m%d%H%M%S)_${SOURCE_COMMIT:0:8}"
+          echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
+          npx vite build --base "/_yeop_releases/${rid}/"
+          RELEASE_ID="$rid" python - <<'PY'
+          import os
+          from pathlib import Path
+          marker='<meta name="yeop-release" content="'+os.environ['RELEASE_ID']+'" />'
+          for path in Path('dist').rglob('*.html'):
+              text=path.read_text();assert 'noindex, nofollow' in text and text.count('</head>')==1
+              path.write_text(text.replace('</head>',marker+'\n</head>'))
+          for path in Path('dist').rglob('*'):
+              if path.suffix in ('.js','.json','.html'):
+                  text=path.read_text()
+                  for value in ['gurmir.com','mir427.vercel.app','originalProficiency','미르실버타운']:
+                      assert value not in text,(path,value)
+          PY
+      - name: Stage only, never activate production
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+          DIST_DIR: dist
+          SERVER_SOURCE_DIR: server
+        run: python scripts/stage-songbook-platform-preview.py
+      - name: Public preview and real metadata verification
+        run: |
+          python scripts/songbook-platform-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out platform-report/live --live
+          cp deploy_report.json platform-report/deploy_report.json
+      - name: Reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: songbook-platform-preview
+          path: |
+            platform-report/
+            deploy_report.json
+          retention-days: 14

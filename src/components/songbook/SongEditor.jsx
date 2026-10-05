@@ -2,9 +2,11 @@ import {useEffect, useRef, useState} from 'react';
 import {matches, normalize} from '../../lib/songbookV2';
 import {searchRows, existingMatch, selectionDraft, titleLabel, versionLabel, durationLabel, mergedAliases} from '../../lib/songbookSearchLocale';
 import {SongCover, VodLinks} from './SongMedia';
+import PlatformDiscovery from './PlatformDiscovery.jsx';
+import {videoSelection} from '../../lib/songbookPlatforms.js';
 
 const blank = () => ({title:'', artist:'', categories:[], aliases:[], videoUrls:[], difficulty:null, requestStatus:'unreviewed', artworkUrl:'', musicUrl:'', album:''});
-export default function SongEditor({song, store, categories, close, saved, Modal, StarPicker}) {
+export default function SongEditor({song, store, categories, close, saved, Modal, StarPicker, platformSearch=false, allowUnknownArtist=false}) {
   const [draft, setDraft] = useState(() => song ? {...song,videoUrls:song.manualVideoUrls||song.videoUrls} : blank());
   const [q, setQ] = useState(''), [region, setRegion] = useState('AUTO');
   const [results, setResults] = useState([]), [searched, setSearched] = useState('');
@@ -43,9 +45,22 @@ export default function SongEditor({song, store, categories, close, saved, Modal
     setSuggestedTitle(result.suggestedTitle || '');
     setError('');
   }
+  const [importNotice,setImportNotice]=useState('');
+  function importPlatform(result) {
+    setError('');
+    try {
+      if(result.provider==='youtube') {
+        setDraft(videoSelection(draft,result));
+        setImportNotice('YouTube 영상 정보를 가져왔습니다. 채널명을 가수로 넣지 않았습니다. 영상 제목을 실제 곡명에 맞게 수정하고, 가수는 공란으로 둘 수 있습니다.');
+      } else if(result.provider==='melon') {
+        setDraft({...blank(),title:result.title,artist:result.artist});setSuggestedTitle('');
+        setImportNotice('멜론에서 확인 후 직접 입력한 정보를 적용했습니다. 자동 검색으로 가져온 결과는 아닙니다.');
+      } else {select(result);setImportNotice('Apple Music 곡 정보를 가져왔습니다. 제목·가수·버전을 확인하고 저장해 주세요.');}
+    } catch(err) {setError(err.message);}
+  }
   const choices = [...new Set([...categories, ...draft.categories])];
   return <Modal title={song?'곡 정보 편집':'노래 추가'} close={close}>
-    <section className="sb2-discovery sb3-discovery">
+    {platformSearch?<PlatformDiscovery songs={store.songs} onSelect={importPlatform} onExisting={s=>{setDraft({...s,videoUrls:s.manualVideoUrls||s.videoUrls});setSuggestedTitle('');setError('');setImportNotice('기존 노래책의 곡을 선택했습니다. 검토 내용은 이 브라우저에만 저장됩니다.');}}/>:<section className="sb2-discovery sb3-discovery">
       <h3>1. 전체 음악 검색</h3>
       <p className="sb-note">한국어 제목 우선 · 내 노래책과 외부 음악 목록을 함께 찾습니다. 한국 스토어 표기, 확인된 국내명과 한국어 별칭을 대조합니다.</p>
       <form className="sb2-search-add" onSubmit={search}>
@@ -67,13 +82,14 @@ export default function SongEditor({song, store, categories, close, saved, Modal
         </section>
       </div>}
       <p className="sb-note">한국어명이 확인되지 않은 결과는 원문 제목으로 표시합니다. 검색어를 자동 번역하거나 곡명으로 확정하지 않습니다. 원하는 곡이 없으면 직접 등록할 수 있습니다.</p>
-    </section>
+    </section>}
+    {importNotice&&<p className="sp-import-notice" role="status">{importNotice}</p>}
     <form className="sb2-form" onSubmit={async e=>{e.preventDefault();setError('');try{saved(await store.saveSong(draft));}catch(err){setError(err.message);}}}>
       <h3>2. 정보 확인 후 저장 {draft.id && <small>· 기존 곡 편집</small>}</h3>
       <div className="sb3-editor-cover"><SongCover song={draft}/><div><strong>{draft.title || '곡 이름'}</strong><p className="sb-note">{draft.album || '앨범 이미지가 없으면 연결 영상의 썸네일을 표시합니다.'}</p>
         {draft.artworkUrl && <button type="button" className="sb-reset" onClick={()=>setDraft({...draft,artworkUrl:'',musicUrl:'',album:''})}>앨범 이미지 연결 해제</button>}
       </div></div>
-      <div className="sb2-form-grid"><label>곡명<input required maxLength={200} value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>가수·작품<input required maxLength={200} value={draft.artist} onChange={e=>setDraft({...draft,artist:e.target.value})}/></label></div>
+      <div className="sb2-form-grid"><label>곡명<input required maxLength={200} value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>가수·작품{allowUnknownArtist&&<small>선택 · 모르면 공란으로 두세요</small>}<input required={!allowUnknownArtist} maxLength={200} value={draft.artist} onChange={e=>setDraft({...draft,artist:e.target.value})}/></label></div>
       {suggestedTitle && <p className="sb4-title-suggestion">한국어 제목 제안: <strong>{suggestedTitle}</strong> <button type="button" className="sb-button" onClick={()=>{setDraft({...draft,title:suggestedTitle,aliases:mergedAliases([draft.title,...draft.aliases],suggestedTitle)});setSuggestedTitle('');}}>한국어 제목 적용</button></p>}
       {searched && !/^https:/i.test(searched) && draft.title && normalize(searched)!==normalize(draft.title) && !draft.aliases.some(alias=>normalize(alias)===normalize(searched)) && <button type="button" className="sb-button sb3-alias-action" onClick={()=>setDraft({...draft,aliases:[...new Set([...draft.aliases,searched])].slice(0,20)})}>검색어 ‘{searched}’를 검색 별칭에 추가</button>}
       <fieldset className="sb2-category-select"><legend>카테고리 · 여러 개 선택 가능</legend>{choices.map(c=><label key={c}><input type="checkbox" checked={draft.categories.includes(c)} onChange={()=>setDraft({...draft,categories:draft.categories.includes(c)?draft.categories.filter(x=>x!==c):[...draft.categories,c]})}/>{c}</label>)}</fieldset>

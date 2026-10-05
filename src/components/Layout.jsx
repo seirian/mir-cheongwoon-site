@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import PageMetadata from './PageMetadata';
-import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW } from '../lib/preview';
+import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW, IS_SONGBOOK_PLATFORM_PREVIEW } from '../lib/preview';
 import { supabase } from '../lib/supabase';
 
 const BRAND_ICON = import.meta.env.BASE_URL + 'icon_img.png';
@@ -59,7 +59,7 @@ export default function Layout() {
     <div className="site-shell">
       <PageMetadata/>
       <a className="skip-link" href="#main-content">본문으로 건너뛰기</a>
-      {IS_REVIEW_PREVIEW && <div className="review-banner"><span>{IS_SONGBOOK_PREVIEW ? '노래책 4차 검토안 · 운영과 분리된 편집 공간' : '2차 검토용 · 홈 이미지만 별도 저장 가능'}</span><Link to={reviewPath}>{IS_SONGBOOK_PREVIEW ? '노래책 검토실 ↗' : '2차 변경점 보기 ↗'}</Link></div>}
+      {IS_REVIEW_PREVIEW && <div className="review-banner"><span>{IS_SONGBOOK_PLATFORM_PREVIEW ? '플랫폼 검색 1차 검토안 · 이 브라우저에만 저장' : IS_SONGBOOK_PREVIEW ? '노래책 4차 검토안 · 운영과 분리된 편집 공간' : '2차 검토용 · 홈 이미지만 별도 저장 가능'}</span><Link to={reviewPath}>{IS_SONGBOOK_PREVIEW ? '노래책 검토실 ↗' : '2차 변경점 보기 ↗'}</Link></div>}
       <header className="site-header">
         <Link to="/" className="brand" onClick={() => setOpen(false)}><img className="brand-icon" src={BRAND_ICON} alt="" width="36" height="36" aria-hidden="true"/><span>미르 <b>×</b> 청운밴드</span></Link>
         <button className="mobile-menu" onClick={() => setOpen(v => !v)} type="button" aria-label={open ? '메뉴 닫기' : '메뉴 열기'} aria-expanded={open} aria-controls="site-navigation">{open ? <X size={22}/> : <Menu size={22}/>}</button>
