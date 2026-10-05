@@ -63,7 +63,7 @@ def main():
             video_title=youtube.locator('.sp-result-copy>strong').first.inner_text()
             youtube.get_by_role('button',name='영상 정보 가져오기',exact=True).first.click()
             expect(dialog.get_by_label('곡명',exact=True)).to_have_value('영물이다');expect(artist_field(dialog)).to_have_value('이오몽')
-            expect(dialog.get_by_label('연결 영상 · 한 줄에 한 주소',exact=True)).to_have_value(re.compile('youtube[.]com'))
+            expect(dialog.locator('form.sb2-form textarea')).to_have_value(re.compile('youtube[.]com'))
             save(dialog,'검토용 음원·영상 연결');checks.append('select Apple metadata then append YouTube video without overwriting song title or artist')
             dialog=open_editor();dialog.get_by_role('button',name='YouTube',exact=True).click();dialog.get_by_label('확인한 YouTube 영상 주소',exact=True).fill(url);dialog.get_by_role('button',name='영상 주소로 가져오기',exact=True).click()
             youtube=dialog.locator('[data-provider=youtube]');expect(youtube.locator('.sp-result').first).to_be_visible(timeout=35000)
