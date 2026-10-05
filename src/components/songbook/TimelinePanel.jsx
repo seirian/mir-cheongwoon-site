@@ -1,8 +1,9 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {reviewReasons,timeLabel,timelineUrl} from '../../lib/songbookTimeline';
 import {reviewPage,reviewNotice,savedReviewView,saveReviewView,REVIEW_PAGE_SIZE} from '../../lib/songbookReviewState';
-import {formatPlaybackPosition,parsePlaybackPosition} from '../../lib/playbackPosition.js';
-import PlaybackPositionInput from './PlaybackPositionInput.jsx';
+import {parsePlaybackPosition} from '../../lib/playbackPosition.js';
+import {candidatePlaybackPosition} from '../../lib/candidatePlaybackPosition.js';
+import CandidatePlaybackPosition from './CandidatePlaybackPosition.jsx';
 import SongLinkPicker from './SongLinkPicker.jsx';
 import {linkChoiceError} from '../../lib/songbookLinkSearch.js';
 import {IS_REVIEW_PREVIEW} from '../../lib/preview';
@@ -63,7 +64,7 @@ export default function TimelinePanel({store}) {
   return()=>{clearInterval(timer);window.removeEventListener('focus',check);document.removeEventListener('visibilitychange',check);};
  },[load,selected]);
  if(IS_REVIEW_PREVIEW||!store.admin)return null;
- function choose(c){setSelected(c);setTitle(c.title);setArtist(c.artist);setSongId(store.songs.some(s=>s.id===c.song_id)?c.song_id:null);setPosition(['section_timestamp_only','already_listed_section'].includes(c.reason)&&c.approved_seconds==null?'':formatPlaybackPosition(c.approved_seconds??c.seconds));setError('');}
+ function choose(c){setSelected(c);setTitle(c.title);setArtist(c.artist);setSongId(store.songs.some(s=>s.id===c.song_id)?c.song_id:null);setPosition(candidatePlaybackPosition(c).initialValue);setError('');}
  async function decide(c,decision){
   if(lock.current||!canReview)return;
   const parsedPosition=parsePlaybackPosition(position);
@@ -94,7 +95,7 @@ export default function TimelinePanel({store}) {
    <div className="sb-actions"><a className="sb-button" href={timelineUrl(c.vod_id,c.approved_seconds??c.seconds)||undefined} target="_blank" rel="noopener noreferrer">VOD 확인 ↗</a><button type="button" className="sb-button" onClick={()=>choose(c)} disabled={busy||!canReview}>정보 확인·연결</button>{c.decision!=='rejected'&&<button type="button" className="sb-reset" onClick={()=>decide(c,'rejected')} disabled={busy||!canReview}>제외</button>}</div>
    {selected?.id===c.id&&<form className="sb2-form sb-auto-form" onSubmit={e=>{e.preventDefault();decide(selected,'approved');}}>
     <p className="sb-note">곡과 미르님 가창 여부를 영상을 통해 확인한 뒤 저장해 주세요. 기존 곡에 연결하면 제목·난이도·숙련도는 변경하지 않습니다.</p><blockquote>{c.line}</blockquote>
-    <PlaybackPositionInput key={c.id} value={position} onChange={setPosition} vodId={c.vod_id} disabled={busy||!canReview}/><p className="sb-note">곡별 시간이 없는 구간 목록은 영상을 보고 정확한 시작 위치를 입력해야 반영됩니다.</p>
+    <CandidatePlaybackPosition key={c.id} candidate={selected} value={position} onChange={setPosition} disabled={busy||!canReview}/>
     <SongLinkPicker key={`link-${c.id}`} songs={store.songs} songId={songId} initialQuery={c.title||''} onChange={id=>{setSongId(id);setError('');}} disabled={busy||!canReview}/>
     {songId===''&&<><label>곡명<input value={title} onChange={e=>setTitle(e.target.value)} maxLength={150} required disabled={busy||!canReview}/></label><label>가수<input value={artist} onChange={e=>setArtist(e.target.value)} maxLength={150} required disabled={busy||!canReview}/></label><p className="sb-note">새 곡은 ‘기타’ 분류·신청 확인 전으로 추가됩니다. 등록 후 곡 정보에서 수정할 수 있습니다.</p></>}
     <div className="sb-actions"><button className="sb-button sb-primary" disabled={busy||!canReview}>가창 확인 후 반영</button><button type="button" className="sb-button" disabled={busy} onClick={()=>setSelected(null)}>취소</button></div>
