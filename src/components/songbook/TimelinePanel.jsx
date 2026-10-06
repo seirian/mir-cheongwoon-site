@@ -1,3 +1,4 @@
+import {useTimedNotice} from '../../lib/useTimedNotice.js';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {reviewReasons,timeLabel,timelineUrl} from '../../lib/songbookTimeline';
 import {reviewPage,reviewNotice,savedReviewView,saveReviewView,REVIEW_PAGE_SIZE} from '../../lib/songbookReviewState';
@@ -32,7 +33,7 @@ export default function TimelinePanel({store}) {
  const [open,setOpen]=useState(false),[tab,setTab]=useState('pending'),[page,setPage]=useState(0);
  const [query,setQuery]=useState(''),[searchInput,setReviewInput]=useState('');
  const [rows,setRows]=useState([]),[count,setCount]=useState(0),[run,setRun]=useState(null);
- const [error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
+ const [error,setError]=useState(''),[notice,setNotice,noticeProps]=useTimedNotice(),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
  const [selected,setSelected]=useState(null),[title,setTitle]=useState(''),[artist,setArtist]=useState(''),[songId,setSongId]=useState(null),[position,setPosition]=useState('');
  const request=useRef(0),lock=useRef(false),owner=useRef(null),mounted=useRef(true),currentUser=useRef(null);
  const userId=store.session?.user?.id||null;currentUser.current=userId;
@@ -103,7 +104,7 @@ export default function TimelinePanel({store}) {
    {(query||searchInput)&&<button type="button" className="sb-button" disabled={busy||!canReview} onClick={()=>applySearch('')}>검색 초기화</button>}
   </form>
   <p className="sb-note" id="sb-review-search-help">현재 탭의 전체 항목에서 찾습니다. 곡명·가수·원문 내용·VOD 번호를 검색할 수 있고, 띄어 쓴 검색어는 모두 포함된 항목을 찾습니다.</p>
-  {notice&&<div className="sb-auto-notice" role="status" aria-live="polite"><span>{notice}</span><button type="button" className="sb-reset" aria-label="처리 알림 닫기" onClick={()=>setNotice('')}>닫기</button></div>}
+  {notice&&<div className="sb-auto-notice" {...noticeProps} role="status" aria-live="polite"><span>{notice}</span><button type="button" className="sb-reset" aria-label="처리 알림 닫기" onClick={()=>setNotice('')}>닫기</button></div>}
   {error&&<p className="sb-auto-warning" role="alert">{error}</p>}
   <p className="sb-auto-count" role="status">{query&&<>‘{query}’ 검색 결과 </>}{count}건{store.authChecking?' · 로그인 권한 확인 중':loading?' · 목록 갱신 중':''}</p>
   <div className="sb-auto-rows" aria-busy={loading}>

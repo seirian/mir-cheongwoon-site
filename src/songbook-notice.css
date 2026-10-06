@@ -1,0 +1,4 @@
+/* Attribute-scoped: existing widths, gutters and sticky positioning stay intact. */
+[data-notice-state]{opacity:1;transition:opacity 300ms ease}
+[data-notice-state="closing"]{opacity:0}
+@media(prefers-reduced-motion:reduce){[data-notice-state]{transition:none}}
