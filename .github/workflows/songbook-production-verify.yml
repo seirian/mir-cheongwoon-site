@@ -67,6 +67,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-optional-artist-assertions.sql
           psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_review_search.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-review-search-assertions.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_deletion.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-deletion-assertions.sql
       - name: Production build and isolated username login browser checks
         run: |
           sudo apt-get update -qq
@@ -83,6 +85,7 @@ jobs:
           python scripts/songbook-reference-position-check.py --fixture /tmp/songbook-review-fixture.html --out songbook-production-report/reference
           python scripts/songbook-video-order-check.py --out songbook-production-report/video-order
           python scripts/songbook-platform-production-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/platform-production
+          python scripts/songbook-deletion-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/deletion
       - uses: actions/upload-artifact@v4
         if: always()
         with:
