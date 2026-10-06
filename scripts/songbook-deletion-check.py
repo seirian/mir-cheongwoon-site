@@ -13,7 +13,7 @@ token=enc({'alg':'HS256','typ':'JWT'})+'.'+enc({'sub':uid,'aud':'authenticated',
 raw=json.loads(Path('src/data/songbookCatalog.json').read_text());seed=raw[0]
 manual={'id':'custom-00000000-0000-4000-8000-000000000001','title':'삭제 검증곡','artist':'','categories':['가요'],'aliases':[],'video_urls':[],'difficulty':4,'revision':3,'request_status':'unreviewed'}
 auto={'id':'custom-00000000-0000-4000-8000-000000000002','title':'자동 보관 테스트곡','artist':'검증 가수','categories':['가요'],'aliases':[],'active':True}
-state={'admin':True,'fail':False,'fail_read':False};deletions={};writes=[];checks=[];errors=[]
+state={'admin':True,'fail':False,'fail_read':False,'failed_reads':0};deletions={};writes=[];checks=[];errors=[]
 with sync_playwright() as pw:
  browser=pw.chromium.launch(executable_path=shutil.which('google-chrome') or shutil.which('chromium'),args=['--no-sandbox'])
  ctx=browser.new_context(viewport={'width':1440,'height':1050});page=ctx.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
@@ -47,7 +47,10 @@ with sync_playwright() as pw:
     if table=='member_profiles':return reply({'username':'mir.review'} if obj else [{'username':'mir.review'}])
     if table=='songbook_deletions':
      assert params.get('select')==['song_id']
-     return reply({'code':'unavailable'},503) if state['fail_read'] else reply([{'song_id':sid} for sid in deletions])
+     if state['fail_read']:
+      state['failed_reads']+=1
+      return reply({'code':'unavailable'},503)
+     return reply([{'song_id':sid} for sid in deletions])
     if table=='songbook_entries':return reply([] if manual['id'] in deletions else [manual])
     if table=='songbook_ratings':return reply([] if manual['id'] in deletions else [{'song_id':manual['id'],'proficiency':5,'revision':1}])
     # Deliberately return the automatic raw row, to also prove client-side suppression after re-scan.
@@ -99,10 +102,24 @@ with sync_playwright() as pw:
   go(auto['title']);detail(auto['title']);d=confirm();d.get_by_role('button',name='삭제하기',exact=True).click();expect(page.get_by_role('dialog')).to_have_count(0);page.reload(wait_until='networkidle');expect(page.get_by_role('button',name=auto['title']+' 상세 보기',exact=True)).to_have_count(0)
   checks.append('automatic raw data returned on later refresh cannot republish a deleted song')
   state['admin']=False;go(manual['title']);detail(manual['title']);expect(page.get_by_role('button',name='노래 삭제',exact=True)).to_have_count(0);page.keyboard.press('Escape');expect(page.get_by_role('button',name='삭제한 노래',exact=True)).to_have_count(0)
-  state['fail_read']=True;go();expect(page.locator('.sb2-error')).to_contain_text('삭제 상태');expect(page.locator('.sb2-song')).to_have_count(0)
-  checks.append('ordinary members remain read-only; failed initial deletion lookup never exposes static fallback')
+  state['fail_read']=True;go();expect(page.locator('.sb2-song')).to_have_count(0)
+  # supabase-js 2.116 retries idempotent 503 reads after 1s, 2s and 4s.
+  # The old 5s assertion expired before retry exhaustion; preserve the real retry policy.
+  expect(page.locator('.sb2-error')).to_contain_text('삭제 상태',timeout=15000)
+  expect(page.locator('.sb2-song')).to_have_count(0);assert state['failed_reads']>=2
+  expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
+  page.locator('.sb2-error').scroll_into_view_if_needed();page.screenshot(path=str(out/'deletion-read-error-390.png'))
+  checks.append('ordinary members remain read-only; initial 503 retries never expose static fallback and finish with actionable error')
+  before=len(writes);state['fail_read']=False
+  page.locator('.sb2-error').get_by_role('button',name='다시 불러오기',exact=True).click()
+  expect(page.locator('.sb2-song')).to_have_count(24,timeout=15000);expect(page.locator('.sb2-error')).to_have_count(0)
+  go(manual['title']);expect(page.get_by_role('button',name=manual['title']+' 상세 보기',exact=True)).to_be_visible()
+  go(seed['title']);expect(page.get_by_role('button',name=seed['title']+' 상세 보기',exact=True)).to_have_count(0)
+  go(auto['title']);expect(page.get_by_role('button',name=auto['title']+' 상세 보기',exact=True)).to_have_count(0)
+  assert len(writes)==before
+  checks.append('manual reload after read recovery clears error without writes; existing deletion markers remain effective')
   assert not errors
-  (out/'report.json').write_text(json.dumps({'checks':checks,'javascript_errors':errors,'mock_mutations':writes,'live_mutations':0},ensure_ascii=False,indent=2))
+  (out/'report.json').write_text(json.dumps({'checks':checks,'javascript_errors':errors,'mock_mutations':writes,'failed_read_attempts':state['failed_reads'],'live_mutations':0},ensure_ascii=False,indent=2))
  except Exception:
   (out/'error.txt').write_text(traceback.format_exc());(out/'failure.txt').write_text(page.locator('body').inner_text());page.screenshot(path=str(out/'failure.png'));raise
  finally:browser.close()
