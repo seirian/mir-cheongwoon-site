@@ -5,11 +5,12 @@ import TimelinePanel from '../../src/components/songbook/TimelinePanel.jsx';
 import '../../src/styles.css';
 import '../../src/songbook.css';
 import '../../src/songbook-v2.css';
-window.reviewRequests=[];
+window.reviewRequests=[];window.reviewSearchRequests=[];window.reviewSearchFailure=false;window.reviewSearchDelays={};
 const catalog=[{id:'wisp',title:'영물이다',artist:'이오몽',aliases:['Wisp!']},{id:'wisp-inst',title:'영물이다 (inst)',artist:'이오몽',aliases:['Wisp! (Instrumental)']},{id:'other',title:'영물이다',artist:'동명곡 가수',aliases:[]},{id:'ado',title:'나는 최강',artist:'Ado',aliases:['私は最強']},...Array.from({length:45},(_,i)=>({id:`many-${i}`,title:`선택 테스트 ${String(i).padStart(2,'0')}`,artist:'검증 가수',aliases:[]}))];
 function Fixture(){
  const [admin,setAdmin]=useState(true),[checking,setChecking]=useState(false),[songs,setSongs]=useState([]);
  const rows=useRef(Array.from({length:17},(_,i)=>({id:String(i+1),vod_id:'208123456',seconds:120+i,approved_seconds:null,title:`미르 확인곡 ${String(i+1).padStart(2,'0')}`,artist:'테스트 가수',reason:i===1?'section_timestamp_only':'artist_metadata_required',line:'가창 여부를 확인하는 테스트 기록',revision:1,song_id:null,decision:'pending',present:true})));
+ window.setReviewSearchRows=data=>{rows.current=data.map(c=>({...c}));};
  const failure=useRef(false),saved=useRef(0);
  const client=useMemo(()=>({
   from(name){const filter={},query={select(){return query;},eq(k,v){filter[k]=v;return query;},order(){return query;},limit(){return query;},range(a,b){filter.from=a;filter.to=b;return query;},then(resolve){
@@ -18,6 +19,16 @@ function Fixture(){
    if(name==='songbook_sync_runs')data=[{id:'run',started_at:'2026-10-04T00:00:00Z',status:'success',stats:{checked:1}}];
    return new Promise(r=>setTimeout(()=>r({data,count,error:null}),80)).then(resolve);
   }};return query;},
+  async rpc(name,args,options){
+   if(name!=='songbook_review_search'||options?.get!==true)throw Error('unexpected RPC');
+   window.reviewSearchRequests.push({...args});
+   const terms=args.p_query.normalize('NFKC').toLowerCase().trim().split(/\s+/u).filter(Boolean);
+   const all=rows.current.filter(c=>c.present&&c.decision===args.p_decision&&terms.every(t=>[c.title,c.artist,c.line,c.vod_id].join(' ').normalize('NFKC').toLowerCase().replace(/\s+/gu,'').includes(t)));
+   const data={count:all.length,rows:all.slice(args.p_page*args.p_page_size,(args.p_page+1)*args.p_page_size).map(c=>({...c}))};
+   const fail=window.reviewSearchFailure;window.reviewSearchFailure=false;
+   await new Promise(resolve=>setTimeout(resolve,window.reviewSearchDelays[args.p_query]||80));
+   return fail?{error:new Error('search fixture failure')}:{data,error:null};
+  },
   functions:{async invoke(_name,{body}){window.reviewRequests.push({...body});await new Promise(r=>setTimeout(r,100));if(failure.current){failure.current=false;return{error:new Error('fixture conflict')};}
    const c=rows.current.find(r=>r.id===body.id);if(!c||c.revision!==body.revision)return{error:new Error('fixture conflict')};
    if(body.decision==='approved'){if(!Number.isInteger(body.seconds)||body.seconds<0||body.seconds>172800)throw Error('invalid position');c.approved_seconds=body.seconds;c.song_id=body.song_id||null;}
