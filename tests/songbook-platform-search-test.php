@@ -3,6 +3,7 @@ declare(strict_types=1);
 define('SONGBOOK_PLATFORM_TEST',true);
 require __DIR__.'/../server/api/songbook-platform-search.php';
 function check(bool $value,string $name):void{if(!$value)throw new Exception($name);}
+check(SBP_ENABLED_PROVIDERS===['apple','youtube'],'Melon excluded from active provider allowlist');
 $v=sbp_youtube_url('https://youtu.be/abcdefghijk?t=1m2s');
 check($v['url']==='https://www.youtube.com/watch?v=abcdefghijk&t=62','preserve offset');
 foreach(['javascript:alert(1)','https://u@youtube.com/watch?v=abcdefghijk','https://youtube.com:8443/watch?v=abcdefghijk','https://127.0.0.1/watch?v=abcdefghijk','https://youtube.com.evil.test/watch?v=abcdefghijk','https://youtube.com/redirect?q=x']as $url)check(sbp_youtube_url($url)===null,'reject URL');
@@ -15,4 +16,7 @@ check(count($rows)===1&&$rows[0]['title']==='A & B'&&$rows[0]['artist']==='','of
 $source=file_get_contents(__DIR__.'/../server/api/songbook-platform-search.php');
 check(!str_contains($source,'www.melon.com/search'),'no unapproved Melon requests');
 check(str_contains($source,"'setup_required'"),'missing key is not an empty result');
+$active=implode('',array_map(fn($t)=>is_array($t)?(in_array($t[0],[T_COMMENT,T_DOC_COMMENT],true)?'':$t[1]):$t,token_get_all($source)));
+check(!str_contains($active,"'melon'"),'no active Melon backend branch');
+check(str_contains($source,'MELON_PAUSED'),'paused backend retained as comments');
 echo "PASS: platform URL validation, metadata mapping, missing-key state, no Melon scraping\n";

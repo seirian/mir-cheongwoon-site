@@ -53,13 +53,16 @@ function sbp_budget(string $root,string $name,int $limit,int $period): bool {
         $times[]=$now;ftruncate($file,0);rewind($file);fwrite($file,json_encode($times));return true;
     } finally {flock($file,LOCK_UN);fclose($file);}
 }
+// MELON_PAUSED: the inactive provider is rejected before any network or cache access.
+const SBP_ENABLED_PROVIDERS = ['apple','youtube' /* ,'melon' */];
 if (defined('SONGBOOK_PLATFORM_TEST')) return;
 header('Content-Type: application/json; charset=utf-8');header('X-Content-Type-Options: nosniff');header('Cache-Control: no-store');
 if (($_SERVER['REQUEST_METHOD']??'GET')!=='GET') {header('Allow: GET');sb3_reply(405,['error'=>'method']);}
 $provider=$_GET['provider']??'';$q=$_GET['q']??'';$country=$_GET['country']??'AUTO';
-if (!is_string($provider)||!in_array($provider,['apple','youtube','melon'],true)||!is_string($q)||!is_string($country)||!in_array($country,['AUTO','KR','US','JP'],true)) sb3_reply(400,['error'=>'query']);
+if (!is_string($provider)||!in_array($provider,SBP_ENABLED_PROVIDERS,true)||!is_string($q)||!is_string($country)||!in_array($country,['AUTO','KR','US','JP'],true)) sb3_reply(400,['error'=>'query']);
 $q=sb3_text($q,300);if (!$q || preg_match_all('/./us',$q)<2) sb3_reply(400,['error'=>'query']);
-if ($provider==='melon') sb3_reply(200,['provider'=>'melon','state'=>'external_only','songs'=>[],'message'=>'멜론 자동 검색은 연결하지 않았습니다. 멜론에서 확인한 정보를 직접 입력할 수 있습니다.']);
+// MELON_PAUSED: previous placeholder response is retained for future integration.
+// if ($provider==='melon') sb3_reply(200,['provider'=>'melon','state'=>'external_only','songs'=>[],'message'=>'멜론 자동 검색은 연결하지 않았습니다. 멜론에서 확인한 정보를 직접 입력할 수 있습니다.']);
 $video=$provider==='youtube'?sbp_youtube_url($q):null;
 $key=trim((string)(getenv('SONGBOOK_YOUTUBE_API_KEY')?:getenv('YOUTUBE_API_KEY')?:''));
 if ($provider==='youtube' && !$video && preg_match('~^https?://~i',$q)) sb3_reply(400,['error'=>'unsupported_video_url']);

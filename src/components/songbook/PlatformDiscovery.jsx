@@ -3,14 +3,16 @@ import {Search,Music2,ExternalLink,Youtube} from 'lucide-react';
 import {matches} from '../../lib/songbookV2.js';
 import {vodInfo,musicUrl} from '../../lib/songbookMedia.js';
 import {existingMatch,titleLabel,versionLabel} from '../../lib/songbookSearchLocale.js';
-import {externalSearch,melonSongUrl,platformRows,PLATFORM_NAMES} from '../../lib/songbookPlatforms.js';
+import {externalSearch,platformRows,PLATFORM_NAMES} from '../../lib/songbookPlatforms.js';
+// MELON_PAUSED: import {melonSongUrl} from '../../lib/songbookPlatforms.js';
 import {SongCover} from './SongMedia.jsx';
 import '../../songbook-platforms.css';
 const empty=()=>({state:'idle',songs:[],message:''});
 export default function PlatformDiscovery({songs,onSelect,onExisting}) {
   const [query,setQuery]=useState(''),[searched,setSearched]=useState(''),[country,setCountry]=useState('AUTO'),[tab,setTab]=useState('all');
   const [panels,setPanels]=useState({apple:empty(),youtube:empty()}),[videoUrl,setVideoUrl]=useState('');
-  const [melon,setMelon]=useState({title:'',artist:'',url:''}),[melonError,setMelonError]=useState('');
+  // MELON_PAUSED: keep the manual-import state alongside its commented form.
+  // const [melon,setMelon]=useState({title:'',artist:'',url:''}),[melonError,setMelonError]=useState('');
   const requests=useRef({}),versions=useRef({apple:0,youtube:0});
   function cancel(){for(const p of ['apple','youtube']){++versions.current[p];requests.current[p]?.abort();}}
   useEffect(()=>()=>cancel(),[]);
@@ -70,6 +72,7 @@ export default function PlatformDiscovery({songs,onSelect,onExisting}) {
       <form className="sp-url-form" onSubmit={e=>{e.preventDefault();void lookup('youtube',videoUrl.trim());}}><label>확인한 YouTube 영상 주소<input required type="url" maxLength={1500} value={videoUrl} onChange={e=>setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=…"/></label><button className="sb-button" disabled={panels.youtube.state==='loading'}>영상 주소로 가져오기</button></form>
       {resultList('youtube')}
     </section>}
+    {/* MELON_PAUSED: retained but not rendered, including links and manual import.
     {(tab==='all'||tab==='melon')&&<section className="sp-provider" data-provider="melon" aria-label="Melon 확인 및 직접 입력"><header><h4><Music2 size={18}/>Melon</h4><span className="sp-badge is-pending">자동 검색 미연결</span></header>
       <p className="sp-message">멜론 검색 결과를 이 화면에 자동 수집하지 않습니다. 연동 허용 여부를 확인한 API가 필요합니다. 지금은 멜론에서 곡을 확인한 뒤 직접 입력할 수 있습니다.</p>
       <a className="sp-outbound" href={externalSearch('melon',query)} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>멜론에서 곡 검색 ↗</a>
@@ -79,5 +82,6 @@ export default function PlatformDiscovery({songs,onSelect,onExisting}) {
         {melonError&&<p role="alert">{melonError}</p>}<button className="sb-button" type="submit">직접 입력한 내용 적용</button><small>외부 검색 결과가 아닌, 직접 입력한 정보입니다. 앨범 이미지·가사는 자동으로 수집하지 않습니다.</small>
       </form>
     </section>}
+    */}
   </section>;
 }

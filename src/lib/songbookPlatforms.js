@@ -1,16 +1,24 @@
 import {vodInfo, vodLinks, musicUrl} from './songbookMedia.js';
 import {searchRows} from './songbookSearchLocale.js';
-export const PLATFORM_NAMES = {apple:'Apple Music',youtube:'YouTube',melon:'Melon'};
+export const PLATFORM_NAMES = {
+  apple:'Apple Music',
+  youtube:'YouTube',
+  // MELON_PAUSED: restore together with the UI and server allowlist after integration review.
+  // melon:'Melon',
+};
 export const PLATFORM_DRAFT_KEY = 'mir-songbook-platform-review-v1';
 export function externalSearch(provider, query='') {
   const term=String(query).trim().slice(0,300);
   if(provider==='youtube')return 'https://www.youtube.com/results?'+new URLSearchParams({search_query:term});
-  if(provider==='melon')return 'https://www.melon.com/search/song/index.htm?'+new URLSearchParams({q:term});
+  // MELON_PAUSED: external search is inactive while the platform is hidden.
+  // if(provider==='melon')return 'https://www.melon.com/search/song/index.htm?'+new URLSearchParams({q:term});
   return '';
 }
+/* MELON_PAUSED: original detail-URL validation retained for later restoration.
 export function melonSongUrl(value) {
   try {const u=new URL(value);const id=u.searchParams.get('songId');return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&['www.melon.com','melon.com'].includes(u.hostname)&&u.pathname==='/song/detail.htm'&&/^\d{1,12}$/.test(id||'')?'https://www.melon.com/song/detail.htm?songId='+id:'';}catch{return '';}
 }
+*/
 export function platformRows(provider,rows,songs=[]) {
   if(!Array.isArray(rows))return [];
   if(provider==='apple')return searchRows(rows.filter(r=>String(r?.key||'').startsWith('itunes:')&&musicUrl(r.musicUrl)),songs).map(r=>({...r,provider:'apple'}));

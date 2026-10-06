@@ -52,10 +52,15 @@ export default function SongEditor({song, store, categories, close, saved, Modal
       if(result.provider==='youtube') {
         setDraft(videoSelection(draft,result));
         setImportNotice('YouTube 영상 정보를 가져왔습니다. 채널명을 가수로 넣지 않았습니다. 영상 제목을 실제 곡명에 맞게 수정하고, 가수는 공란으로 둘 수 있습니다.');
-      } else if(result.provider==='melon') {
+      }
+      /* MELON_PAUSED: preserved manual import; unsupported providers must not become Apple results.
+      else if(result.provider==='melon') {
         setDraft({...blank(),title:result.title,artist:result.artist});setSuggestedTitle('');
         setImportNotice('멜론에서 확인 후 직접 입력한 정보를 적용했습니다. 자동 검색으로 가져온 결과는 아닙니다.');
-      } else {select(result);setImportNotice('Apple Music 곡 정보를 가져왔습니다. 제목·가수·버전을 확인하고 저장해 주세요.');}
+      }
+      */
+      else if(result.provider==='apple') {select(result);setImportNotice('Apple Music 곡 정보를 가져왔습니다. 제목·가수·버전을 확인하고 저장해 주세요.');}
+      else {throw Error('현재 지원하지 않는 검색 플랫폼입니다.');}
     } catch(err) {setError(err.message);}
   }
   const choices = [...new Set([...categories, ...draft.categories])];

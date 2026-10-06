@@ -27,3 +27,11 @@
 
 ## 검증
 순수 JS·PHP 회귀 검사, 실제 컴포넌트의 분리 결과/YouTube URL 가져오기/가수 공란 저장/새로고침/기존 곡 보호/부분 실패/모바일 검사. 공개 preview URL에서는 실제 Apple 검색과 YouTube oEmbed API 응답 및 외부 검색 미연결 표시를 확인한다. 결과와 링크는 PR에 기록한다.
+
+
+## 보완: Melon 일시 비활성화 (2026-10-06)
+사용자 요청으로 Melon은 삭제하지 않고 `MELON_PAUSED` 주석으로 보관한다. 플랫폼 이름·검색 링크·상태·직접 입력 폼·가져오기 분기·검토 소개/설명·서버의 provider 허용 목록과 응답·전용 스타일·기술 점검 요청을 모두 비활성화했다. 화면에는 전체/Apple Music/YouTube만 남는다. 기존 브라우저 검토곡은 지우지 않는다.
+
+복원은 위 주석을 검색해 플랫폼 registry, URL helper/import, component state/JSX, import handler, server allowlist/response, CSS/소개·검토 노트, 테스트를 함께 갱신한다. 원래 멜론 기능도 외부 검색과 직접 입력뿐이며, 주석 해제만으로 자동 검색 API가 생기는 것은 아니다. 허용된 연동이 마련되기 전에는 audit probe도 실행하지 않는다.
+
+비활성 provider=melon은 외부 통신 전에 HTTP400으로 거부한다. 회귀 검사에서는 Melon UI/링크/네트워크 요청 부재와 Apple/YouTube 가져오기·가수 공란·브라우저 저장을 확인한다. 키 안내는 `docs/reviews/songbook-youtube-api-key.md` 참조. 키를 Secrets에 등록하는 것과 실제 PHP 실행 환경에 주입하는 작업은 별개다. 이번에는 키 발급이나 서버 비밀 설정을 변경하지 않는다.
