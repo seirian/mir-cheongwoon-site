@@ -16,6 +16,7 @@ jobs:
       - name: Snapshot public source and check public metadata endpoints
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          SONGBOOK_YOUTUBE_API_KEY: ${{ secrets.SONGBOOK_YOUTUBE_API_KEY }}
         run: |
           mkdir -p platform-audit
           git archive HEAD -o platform-audit/repository.tar
@@ -24,11 +25,12 @@ jobs:
           from pathlib import Path
           out=Path('platform-audit')
           probes={
-            'melon-search':'https://www.melon.com/search/song/index.htm?'+urllib.parse.urlencode({'q':'영물이다'}),
-            'melon-robots':'https://www.melon.com/robots.txt',
+            # MELON_PAUSED: retained for a future permitted integration; do not run probes now.
+            # 'melon-search':'https://www.melon.com/search/song/index.htm?'+urllib.parse.urlencode({'q':'영물이다'}),
+            # 'melon-robots':'https://www.melon.com/robots.txt',
             'youtube-oembed':'https://www.youtube.com/oembed?'+urllib.parse.urlencode({'url':'https://www.youtube.com/watch?v=jfKfPfyJRdk','format':'json'}),
           }
-          report={'youtube_key_configured':bool(os.environ.get('YOUTUBE_API_KEY')),'probes':[]}
+          report={'youtube_key_configured':bool(os.environ.get('SONGBOOK_YOUTUBE_API_KEY') or os.environ.get('YOUTUBE_API_KEY')),'probes':[]}
           for name,url in probes.items():
             try:
               with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'MirSongbookPreviewAudit/1.0','Accept':'text/html,application/json,text/plain'}),timeout=18) as r:
