@@ -48,6 +48,9 @@ jobs:
           npm run verify
           npm run check:backend
           php tests/songbook-search-test.php
+          php tests/songbook-platform-search-test.php
+          python -m pip install paramiko==5.0.0
+          python tests/test_songbook_key_provision.py
           php tests/songbook-localization-test.php
           python scripts/reconcile-songbook-difficulty.py --self-test
           deno check --config supabase/functions/songbook-timeline-sync/deno.json supabase/functions/songbook-timeline-sync/index.ts
@@ -60,6 +63,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c 'CREATE ROLE service_role NOLOGIN BYPASSRLS; GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT SELECT ON public.admins TO service_role;'
           psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_timeline_sync.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-timeline-assertions.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_optional_artist.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-optional-artist-assertions.sql
       - name: Production build and isolated username login browser checks
         run: |
           sudo apt-get update -qq
@@ -74,6 +79,7 @@ jobs:
           python scripts/songbook-review-ui-check.py --fixture /tmp/songbook-review-fixture.html --out songbook-production-report/review
           python scripts/songbook-reference-position-check.py --fixture /tmp/songbook-review-fixture.html --out songbook-production-report/reference
           python scripts/songbook-video-order-check.py --out songbook-production-report/video-order
+          python scripts/songbook-platform-production-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/platform-production
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -71,6 +71,23 @@ with sync_playwright() as pw:
 result=json.loads(get('/_yeop_releases/'+rid+'/api/songbook-search.php?'+urllib.parse.urlencode({'q':'영물이다','country':'AUTO'})))
 assert any(s.get('title')=='영물이다' and s.get('artist')=='이오몽' for s in result.get('songs',[])), 'Korean catalog search did not return verified title'
 checks.append('active release music search returns 영물이다 — 이오몽')
-report={'release':rid,'source_sha':a.sha,'checks':checks,'javascript_errors':errors,'writes':writes,'production_api_reads':api_responses,'music_search_partial':result.get('partial')}
+platform_results={}
+for provider,term in [('apple','영물이다'),('youtube','영물이다 이오몽')]:
+ payload=json.loads(get('/_yeop_releases/'+rid+'/api/songbook-platform-search.php?'+urllib.parse.urlencode({'provider':provider,'q':term,'country':'AUTO'})))
+ assert payload.get('state')=='ok' and payload.get('songs'), 'production platform search failed: '+provider
+ assert all(row.get('provider')==provider for row in payload['songs'])
+ if provider=='youtube':
+  assert all(row.get('artist')=='' and row.get('videoUrl','').startswith('https://www.youtube.com/watch?v=') for row in payload['songs'])
+ else:
+  assert any(row.get('title')=='영물이다' and row.get('artist')=='이오몽' for row in payload['songs'])
+ platform_results[provider]={'status':'ok','count':len(payload['songs'])}
+ checks.append('production '+provider+' platform search returns separate live results')
+for suffix in ['api/_songbook_youtube_key.php','api/_songbook_youtube_key.php/test']:
+ try:
+  with urllib.request.urlopen(origin+'/_yeop_releases/'+rid+'/'+suffix,timeout=20) as response:status=response.status
+ except urllib.error.HTTPError as error:status=error.code
+ assert status in (403,404), 'private runtime URL not blocked'
+checks.append('production key configuration and PATH_INFO URLs are HTTP-denied')
+report={'release':rid,'source_sha':a.sha,'checks':checks,'javascript_errors':errors,'writes':writes,'production_api_reads':api_responses,'music_search_partial':result.get('partial'),'platform_results':platform_results}
 (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
 print(json.dumps({'release':rid,'checks':len(checks),'music_search_partial':result.get('partial'),'status':'passed'},ensure_ascii=False))

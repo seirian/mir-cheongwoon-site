@@ -1,0 +1,51 @@
+name: Songbook platform audit
+on:
+  push:
+    branches: [feature/songbook-platform-search]
+    paths: ['.github/workflows/songbook-platform-audit.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Snapshot public source and check registered key presence
+        env:
+          SONGBOOK_YOUTUBE_API_KEY: ${{ secrets.SONGBOOK_YOUTUBE_API_KEY }}
+        run: |
+          mkdir -p platform-audit
+          git archive HEAD -o platform-audit/repository.tar
+          python - <<'PY'
+          import json,os,urllib.request,urllib.parse
+          from pathlib import Path
+          out=Path('platform-audit')
+          probes={
+            # MELON_PAUSED: retained for a future permitted integration; do not run probes now.
+            # 'melon-search':'https://www.melon.com/search/song/index.htm?'+urllib.parse.urlencode({'q':'영물이다'}),
+            # 'melon-robots':'https://www.melon.com/robots.txt',
+            'youtube-oembed':'https://www.youtube.com/oembed?'+urllib.parse.urlencode({'url':'https://www.youtube.com/watch?v=jfKfPfyJRdk','format':'json'}),
+          }
+          report={'source_sha':os.environ.get('GITHUB_SHA'),'youtube_key_configured':bool(os.environ.get('SONGBOOK_YOUTUBE_API_KEY')),'probes':[]}
+          for name,url in probes.items():
+            try:
+              with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'MirSongbookPreviewAudit/1.0','Accept':'text/html,application/json,text/plain'}),timeout=18) as r:
+                body=r.read(1000000);status=r.status;ctype=r.headers.get('Content-Type','')
+              (out/(name+'.txt')).write_bytes(body)
+              report['probes'].append({'name':name,'status':status,'content_type':ctype,'bytes':len(body)})
+            except Exception as e:
+              report['probes'].append({'name':name,'error':type(e).__name__+': '+str(e)[:200]})
+          (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          print(json.dumps(report,ensure_ascii=False))
+          if not report['youtube_key_configured']:
+              raise SystemExit('Required repository secret is not available; no key value was logged.')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-platform-audit
+          path: platform-audit/
+          retention-days: 3
