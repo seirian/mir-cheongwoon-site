@@ -136,7 +136,7 @@ export function useSongbookStore(demo) {
   }
   async function saveSong(input) {
     if (!canEdit || writeLock.current) throw Error('편집 권한이 없거나 저장 중입니다.');
-    const payload = validateEntry({ ...input, id: input.id || 'custom-' + crypto.randomUUID() });
+    const payload = validateEntry({ ...input, id: input.id || 'custom-' + crypto.randomUUID() }, {allowUnknownArtist: !IS_REVIEW_PREVIEW});
     if (duplicateOf(songs, payload)) throw Error('같은 곡이 이미 있습니다. 기존 곡을 편집해주세요.');
     writeLock.current = true; setSaving(true);
     try {

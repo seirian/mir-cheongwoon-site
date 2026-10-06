@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import importlib.util
 import json
 import os
 import posixpath
@@ -19,7 +20,7 @@ for _daily_api in ("api/_fanart_daily.php", "api/naver-fanart-daily.php", "api/n
         base.API_FILES.append(_daily_api)
 
 # Songbook APIs must be present in both preview and production releases.
-SONGBOOK_API_FILES = ("api/songbook-search.php", "api/_songbook_localization.php", "api/_songbook_korean_titles.php")
+SONGBOOK_API_FILES = ("api/songbook-search.php", "api/_songbook_localization.php", "api/_songbook_korean_titles.php", "api/songbook-platform-search.php", "api/_songbook_youtube.php")
 for endpoint in SONGBOOK_API_FILES:
     if endpoint not in base.API_FILES:
         base.API_FILES.append(endpoint)
@@ -33,7 +34,14 @@ def songbook_api_smoke(rid: str):
         payload = {}
     if code != 400 or payload.get("error") != "query":
         raise base.Stop("Songbook API is missing or invalid; release will not be activated")
-    return {"status": code, "invalid_query_rejected": True, "passed": True}
+    platform_code, platform_body, _ = base.http(CANONICAL_ORIGIN + PREFIX + rid + "/api/songbook-platform-search.php?provider=melon&q=disabled")
+    try:
+        platform_payload = json.loads(platform_body)
+    except Exception:
+        platform_payload = {}
+    if platform_code != 400 or platform_payload.get("error") != "query":
+        raise base.Stop("Platform search API is missing or disabled-provider validation failed")
+    return {"status": code, "invalid_query_rejected": True, "platform_status": platform_code, "passed": True}
 
 PERSONAL_WEB = "/web"
 SITE_WEB = "/web/_mir_site"
@@ -457,6 +465,7 @@ def main():
         if site_info is None or not stat.S_ISDIR(site_info.st_mode) or site_info.st_uid != OWNER_UID:
             raise base.Stop("Unexpected MIR internal site root")
 
+        routing_before = {path: r.read(path) for path in (PERSONAL_WEB + "/.htaccess", SITE_WEB + "/.htaccess")}
         ensure_dir(r, SITE_WEB + PREFIX.rstrip("/"))
         ensure_daily_fanart_store(r)
 
@@ -510,6 +519,23 @@ def main():
             report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             print("STAGED ONLY:", rid)
             return
+
+        # Provision and verify the server-only key BEFORE changing the active release.
+        # A failed key setup leaves production routing on the previous release.
+        if any(r.read(path) != data for path, data in routing_before.items()):
+            raise base.Stop("Production routing changed while the release was staged")
+        report.update(phase="staged", production_routing_unchanged=True)
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        spec = importlib.util.spec_from_file_location("songbook_key_setup", Path(__file__).with_name("provision-songbook-youtube-key.py"))
+        runtime = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(runtime)
+        try:
+            runtime.run(production=True)
+        except Exception as error:
+            raise base.Stop("YouTube runtime setup failed: " + (str(error) if isinstance(error, base.Stop) else type(error).__name__)) from None
+        report["youtube_runtime"] = json.loads(Path("platform-report/youtube-runtime.json").read_text())
+        if report["youtube_runtime"].get("status") != "verified":
+            raise base.Stop("YouTube runtime was not verified")
 
         changes = []
         report["phase"] = "activating"

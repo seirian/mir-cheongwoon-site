@@ -64,8 +64,8 @@ export default function SongEditor({song, store, categories, close, saved, Modal
     } catch(err) {setError(err.message);}
   }
   const choices = [...new Set([...categories, ...draft.categories])];
-  return <Modal title={song?'곡 정보 편집':'노래 추가'} close={close}>
-    {platformSearch?<PlatformDiscovery songs={store.songs} onSelect={importPlatform} onExisting={s=>{setDraft({...s,videoUrls:s.manualVideoUrls||s.videoUrls});setSuggestedTitle('');setError('');setImportNotice('기존 노래책의 곡을 선택했습니다. 검토 내용은 이 브라우저에만 저장됩니다.');}}/>:<section className="sb2-discovery sb3-discovery">
+  return <Modal title={song?'곡 정보 편집':'노래 추가'} close={close} className={platformSearch?'sp-modal':''}>
+    {platformSearch?<PlatformDiscovery songs={store.songs} onSelect={importPlatform} onExisting={s=>{setDraft({...s,videoUrls:s.manualVideoUrls||s.videoUrls});setSuggestedTitle('');setError('');setImportNotice('기존 노래책의 곡을 선택했습니다. 내용을 확인한 후 저장해 주세요.');}}/>:<section className="sb2-discovery sb3-discovery">
       <h3>1. 전체 음악 검색</h3>
       <p className="sb-note">한국어 제목 우선 · 내 노래책과 외부 음악 목록을 함께 찾습니다. 한국 스토어 표기, 확인된 국내명과 한국어 별칭을 대조합니다.</p>
       <form className="sb2-search-add" onSubmit={search}>

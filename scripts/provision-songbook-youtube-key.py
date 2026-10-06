@@ -66,11 +66,17 @@ def routing_hashes(remote):
     return {p:hashlib.sha256(remote.read(p) or b'').hexdigest() for p in ('/web/.htaccess','/web/_mir_site/.htaccess')}
 
 
-def run():
-    if os.environ.get('GITHUB_REF') != 'refs/heads/feature/songbook-platform-search':
-        raise base.Stop('Credential provisioning is restricted to the preview branch.')
-    if any(os.environ.get(f) != 'true' for f in ('VITE_REVIEW_PREVIEW','VITE_SONGBOOK_PREVIEW','VITE_SONGBOOK_PLATFORM_PREVIEW')):
-        raise base.Stop('All three preview flags are required.')
+def validate_execution_context(production=False):
+    expected_ref = 'refs/heads/main' if production else 'refs/heads/feature/songbook-platform-search'
+    if os.environ.get('GITHUB_REF') != expected_ref:
+        raise base.Stop('Credential provisioning is restricted to the requested release branch.')
+    expected_flag = 'false' if production else 'true'
+    if any(os.environ.get(f) != expected_flag for f in ('VITE_REVIEW_PREVIEW','VITE_SONGBOOK_PREVIEW','VITE_SONGBOOK_PLATFORM_PREVIEW')):
+        raise base.Stop('Release mode and preview flags do not match.')
+
+
+def run(production=False):
+    validate_execution_context(production)
     report_path = Path('platform-report/youtube-runtime.json')
     report_path.parent.mkdir(exist_ok=True, parents=True)
     staged = json.loads(Path('deploy_report.json').read_text())

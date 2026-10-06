@@ -5,6 +5,7 @@ import stat
 import sys
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 spec = importlib.util.spec_from_file_location('key_provision', Path(__file__).resolve().parents[1]/'scripts/provision-songbook-youtube-key.py')
@@ -31,6 +32,16 @@ class MemoryRemote:
     def remove(self,p): del self.files[p];self.events.append('remove')
 
 class ProvisionTests(unittest.TestCase):
+    def test_production_requires_main_and_all_preview_flags_false(self):
+        flags={k:'false' for k in ('VITE_REVIEW_PREVIEW','VITE_SONGBOOK_PREVIEW','VITE_SONGBOOK_PLATFORM_PREVIEW')}
+        with patch.dict(module.os.environ,{'GITHUB_REF':'refs/heads/main',**flags},clear=True):
+            module.validate_execution_context(production=True)
+            with self.assertRaises(module.base.Stop): module.validate_execution_context()
+        for ref in ['refs/heads/develop','refs/pull/90/merge','refs/heads/feature/songbook-platform-search']:
+            with patch.dict(module.os.environ,{'GITHUB_REF':ref,**flags},clear=True):
+                with self.assertRaises(module.base.Stop): module.validate_execution_context(production=True)
+        with patch.dict(module.os.environ,{'GITHUB_REF':'refs/heads/main',**flags,'VITE_SONGBOOK_PREVIEW':'true'},clear=True):
+            with self.assertRaises(module.base.Stop): module.validate_execution_context(production=True)
     def test_php_guard_and_key_format(self):
         data=module.config_bytes('fixture-key-not-a-real-secret-12345')
         self.assertTrue(data.startswith(b'<?php'))
