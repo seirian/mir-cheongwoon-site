@@ -7,6 +7,13 @@ import {externalSearch,platformRows,PLATFORM_NAMES} from '../../lib/songbookPlat
 // MELON_PAUSED: import {melonSongUrl} from '../../lib/songbookPlatforms.js';
 import {SongCover} from './SongMedia.jsx';
 import '../../songbook-platforms.css';
+const youtubeErrors = {
+  youtube_quota_exceeded:'YouTube 검색 할당량을 모두 사용했습니다. 영상 주소 가져오기 또는 Apple Music 검색을 이용해 주세요.',
+  youtube_api_disabled:'YouTube 검색 API가 사용 설정되지 않았습니다. 관리자에게 API 설정 확인을 요청해 주세요.',
+  youtube_key_invalid:'YouTube 검색 키를 확인해야 합니다. 영상 주소 가져오기는 계속 사용할 수 있습니다.',
+  youtube_key_restricted:'YouTube 검색 키의 서버 IP 또는 API 제한 설정을 확인해야 합니다. 관리자에게 알려주세요.',
+  youtube_search_unavailable:'YouTube 검색에 연결하지 못했습니다. 다시 검색하거나 영상 주소로 가져와 주세요.',
+};
 const empty=()=>({state:'idle',songs:[],message:''});
 export default function PlatformDiscovery({songs,onSelect,onExisting}) {
   const [query,setQuery]=useState(''),[searched,setSearched]=useState(''),[country,setCountry]=useState('AUTO'),[tab,setTab]=useState('all');
@@ -25,7 +32,7 @@ export default function PlatformDiscovery({songs,onSelect,onExisting}) {
       const response=await fetch(`${import.meta.env.BASE_URL}api/songbook-platform-search.php?${new URLSearchParams({provider,q:term,country})}`,{signal:controller.signal});
       const data=await response.json();
       if(sequence!==versions.current[provider])return;
-      if(!response.ok)throw Error(response.status===429?'검색 요청 한도에 도달했습니다. 잠시 뒤 다시 시도해 주세요.':provider==='youtube'?'영상을 불러오지 못했습니다. 주소·공개 상태를 확인해 주세요. 비공개·제한된 영상은 가져올 수 없습니다.':'음악 검색에 연결하지 못했습니다. 다시 시도하거나 직접 입력해 주세요.');
+      if(!response.ok)throw Error(provider==='youtube'&&youtubeErrors[data.error]?youtubeErrors[data.error]:response.status===429?'검색 요청 한도에 도달했습니다. 잠시 뒤 다시 시도해 주세요.':provider==='youtube'?'영상을 불러오지 못했습니다. 주소·공개 상태를 확인해 주세요. 비공개·제한된 영상은 가져올 수 없습니다.':'음악 검색에 연결하지 못했습니다. 다시 시도하거나 직접 입력해 주세요.');
       if(!Array.isArray(data.songs))throw Error('검색 응답을 확인하지 못했습니다. 다시 시도해 주세요.');
       const rows=platformRows(provider,data.songs,songs);
       const state=data.state==='setup_required'?'setup_required':rows.length?'ok':'empty';
@@ -44,7 +51,7 @@ export default function PlatformDiscovery({songs,onSelect,onExisting}) {
   const existing=searched?songs.filter(s=>matches(s,searched)).slice(0,8):[];
   const loading=Object.values(panels).some(p=>p.state==='loading');
   function resultList(provider){const panel=panels[provider];return <>
-    {panel.state==='idle'&&<p className="sp-empty">{provider==='apple'?'곡명이나 가수를 검색하면 한국어 제목을 우선 표시합니다.':'영상 주소로 제목과 썸네일을 가져올 수 있습니다.'}</p>}
+    {panel.state==='idle'&&<p className="sp-empty">{provider==='apple'?'곡명이나 가수를 검색하면 한국어 제목을 우선 표시합니다.':'곡명·가수로 영상을 검색하거나, 영상 주소로 제목과 썸네일을 가져올 수 있습니다.'}</p>}
     {panel.state==='loading'&&<p role="status" className="sp-empty">{PLATFORM_NAMES[provider]} 검색 중…</p>}
     {panel.message&&<p className={`sp-message ${panel.state==='error'?'is-error':''}`} role={panel.state==='error'?'alert':'status'}>{panel.message}</p>}
     {panel.state==='empty'&&<p className="sp-empty" role="status">일치하는 결과가 없습니다. 다른 검색어나 영상 주소를 사용해 보세요.</p>}
@@ -66,7 +73,7 @@ export default function PlatformDiscovery({songs,onSelect,onExisting}) {
     <div className="sp-tabs" aria-label="검색 플랫폼 선택">{[['all','전체'],...Object.entries(PLATFORM_NAMES)].map(([id,name])=><button key={id} type="button" aria-pressed={tab===id} onClick={()=>setTab(id)}>{name}{panels[id]?.songs.length>0&&<small>{panels[id].songs.length}</small>}</button>)}</div>
     {existing.length>0&&<details className="sp-existing"><summary>기존 노래책에도 일치하는 곡이 있습니다 · {existing.length}개 표시</summary>{existing.map(s=><button type="button" key={s.id} onClick={()=>onExisting(s)}>{s.title} — {s.artist||'가수 미확인'}</button>)}</details>}
     {(tab==='all'||tab==='apple')&&<section className="sp-provider" data-provider="apple" aria-label="Apple Music 검색 결과"><header><h4><Music2 size={18}/>Apple Music</h4><span className="sp-badge">음원 정보 검색</span></header>{resultList('apple')}</section>}
-    {(tab==='all'||tab==='youtube')&&<section className="sp-provider" data-provider="youtube" aria-label="YouTube 검색 결과"><header><h4><Youtube size={19}/>YouTube</h4><span className="sp-badge">영상 주소 가져오기</span></header>
+    {(tab==='all'||tab==='youtube')&&<section className="sp-provider" data-provider="youtube" aria-label="YouTube 검색 결과"><header><h4><Youtube size={19}/>YouTube</h4><span className="sp-badge">키워드·영상 주소 검색</span></header>
       <p className="sb-note">채널명은 가수명이 아닙니다. 원곡·커버·반주를 직접 확인해 주세요. 영상 선택만으로 미르님의 가창 기록이 되지는 않습니다.</p>
       <a className="sp-outbound" href={externalSearch('youtube',query)} target="_blank" rel="noopener noreferrer"><ExternalLink size={15}/>YouTube에서 검색 ↗</a>
       <form className="sp-url-form" onSubmit={e=>{e.preventDefault();void lookup('youtube',videoUrl.trim());}}><label>확인한 YouTube 영상 주소<input required type="url" maxLength={1500} value={videoUrl} onChange={e=>setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=…"/></label><button className="sb-button" disabled={panels.youtube.state==='loading'}>영상 주소로 가져오기</button></form>

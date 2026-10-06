@@ -17,8 +17,8 @@ def main():
         if os.environ.get(flag)!='true':raise SystemExit('Preview flags are required.')
     for route in ('index.html','songbook/index.html','songbook/review/index.html'):
         if 'noindex, nofollow' not in (Path('dist')/route).read_text():raise SystemExit('Missing noindex metadata.')
-    endpoint='api/songbook-platform-search.php'
-    if endpoint not in base.API_FILES:base.API_FILES.append(endpoint)
+    for endpoint in ('api/songbook-platform-search.php','api/_songbook_youtube.php'):
+        if endpoint not in base.API_FILES:base.API_FILES.append(endpoint)
     os.environ['ACTIVATE']='false'
     before=fingerprints();deploy.main();after=fingerprints()
     if before!=after:raise SystemExit('Production routing changed; inspect concurrent deployment.')

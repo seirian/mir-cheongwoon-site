@@ -3,6 +3,7 @@
 declare(strict_types=1);
 define('SONGBOOK_SEARCH_TEST', true);
 require_once __DIR__ . '/songbook-search.php';
+require_once __DIR__ . '/_songbook_youtube.php';
 
 function sbp_youtube_url(string $value): ?array {
     if (strlen($value)>1500 || preg_match('/[\\\\\s]/u',$value)) return null;
@@ -53,8 +54,9 @@ function sbp_budget(string $root,string $name,int $limit,int $period): bool {
         $times[]=$now;ftruncate($file,0);rewind($file);fwrite($file,json_encode($times));return true;
     } finally {flock($file,LOCK_UN);fclose($file);}
 }
-// MELON_PAUSED: the inactive provider is rejected before any network or cache access.
-const SBP_ENABLED_PROVIDERS = ['apple','youtube' /* ,'melon' */];
+// MELON_PAUSED: restore the provider only with the UI and permitted integration.
+// const SBP_ENABLED_PROVIDERS = ['apple','youtube','melon'];
+const SBP_ENABLED_PROVIDERS = ['apple','youtube'];
 if (defined('SONGBOOK_PLATFORM_TEST')) return;
 header('Content-Type: application/json; charset=utf-8');header('X-Content-Type-Options: nosniff');header('Cache-Control: no-store');
 if (($_SERVER['REQUEST_METHOD']??'GET')!=='GET') {header('Allow: GET');sb3_reply(405,['error'=>'method']);}
@@ -64,7 +66,7 @@ $q=sb3_text($q,300);if (!$q || preg_match_all('/./us',$q)<2) sb3_reply(400,['err
 // MELON_PAUSED: previous placeholder response is retained for future integration.
 // if ($provider==='melon') sb3_reply(200,['provider'=>'melon','state'=>'external_only','songs'=>[],'message'=>'멜론 자동 검색은 연결하지 않았습니다. 멜론에서 확인한 정보를 직접 입력할 수 있습니다.']);
 $video=$provider==='youtube'?sbp_youtube_url($q):null;
-$key=trim((string)(getenv('SONGBOOK_YOUTUBE_API_KEY')?:getenv('YOUTUBE_API_KEY')?:''));
+$key=sbp_youtube_key();
 if ($provider==='youtube' && !$video && preg_match('~^https?://~i',$q)) sb3_reply(400,['error'=>'unsupported_video_url']);
 if ($provider==='youtube' && !$video && !$key) sb3_reply(200,['provider'=>'youtube','state'=>'setup_required','songs'=>[],'message'=>'키워드 검색 API 연결 전입니다. YouTube에서 검색한 뒤 영상 주소를 붙여넣어 가져오세요.']);
 $lookup=$provider==='apple'?sb3_lookup_id($q):'';
@@ -77,13 +79,14 @@ if (is_file($path)) {$cached=json_decode((string)file_get_contents($path),true);
 if (!sbp_budget($root,'global-'.$provider,20,60)) {header('Retry-After: 60');sb3_reply(429,['error'=>'rate_limit']);}
 $urls=[];$songs=[];$partial=false;
 if ($provider==='youtube') {
-    if ($video) $urls['youtube']='https://www.youtube.com/oembed?'.http_build_query(['url'=>$video['url'],'format'=>'json']);
-    else {
+    if ($video) {
+        $urls['youtube']='https://www.youtube.com/oembed?'.http_build_query(['url'=>$video['url'],'format'=>'json']);
+        $response=sb3_fetch($urls)['youtube']??['ok'=>false,'data'=>[]];
+    } else {
         if (!sbp_budget($root,'youtube-search-day',80,86400)) {header('Retry-After: 3600');sb3_reply(429,['error'=>'search_budget']);}
-        $urls['youtube']='https://www.googleapis.com/youtube/v3/search?'.http_build_query(['part'=>'snippet','type'=>'video','q'=>$q,'maxResults'=>12,'relevanceLanguage'=>'ko','regionCode'=>'KR','safeSearch'=>'moderate','key'=>$key]);
+        $response=sbp_youtube_search($q,$key);
     }
-    $response=sb3_fetch($urls)['youtube'];
-    if (!$response['ok']) sb3_reply(502,['error'=>'video_unavailable','provider'=>'youtube','songs'=>[]]);
+    if (!$response['ok']) sb3_reply(502,['error'=>$video?'video_unavailable':sbp_youtube_failure($response),'provider'=>'youtube','songs'=>[]]);
     $songs=$video?sbp_oembed($response['data'],$video):sbp_search_videos($response['data']);
     if ($video && !$songs) sb3_reply(502,['error'=>'video_unavailable','provider'=>'youtube','songs'=>[]]);
 } else {

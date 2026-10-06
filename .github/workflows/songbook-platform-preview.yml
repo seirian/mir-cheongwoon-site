@@ -36,6 +36,8 @@ jobs:
           npm run verify
           npm run check:backend
           php tests/songbook-platform-search-test.php
+          php tests/songbook-youtube-runtime-test.php
+          python -m unittest discover -s tests -p "test_songbook_key_provision.py"
           php tests/songbook-search-test.php
           php tests/songbook-localization-test.php
       - name: Browser dependencies
@@ -78,9 +80,14 @@ jobs:
           DIST_DIR: dist
           SERVER_SOURCE_DIR: server
         run: python scripts/stage-songbook-platform-preview.py
+      - name: Provision the registered YouTube key for this preview only
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+          SONGBOOK_YOUTUBE_API_KEY: ${{ secrets.SONGBOOK_YOUTUBE_API_KEY }}
+        run: python scripts/provision-songbook-youtube-key.py
       - name: Public preview and real metadata verification
         run: |
-          python scripts/songbook-platform-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out platform-report/live --live
+          python scripts/songbook-platform-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out platform-report/live --live --require-keyword
           cp deploy_report.json platform-report/deploy_report.json
       - name: Reports and screenshots
         if: always()
