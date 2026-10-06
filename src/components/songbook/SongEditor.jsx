@@ -1,3 +1,4 @@
+import {useTimedNotice} from '../../lib/useTimedNotice.js';
 import {useEffect, useRef, useState} from 'react';
 import {matches, normalize} from '../../lib/songbookV2';
 import {searchRows, existingMatch, selectionDraft, titleLabel, versionLabel, durationLabel, mergedAliases} from '../../lib/songbookSearchLocale';
@@ -45,7 +46,7 @@ export default function SongEditor({song, store, categories, close, saved, Modal
     setSuggestedTitle(result.suggestedTitle || '');
     setError('');
   }
-  const [importNotice,setImportNotice]=useState('');
+  const [importNotice,setImportNotice,importNoticeProps]=useTimedNotice();
   function importPlatform(result) {
     setError('');
     try {
@@ -88,7 +89,7 @@ export default function SongEditor({song, store, categories, close, saved, Modal
       </div>}
       <p className="sb-note">한국어명이 확인되지 않은 결과는 원문 제목으로 표시합니다. 검색어를 자동 번역하거나 곡명으로 확정하지 않습니다. 원하는 곡이 없으면 직접 등록할 수 있습니다.</p>
     </section>}
-    {importNotice&&<p className="sp-import-notice" role="status">{importNotice}</p>}
+    {importNotice&&<p className="sp-import-notice" {...importNoticeProps} role="status">{importNotice}</p>}
     <form className="sb2-form" onSubmit={async e=>{e.preventDefault();setError('');try{saved(await store.saveSong(draft));}catch(err){setError(err.message);}}}>
       <h3>2. 정보 확인 후 저장 {draft.id && <small>· 기존 곡 편집</small>}</h3>
       <div className="sb3-editor-cover"><SongCover song={draft}/><div><strong>{draft.title || '곡 이름'}</strong><p className="sb-note">{draft.album || '앨범 이미지가 없으면 연결 영상의 썸네일을 표시합니다.'}</p>

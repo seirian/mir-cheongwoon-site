@@ -1,3 +1,4 @@
+import {useTimedNotice} from '../../lib/useTimedNotice.js';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Trash2,RotateCcw} from 'lucide-react';
 import '../../songbook-deletion.css';
@@ -21,7 +22,7 @@ export function DeleteSongDialog({Modal,song,store,close,deleted}) {
 }
 
 export function DeletedSongsDialog({Modal,store,close,restored}) {
- const [page,setPage]=useState(0),[rows,setRows]=useState([]),[count,setCount]=useState(0),[error,setError]=useState(''),[notice,setNotice]=useState(''),[loading,setLoading]=useState(false),[busy,setBusy]=useState(false);
+ const [page,setPage]=useState(0),[rows,setRows]=useState([]),[count,setCount]=useState(0),[error,setError]=useState(''),[notice,setNotice,noticeProps]=useTimedNotice(),[loading,setLoading]=useState(false),[busy,setBusy]=useState(false);
  const generation=useRef(0),lock=useRef(false);
  const load=useCallback(async()=>{
   if(!store.canDelete||lock.current)return;
@@ -48,7 +49,7 @@ export function DeletedSongsDialog({Modal,store,close,restored}) {
  }
  return <Modal title="삭제한 노래" close={()=>{if(!lock.current)close();}} className="sb-delete-dialog">
   <p className="sb-note">삭제한 곡을 복원하면 보관된 곡 정보와 숙련도·영상 연결을 다시 사용할 수 있습니다.</p>
-  {notice&&<p role="status" className="sb-delete-notice">{notice}</p>}{error&&<p role="alert" className="sb2-error">{error}</p>}
+  {notice&&<p role="status" className="sb-delete-notice" {...noticeProps}>{notice}</p>}{error&&<p role="alert" className="sb2-error">{error}</p>}
   <div aria-busy={loading}>{rows.map(row=><article key={row.song_id} className="sb-deleted-row"><div><strong>{row.title}</strong><p>{row.artist||'가수 미확인'}</p></div><button className="sb-button" type="button" disabled={busy||!store.canDelete} onClick={()=>restore(row)} aria-label={`${row.title} 복원`}><RotateCcw size={15}/>복원</button></article>)}</div>
   {!loading&&!error&&!rows.length&&<p>삭제한 노래가 없습니다.</p>}
   <div className="sb-actions"><button className="sb-button" type="button" disabled={!page||busy||loading} onClick={()=>setPage(p=>p-1)}>이전</button><span>{page+1} / {Math.max(1,Math.ceil(count/20))}</span><button className="sb-button" type="button" disabled={(page+1)*20>=count||busy||loading} onClick={()=>setPage(p=>p+1)}>다음</button><button className="sb-reset" type="button" disabled={busy||loading} onClick={load}>새로고침</button></div>
