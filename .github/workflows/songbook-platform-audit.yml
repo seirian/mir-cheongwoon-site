@@ -13,9 +13,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Snapshot public source and check public metadata endpoints
+      - name: Snapshot public source and check registered key presence
         env:
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           SONGBOOK_YOUTUBE_API_KEY: ${{ secrets.SONGBOOK_YOUTUBE_API_KEY }}
         run: |
           mkdir -p platform-audit
@@ -30,7 +29,7 @@ jobs:
             # 'melon-robots':'https://www.melon.com/robots.txt',
             'youtube-oembed':'https://www.youtube.com/oembed?'+urllib.parse.urlencode({'url':'https://www.youtube.com/watch?v=jfKfPfyJRdk','format':'json'}),
           }
-          report={'youtube_key_configured':bool(os.environ.get('SONGBOOK_YOUTUBE_API_KEY') or os.environ.get('YOUTUBE_API_KEY')),'probes':[]}
+          report={'source_sha':os.environ.get('GITHUB_SHA'),'youtube_key_configured':bool(os.environ.get('SONGBOOK_YOUTUBE_API_KEY')),'probes':[]}
           for name,url in probes.items():
             try:
               with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'MirSongbookPreviewAudit/1.0','Accept':'text/html,application/json,text/plain'}),timeout=18) as r:
@@ -41,6 +40,8 @@ jobs:
               report['probes'].append({'name':name,'error':type(e).__name__+': '+str(e)[:200]})
           (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
           print(json.dumps(report,ensure_ascii=False))
+          if not report['youtube_key_configured']:
+              raise SystemExit('Required repository secret is not available; no key value was logged.')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
