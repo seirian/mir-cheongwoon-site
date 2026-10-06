@@ -34,6 +34,9 @@ jobs:
     timeout-minutes: 20
     env:
       YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+      VITE_REVIEW_PREVIEW: 'false'
+      VITE_SONGBOOK_PREVIEW: 'false'
+      VITE_SONGBOOK_PLATFORM_PREVIEW: 'false'
 
     steps:
       - name: Check out main
@@ -260,6 +263,7 @@ jobs:
           ACTIVATE: 'true'
           DIST_DIR: dist
           SERVER_SOURCE_DIR: server
+          SONGBOOK_YOUTUBE_API_KEY: ${{ secrets.SONGBOOK_YOUTUBE_API_KEY }}
         run: python scripts/mir_shared_root_deploy_ci.py
 
       - name: Verify public sharing metadata and thumbnail
@@ -274,6 +278,7 @@ jobs:
           name: yeop-deploy-${{ github.run_id }}
           path: |
             deploy_report.json
+            platform-report/youtube-runtime.json
             deployment-backup/
             share-image-report/
           if-no-files-found: ignore
