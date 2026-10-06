@@ -65,6 +65,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-timeline-assertions.sql
           psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_optional_artist.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-optional-artist-assertions.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_review_search.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-review-search-assertions.sql
       - name: Production build and isolated username login browser checks
         run: |
           sudo apt-get update -qq
@@ -77,6 +79,7 @@ jobs:
           python scripts/songbook-production-browser-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report
           node scripts/build-songbook-review-fixture.mjs /tmp/songbook-review-fixture.html
           python scripts/songbook-review-ui-check.py --fixture /tmp/songbook-review-fixture.html --out songbook-production-report/review
+          python scripts/songbook-review-search-check.py --fixture /tmp/songbook-review-fixture.html --out songbook-production-report/review-search
           python scripts/songbook-reference-position-check.py --fixture /tmp/songbook-review-fixture.html --out songbook-production-report/reference
           python scripts/songbook-video-order-check.py --out songbook-production-report/video-order
           python scripts/songbook-platform-production-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/platform-production
