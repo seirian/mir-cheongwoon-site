@@ -13,7 +13,7 @@ token=enc({'alg':'HS256','typ':'JWT'})+'.'+enc({'sub':uid,'aud':'authenticated',
 raw=json.loads(Path('src/data/songbookCatalog.json').read_text());seed=raw[0]
 manual={'id':'custom-00000000-0000-4000-8000-000000000001','title':'삭제 검증곡','artist':'','categories':['가요'],'aliases':[],'video_urls':[],'difficulty':4,'revision':3,'request_status':'unreviewed'}
 auto={'id':'custom-00000000-0000-4000-8000-000000000002','title':'자동 보관 테스트곡','artist':'검증 가수','categories':['가요'],'aliases':[],'active':True}
-state={'admin':True,'fail':False,'fail_read':False,'failed_reads':0};deletions={};writes=[];checks=[];errors=[]
+state={'admin':True,'fail':False,'fail_read':False,'failed_reads':0};deletions={};writes=[];checks=[];errors=[];notice_bounds=[]
 with sync_playwright() as pw:
  browser=pw.chromium.launch(executable_path=shutil.which('google-chrome') or shutil.which('chromium'),args=['--no-sandbox'])
  ctx=browser.new_context(viewport={'width':1440,'height':1050});page=ctx.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
@@ -67,6 +67,20 @@ with sync_playwright() as pw:
   page.get_by_role('button',name=title+' 상세 보기',exact=True).click();expect(page.get_by_role('dialog',name=title,exact=True)).to_be_visible()
  def confirm():
   page.get_by_role('button',name='노래 삭제',exact=True).click();d=page.get_by_role('dialog',name='노래 삭제 확인',exact=True);expect(d).to_be_visible();return d
+ def notice_layout(label):
+  notice=page.locator('.section-wrap.sb-delete-notice');expect(notice).to_be_visible()
+  for w in [320,390,768,1024,1440,1920,2560]:
+   page.set_viewport_size({'width':w,'height':1050});page.evaluate('window.scrollTo(0,0)')
+   for scrolled in [False,True]:
+    if scrolled:notice.scroll_into_view_if_needed();page.evaluate('window.scrollBy(0,200)')
+    boxes=page.evaluate('''()=>{const r=s=>{const b=document.querySelector(s).getBoundingClientRect();return {left:b.left,right:b.right,width:b.width};};return {notice:r('.section-wrap.sb-delete-notice'),body:r('.sb-library'),close:r('.section-wrap.sb-delete-notice button'),position:getComputedStyle(document.querySelector('.section-wrap.sb-delete-notice')).position};}''')
+    assert abs(boxes['notice']['left']-boxes['body']['left'])<=1,boxes
+    assert abs(boxes['notice']['right']-boxes['body']['right'])<=1,boxes
+    assert boxes['close']['left']>=boxes['notice']['left'] and boxes['close']['right']<=boxes['notice']['right'],boxes
+    assert boxes['position']=='sticky' and page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),boxes
+    notice_bounds.append({'kind':label,'viewport':w,'scrolled':scrolled,**boxes})
+   page.evaluate('window.scrollTo(0,0)');notice.scroll_into_view_if_needed();page.screenshot(path=str(out/f'{label}-aligned-{w}.png'))
+  page.set_viewport_size({'width':390,'height':1050})
  try:
   go(manual['title']);detail(manual['title']);expect(page.get_by_role('button',name='노래 삭제',exact=True)).to_have_count(0);page.keyboard.press('Escape')
   expect(page.get_by_role('button',name='삭제한 노래',exact=True)).to_have_count(0)
@@ -87,6 +101,14 @@ with sync_playwright() as pw:
   assert manual['id'] in deletions and manual['difficulty']==4 and manual['revision']==3
   expect(page.get_by_label('곡명, 가수, 초성 검색',exact=True)).to_have_value(manual['title'])
   checks.append('successful double-click issues one delete; catalog/count/notice update without clearing the search')
+  notice_layout('delete-notice')
+  checks.append('deletion success notice matches both content edges at seven widths before and after scrolling')
+  # Stress only the visible fixture text, never the stored song or request payload.
+  page.locator('.section-wrap.sb-delete-notice>span').evaluate("e=>e.textContent='「'+ '긴노래제목LongTitle'.repeat(14)+'」을 노래책에서 삭제했습니다.'")
+  notice_layout('long-delete-notice')
+  page.get_by_role('button',name='삭제 처리 알림 닫기',exact=True).click();expect(page.locator('.section-wrap.sb-delete-notice')).to_have_count(0)
+  assert len(writes)==before+1
+  checks.append('long notice text wraps within the same gutters; close button stays inside and dismisses without writes')
   page.reload(wait_until='networkidle');expect(page.get_by_role('button',name=manual['title']+' 상세 보기',exact=True)).to_have_count(0)
   with page.expect_download() as dl:page.get_by_role('button',name='CSV',exact=True).click()
   download=dl.value;assert manual['title'] not in Path(download.path()).read_text(encoding='utf-8-sig')
@@ -95,6 +117,8 @@ with sync_playwright() as pw:
   for w in [1440,390]:
    page.set_viewport_size({'width':w,'height':1050});page.screenshot(path=str(out/f'deleted-list-{w}.png'))
   d.get_by_role('button',name=manual['title']+' 복원',exact=True).click();expect(d.get_by_role('status')).to_contain_text('복원했습니다');expect(d.get_by_text('삭제한 노래가 없습니다.',exact=True)).to_be_visible();page.keyboard.press('Escape')
+  notice_layout('restore-notice')
+  checks.append('page-level restoration notice shares content gutters while the dialog notification remains scoped')
   detail(manual['title']);expect(page.get_by_role('dialog').get_by_role('button',name='미르 숙련도 5점으로 설정')).to_have_attribute('aria-pressed','true');page.keyboard.press('Escape')
   checks.append('recovery restores server-backed empty artist song and original proficiency/difficulty')
   go(seed['title']);detail(seed['title']);d=confirm();d.get_by_role('button',name='삭제하기',exact=True).click();expect(page.get_by_role('dialog')).to_have_count(0);page.reload(wait_until='networkidle');expect(page.get_by_role('button',name=seed['title']+' 상세 보기',exact=True)).to_have_count(0)
@@ -119,7 +143,7 @@ with sync_playwright() as pw:
   assert len(writes)==before
   checks.append('manual reload after read recovery clears error without writes; existing deletion markers remain effective')
   assert not errors
-  (out/'report.json').write_text(json.dumps({'checks':checks,'javascript_errors':errors,'mock_mutations':writes,'failed_read_attempts':state['failed_reads'],'live_mutations':0},ensure_ascii=False,indent=2))
+  (out/'report.json').write_text(json.dumps({'checks':checks,'javascript_errors':errors,'mock_mutations':writes,'failed_read_attempts':state['failed_reads'],'notice_bounds':notice_bounds,'live_mutations':0},ensure_ascii=False,indent=2))
  except Exception:
   (out/'error.txt').write_text(traceback.format_exc());(out/'failure.txt').write_text(page.locator('body').inner_text());page.screenshot(path=str(out/'failure.png'));raise
  finally:browser.close()
