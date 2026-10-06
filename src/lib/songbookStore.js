@@ -1,3 +1,4 @@
+import {visibleSongs, deletionResult} from './songbookDeletion.js';
 import { timelineSongs } from './songbookTimeline.js';
 import { songbookEditAccess } from './songbookAccess.js';
 import { supabase } from './supabase';
@@ -17,10 +18,10 @@ export const songbookClient = !IS_REVIEW_PREVIEW ? supabase : IS_SONGBOOK_PREVIE
   global: { fetch: restrictedFetch(url, globalThis.fetch.bind(globalThis)) },
 }) : null;
 const tables = songbookTables(IS_SONGBOOK_PREVIEW);
-async function readTable(name) {
+async function readTable(name, columns = '*', orderField = name === tables.ratings ? 'song_id' : 'id') {
   let data = [];
   for (let page = 0; page < 20; page++) {
-    const response = await songbookClient.from(name).select('*').order(name === tables.ratings ? 'song_id' : 'id').range(page * 500, page * 500 + 499);
+    const response = await songbookClient.from(name).select(columns).order(orderField).range(page * 500, page * 500 + 499);
     if (response.error) throw response.error;
     data = data.concat(response.data);
     if (response.data.length < 500) return data;
@@ -29,6 +30,7 @@ async function readTable(name) {
 }
 export function useSongbookStore(demo) {
   const [entries, setEntries] = useState([]);
+  const [deletions, setDeletions] = useState(null);
   const [ratings, setRatings] = useState([]);
   const [automatic, setAutomatic] = useState([]);
   const [media, setMedia] = useState([]);
@@ -52,21 +54,22 @@ export function useSongbookStore(demo) {
     setError('');
     try {
       if (!songbookClient) throw Error('No configuration');
-      const [e, r, a] = await Promise.all([readTable(tables.entries), readTable(tables.ratings),
-        IS_REVIEW_PREVIEW ? Promise.resolve({rows:[],media:[]}) : Promise.all([readTable('songbook_auto_entries'),readTable('songbook_auto_media')]).then(([rows,media])=>({rows,media})).catch(()=>null)]);
+      const [e, r, a, d] = await Promise.all([readTable(tables.entries), readTable(tables.ratings),
+        IS_REVIEW_PREVIEW ? Promise.resolve({rows:[],media:[]}) : Promise.all([readTable('songbook_auto_entries'),readTable('songbook_auto_media')]).then(([rows,media])=>({rows,media})).catch(()=>null),
+        IS_REVIEW_PREVIEW ? Promise.resolve([]) : readTable('songbook_deletions','song_id','song_id')]);
       if (mode.current || generation !== readGeneration.current) return;
-      setEntries(e); setRatings(r); setReady(true);
+      setEntries(e); setRatings(r); setDeletions(d); setReady(true);
       if(a){setAutomatic(a.rows);setMedia(a.media);setAutoError('');}
       else setAutoError('자동 갱신 목록을 불러오지 못했습니다. 기존 목록과 수동 편집은 계속 사용할 수 있습니다.');
     } catch {
       if (mode.current || generation !== readGeneration.current) return;
       setReady(false); setEntries([]); setRatings([]);
-      setError('저장된 변경사항을 불러오지 못했습니다. 기본 목록만 표시하며 서버 편집은 잠시 중지됩니다.');
+      setError('저장된 변경사항과 삭제 상태를 불러오지 못했습니다. 다시 불러오기를 눌러 주세요. 서버 편집은 잠시 중지됩니다.');
     }
   }, [demo]);
 
   useEffect(() => {
-    setEntries([]); setRatings([]); setAutomatic([]); setMedia([]); setAutoError(''); setReady(false); setError('');
+    setEntries([]); setRatings([]); setDeletions(IS_REVIEW_PREVIEW ? [] : null); setAutomatic([]); setMedia([]); setAutoError(''); setReady(false); setError('');
     if (demo) {
       try {
         const value = JSON.parse(localStorage.getItem(DEMO_KEY) || '{}');
@@ -120,8 +123,31 @@ export function useSongbookStore(demo) {
     return () => { active = false; ++authGeneration.current; data.subscription.unsubscribe(); };
   }, [demo]);
 
-  const songs = timelineSongs(catalog, entries, ratings, automatic, media);
+  const songs = visibleSongs(timelineSongs(catalog, entries, ratings, automatic, media), IS_REVIEW_PREVIEW ? [] : deletions);
   const { canEdit, canRate } = songbookEditAccess({ ready: ready && !authChecking, admin, role, demo, reviewPreview: IS_REVIEW_PREVIEW, songbookPreview: IS_SONGBOOK_PREVIEW });
+  const canDelete = canEdit && admin && !IS_REVIEW_PREVIEW;
+  async function deleteSong(id) {
+    if (!canDelete || writeLock.current || !songs.some(s=>s.id===id)) throw Error('삭제할 곡과 관리자 권한을 확인해 주세요.');
+    writeLock.current=true; setSaving(true);
+    try {
+      const result=await songbookClient.rpc('songbook_delete',{p_song_id:id,p_expected_revision:entries.find(e=>e.id===id)?.revision||0});
+      deletionResult(result,id,'deleted');
+      ++readGeneration.current;
+      setDeletions(old=>[...(old||[]).filter(d=>d.song_id!==id),{song_id:id}]);
+      return id;
+    } finally {writeLock.current=false;setSaving(false);}
+  }
+  async function restoreSong(row) {
+    if (!canDelete || writeLock.current) throw Error('관리자 권한을 확인해 주세요.');
+    writeLock.current=true;setSaving(true);
+    try {
+      const result=await songbookClient.rpc('songbook_restore',{p_song_id:row.song_id,p_delete_token:row.delete_token});
+      deletionResult(result,row.song_id,'restored');
+      ++readGeneration.current;
+      await refresh();
+      return row.song_id;
+    } finally {writeLock.current=false;setSaving(false);}
+  }
   function persist(e, r) {
     localStorage.setItem(DEMO_KEY, JSON.stringify({ entries: e, ratings: r }));
     setEntries(e); setRatings(r);
@@ -131,7 +157,7 @@ export function useSongbookStore(demo) {
     const result = previous
       ? await query.update(payload).eq(idField, payload[idField]).eq('revision', previous.revision).select().single()
       : await query.insert(payload).select().single();
-    if (result.error) throw Error(result.error.code === '23505' ? '같은 곡이 이미 등록되었거나 갱신이 충돌했습니다.' : result.error.code === 'PGRST116' ? '다른 화면에서 변경되었습니다. 새로고침 후 다시 저장해주세요.' : '저장하지 못했습니다. 권한·입력값·연결을 확인해주세요.');
+    if (result.error) throw Error(result.error.code === '23505' ? '같은 곡이 이미 등록되었거나 갱신이 충돌했습니다. 삭제한 노래에도 같은 곡이 있는지 확인해 주세요.' : result.error.code === 'PGRST116' ? '다른 화면에서 변경되었습니다. 새로고침 후 다시 저장해주세요.' : '저장하지 못했습니다. 권한·입력값·연결을 확인해주세요.');
     return result.data;
   }
   async function saveSong(input) {
@@ -161,5 +187,5 @@ export function useSongbookStore(demo) {
       }
     } finally { writeLock.current = false; setSaving(false); }
   }
-  return { songs, session, role, admin, authChecking, ready, error, autoError, saving, canEdit, canRate, saveSong, saveRating, refresh, client: songbookClient };
+  return { songs, session, role, admin, authChecking, ready, error, autoError, saving, canEdit, canRate, canDelete, deleteSong, restoreSong, saveSong, saveRating, refresh, client: songbookClient };
 }
