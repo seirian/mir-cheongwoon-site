@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlsplit
 
 from playwright.sync_api import expect, sync_playwright
+from songbook_search_position import check_search_position
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--sha', required=True)
@@ -200,9 +201,11 @@ with sync_playwright() as pw:
         page.locator('.sg-display-controls').scroll_into_view_if_needed()
         page.screenshot(path=str(out / 'list-1440.png'))
         checks.append('actual production CSS has six desktop columns/four rows for24, four tablet and two mobile columns with square covers and no overflow')
+        search_positions = check_search_position(page, out, 'live')
+        checks.append('search remains in document flow and scrolls out of view in list/cover at six widths, without changing input or results')
         assert not errors and not writes and not snapshot_requests, (errors, writes, snapshot_requests)
         report = {'source_sha': args.sha, 'release': release, 'checks': checks,
-                  'public_song_count': total, 'dimensions': dimensions,
+                  'public_song_count': total, 'dimensions': dimensions, 'search_positions': search_positions,
                   'javascript_errors': errors, 'writes': writes, 'snapshot_requests': snapshot_requests}
         (out / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     except Exception:
