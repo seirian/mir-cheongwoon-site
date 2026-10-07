@@ -1,0 +1,30 @@
+name: Songbook check preview
+on:
+  push:
+    branches: [feature/songbook_check]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: songbook-check-preview
+  cancel-in-progress: false
+jobs:
+  source:
+    if: github.ref == 'refs/heads/feature/songbook_check'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Preserve the exact source for isolated review implementation
+        run: |
+          mkdir -p songbook-check-source
+          git archive HEAD -o songbook-check-source/repository.tar
+          git rev-parse HEAD > songbook-check-source/commit.txt
+          git status --short > songbook-check-source/status.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-check-source
+          path: songbook-check-source/
+          retention-days: 3
