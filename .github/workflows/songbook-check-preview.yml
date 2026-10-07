@@ -19,6 +19,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Preserve tracked review source for reproducible verification
+        run: git archive HEAD -o /tmp/songbook-check-source.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-check-source
+          path: /tmp/songbook-check-source.tar
+          retention-days: 3
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
