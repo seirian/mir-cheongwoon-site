@@ -10,13 +10,13 @@ export const keyFor = dataset => `${REVIEW_KEY}:${dataset === 'sample' ? 'sample
 export const requestText = song => song.artist ? `${song.artist} - ${song.title}` : song.title;
 export function cleanSong(row) {
   const song = publicSong(row);
-  const representativeUrl = vodInfo(row.representativeUrl)?.url || '';
+  const representativeUrl = representative(song)?.url || '';
   const videoKinds = {};
   for(const url of song.videoUrls) {
     const kind = row.videoKinds?.[url];
     if(Object.hasOwn(VIDEO_KINDS,kind)) videoKinds[url] = kind;
   }
-  return {...song,requestStatus:statusOf(song.requestStatus),publicNote:String(row.publicNote||'').slice(0,140),representativeUrl:song.videoUrls.includes(representativeUrl)?representativeUrl:'',videoKinds};
+  return {...song,requestStatus:statusOf(song.requestStatus),publicNote:String(row.publicNote||'').slice(0,140),representativeUrl,videoKinds};
 }
 export function parseSnapshot(value) {
   if(value?.version!==1 || !Array.isArray(value.songs) || !value.songs.length || value.songs.length>10000 || !Number.isFinite(Date.parse(value.capturedAt))) throw Error('검토용 목록을 불러오지 못했습니다. 다시 불러오거나 샘플 화면으로 확인해 주세요.');
@@ -35,8 +35,8 @@ export function validateEdit(song, input) {
   const urls=input.videoUrls.map(url=>vodInfo(url)?.url);
   if(urls.some(url=>!url)) throw Error('YouTube 또는 SOOP 영상 주소를 확인해 주세요.');
   const videoUrls=[...new Set(urls)];
-  const representativeUrl=input.representativeUrl?vodInfo(input.representativeUrl)?.url:'';
-  if(input.representativeUrl && (!representativeUrl||!videoUrls.includes(representativeUrl))) throw Error('대표 영상은 연결된 영상 중에서 선택해 주세요.');
+  // Round 2: a cached/manual representative is not authoritative; derive it from the current links.
+  const representativeUrl=representative({videoUrls})?.url || '';
   // Whitelist only the fields this preview edits; never overwrite difficulty/proficiency or catalog identity.
   return cleanSong({...song,artist,publicNote,requestStatus:input.requestStatus,videoUrls,representativeUrl,videoKinds:input.videoKinds});
 }
@@ -79,7 +79,12 @@ export function shareLink(origin,base,id,dataset='snapshot') {
   return url.href;
 }
 export function representative(song) {
-  return song.representativeUrl ? vodInfo(song.representativeUrl) : null;
+  // Preserve stored relative order and timestamps; neither sort nor mutate the original URLs.
+  for(const url of Array.isArray(song?.videoUrls) ? song.videoUrls : []) {
+    const info=vodInfo(url);
+    if(info?.platform==='youtube')return info;
+  }
+  return null;
 }
 const sample=(n,title,status,urls,extra={})=>cleanSong({id:`check-sample-${n}`,title:`[검토 샘플] ${title}`,artist:'예시 가수',categories:['가요'],aliases:[],videoUrls:urls,requestStatus:status,difficulty:3,proficiency:null,...extra});
 const y='https://www.youtube.com/watch?v=aqz-KE-bpKQ';
@@ -89,6 +94,6 @@ export const SAMPLE_SONGS=[
  sample(2,'유튜브 보완 대상','unreviewed',[s]),
  sample(3,'지금은 쉬어가는 곡','unavailable',[],{publicNote:'이 상태에서는 신청 문구를 복사할 수 없습니다.'}),
  sample(4,'가수 확인이 필요한 곡','unreviewed',[],{artist:'',difficulty:null}),
- sample(5,'대표 영상 선택 연습','available',[y,s],{categories:['J-POP · 애니'],proficiency:3}),
+ sample(5,'대표 영상 자동 지정','available',[s,y,y+'&t=120'],{categories:['J-POP · 애니','기타'],proficiency:3}),
  sample(6,'평가 전인 곡','available',[],{difficulty:null}),
 ];

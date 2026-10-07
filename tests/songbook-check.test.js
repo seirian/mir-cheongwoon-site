@@ -19,7 +19,7 @@ test('status composes with title, category, difficulty and favorites',()=>{
 });
 test('admin-only work filters cannot silently narrow the viewer catalog',()=>{
  const p=params('youtube=missing&attention=artist');assert.equal(selectCheckSongs(SAMPLE_SONGS,p,[],false).length,6);assert.equal(selectCheckSongs(SAMPLE_SONGS,p,[],true).length,1);
- assert.equal(selectCheckSongs(SAMPLE_SONGS,params('attention=representative'),[],true).length,5);
+ assert.equal(selectCheckSongs(SAMPLE_SONGS,params('attention=representative'),[],true).length,4);
 });
 test('request copy has no invented chat command and an unknown artist is not fabricated',()=>{
  assert.equal(requestText({title:'곡',artist:'가수'}),'가수 - 곡');assert.equal(requestText({title:'곡',artist:''}),'곡');
@@ -37,10 +37,10 @@ test('editing uses a whitelist and keeps ID/title/difficulty/proficiency unchang
  const song=SAMPLE_SONGS[0],before=JSON.stringify(song);const saved=validateEdit(song,{...song,artist:'수정',difficulty:1,proficiency:1,id:'hijack',title:'hijack',publicNote:' 안내 '});
  assert.equal(saved.artist,'수정');assert.equal(saved.publicNote,'안내');for(const key of ['id','title','difficulty','proficiency'])assert.equal(saved[key],song[key]);assert.equal(JSON.stringify(song),before);
 });
-test('representative selection requires a real connected valid URL and preserves timestamps',()=>{
+test('automatic representative requires a real connected valid YouTube URL and preserves timestamps',()=>{
  const song=SAMPLE_SONGS[1];const url='https://youtu.be/abcdefghijk?t=1m';const normalized='https://www.youtube.com/watch?v=abcdefghijk&t=60';
  const saved=validateEdit(song,{...song,videoUrls:[...song.videoUrls,url],representativeUrl:url,videoKinds:{[normalized]:'mir'}});assert.equal(saved.representativeUrl,normalized);assert.equal(saved.videoKinds[normalized],'mir');
- assert.throws(()=>validateEdit(song,{...song,representativeUrl:url}));
+ assert.equal(validateEdit(song,{...song,representativeUrl:url}).representativeUrl,''); // Unconnected legacy selections cannot become representative links.
  for(const url of ['javascript:alert(1)','https://www.youtube.com/@singer','https://youtube.com.evil.example/watch?v=abcdefghijk'])assert.throws(()=>validateEdit(song,{...song,videoUrls:[url]}));
 });
 test('local-only persistence roundtrips separately for real copy and examples',()=>{
