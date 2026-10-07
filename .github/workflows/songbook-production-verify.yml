@@ -86,6 +86,7 @@ jobs:
           python scripts/songbook-video-order-check.py --out songbook-production-report/video-order
           python scripts/songbook-platform-production-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/platform-production
           python scripts/songbook-deletion-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/deletion
+          python scripts/songbook-video-presence-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/video-presence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
