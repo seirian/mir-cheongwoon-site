@@ -4,6 +4,7 @@ import argparse,base64,copy,json,shutil,time,traceback
 from pathlib import Path
 from urllib.parse import parse_qs,urlsplit,urlencode
 from playwright.sync_api import sync_playwright,expect
+from songbook_search_position import check_search_position
 p=argparse.ArgumentParser();p.add_argument('--url',required=True);p.add_argument('--out',required=True);a=p.parse_args()
 base=a.url.rstrip('/')+'/';out=Path(a.out);out.mkdir(parents=True,exist_ok=True)
 uid='00000000-0000-4000-8000-000000000001'
@@ -61,6 +62,8 @@ with sync_playwright() as pw:
   go();expect(page.locator('.ck-song')).to_have_count(25);before=page.locator('.ck-song').evaluate_all('(els)=>els.map(e=>e.dataset.songId)')
   page.get_by_role('button',name='커버형',exact=True).click();expect(page.locator('.sg-cover-card')).to_have_count(24);assert before[:24]==page.locator('.sg-cover-card').evaluate_all('(els)=>els.map(e=>e.dataset.songId)')
   assert not page.locator('.sg-card-select').count();checks.append('production viewer shares identical data between list/cover and gets no administrator selection')
+  search_positions=check_search_position(page,out,'viewer')
+  checks.append('viewer search stays at its document position and exits the viewport in both layouts at six widths; scrolling preserves query/results')
   page.goto(base+'account/',wait_until='networkidle');page.get_by_label('아이디',exact=True).fill('mir.review');page.get_by_label('비밀번호',exact=True).fill('fixture password');page.locator('form').get_by_role('button',name='로그인',exact=True).click();expect(page.get_by_role('heading',name='mir.review',exact=True)).to_be_visible()
   go(layout='list',perPage='25');select(1);select(2);expect(toolbar()).to_contain_text('2곡 선택')
   page.get_by_role('button',name='커버형',exact=True).click();expect(page.locator('.sg-card-select input:checked')).to_have_count(0);expect(toolbar()).to_contain_text('0곡 선택')
@@ -84,9 +87,11 @@ with sync_playwright() as pw:
     b=c.bounding_box();cb=c.locator('.sg-card-select').bounding_box();assert cb['x']>=b['x'] and cb['x']+cb['width']<=b['x']+b['width']
    page.screenshot(path=str(out/f'cover-admin-{width}.png'))
   checks.append('administrator cover selection/quick actions stay within cards at five widths without horizontal overflow')
+  search_positions+=check_search_position(page,out,'admin')
+  checks.append('administrator search never follows scroll or covers songs in either layout at six widths; input/results unchanged')
   state['admin']=False;page.reload(wait_until='networkidle');expect(page.locator('.sg-cover-card')).to_have_count(24);expect(page.locator('.sg-card-select,.ck-bulk-toolbar')).to_have_count(0)
   assert not writes and not errors;checks.append('server-denied member sees cover layout without bulk/quick-edit controls; no writes made')
-  (out/'report.json').write_text(json.dumps({'checks':checks,'writes':writes,'javascript_errors':errors,'live_mutations':0},ensure_ascii=False,indent=2)+'\n')
+  (out/'report.json').write_text(json.dumps({'checks':checks,'writes':writes,'javascript_errors':errors,'live_mutations':0,'search_positions':search_positions},ensure_ascii=False,indent=2)+'\n')
  except Exception:
   page.screenshot(path=str(out/'failure.png'));(out/'failure.txt').write_text(traceback.format_exc());raise
  finally:browser.close()
