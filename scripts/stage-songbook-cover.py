@@ -34,5 +34,5 @@ def main():
  Path('songbook-cover-deploy.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
  print('PREVIEW:',report['preview_url'])
  if os.environ.get('GITHUB_STEP_SUMMARY'):
-  with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('### Songbook list/cover review 1\n\n'+report['preview_url']+'\n\n'+report['cover_url']+'\n\nStage only. Production routing unchanged.\n')
+  with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('### Songbook list/cover review 2\n\n'+report['preview_url']+'\n\n'+report['cover_url']+'\n\nStage only. Production routing unchanged.\n')
 if __name__=='__main__':main()
