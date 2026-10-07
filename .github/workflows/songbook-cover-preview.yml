@@ -1,0 +1,74 @@
+name: Songbook cover view preview
+on:
+  push:
+    branches: [feature/songbook-cover-view]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: songbook-cover-preview
+  cancel-in-progress: false
+jobs:
+  preview:
+    if: github.ref == 'refs/heads/feature/songbook-cover-view'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SOURCE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify application and presentation logic
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+      - name: Browser dependencies
+        run: |
+          python -m pip install playwright==1.57.0 paramiko==5.0.0
+          if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+      - name: Isolated preview build and browser verification
+        run: |
+          node scripts/build-songbook-cover.mjs --fixture
+          npx vite preview --config vite.songbook-cover.config.js --base /_test_cover/ --host 127.0.0.1 --port 4181 > /tmp/songbook-cover.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4181/_test_cover/songbook/ >/dev/null && break || sleep 1; done
+          python scripts/songbook-cover-browser-check.py --url http://127.0.0.1:4181/_test_cover/ --out cover-report/local
+      - name: Verified read-only public catalog configuration
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: bash scripts/prepare-public-build-config.sh
+      - name: Build noindex preview using current public snapshot
+        run: |
+          rid="r$(date -u +%Y%m%d%H%M%S)_${SOURCE_COMMIT:0:8}"
+          echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
+          RELEASE_ID="$rid" COVER_BASE="/_yeop_releases/${rid}/" node scripts/build-songbook-cover.mjs
+      - name: Stage only; never activate production
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+        run: python scripts/stage-songbook-cover.py
+      - name: Verify public preview with actual artwork
+        run: python scripts/songbook-cover-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out cover-report/live --live
+      - name: Preserve report and tracked source
+        if: always()
+        run: |
+          mkdir -p cover-report/source
+          git archive HEAD -o cover-report/source/repository.tar
+          git rev-parse HEAD > cover-report/source/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-cover-preview
+          path: |
+            cover-report/
+            songbook-cover-deploy.json
+            dist-songbook-cover/cover-version.json
+          retention-days: 14
