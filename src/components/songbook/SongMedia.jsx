@@ -18,7 +18,7 @@ export function VodLinks({urls, title, detailed = false}) {
     })}
   </span>;
 }
-function MusicBadge({url, title}) {
+export function MusicBadge({url, title}) {
   const [failed, setFailed] = useState(false);
   return <a className="sb3-store-badge" href={url} target="_blank" rel="noopener noreferrer" aria-label={`${title} Apple Music에서 보기`}>
     {failed ? <span style={{fontSize:9, color:'#b7c9e8', display:'block'}}>음원 보기 ↗</span> : <img src="https://marketing.services.apple/api/storage/images/6408fe79bf4a430007e6828b/en-us-large%401x.png" alt="Listen on Apple Music" width="61" height="15" loading="lazy" onError={() => setFailed(true)}/>}

@@ -27,6 +27,7 @@ jobs:
           python scripts/songbook-font-live-check.py --sha "$EXPECTED_SHA"
           python scripts/songbook-live-check.py --sha "$EXPECTED_SHA"
           python scripts/songbook-bulk-live-check.py --sha "$EXPECTED_SHA"
+          python scripts/songbook-cover-live-check.py --sha "$EXPECTED_SHA"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

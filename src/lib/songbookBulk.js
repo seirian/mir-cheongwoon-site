@@ -2,11 +2,13 @@ import {publicSong,validateEntry} from './songbookV2.js';
 import {REQUEST_STATES} from './songbookUsage.js';
 
 export const SONGBOOK_PAGE_SIZES=Object.freeze([10,25,50,100]);
-export function songbookPageSize(value) {
-  return SONGBOOK_PAGE_SIZES.find(n=>String(n)===String(value))||25;
+export const SONGBOOK_COVER_PAGE_SIZES=Object.freeze([24,48,96]);
+export const songbookPageSizes=layout=>layout==='cover'?SONGBOOK_COVER_PAGE_SIZES:SONGBOOK_PAGE_SIZES;
+export function songbookPageSize(value,layout='list') {
+  return songbookPageSizes(layout).find(n=>String(n)===String(value))||(layout==='cover'?24:25);
 }
-export function songbookPage(items,requested,size) {
-  const pageSize=songbookPageSize(size),pages=Math.max(1,Math.ceil(items.length/pageSize)),n=Number(requested);
+export function songbookPage(items,requested,size,layout='list') {
+  const pageSize=songbookPageSize(size,layout),pages=Math.max(1,Math.ceil(items.length/pageSize)),n=Number(requested);
   const page=Math.max(1,Math.min(pages,Number.isFinite(n)?Math.floor(n):1));
   return {page,pages,pageSize,items:items.slice((page-1)*pageSize,page*pageSize)};
 }
