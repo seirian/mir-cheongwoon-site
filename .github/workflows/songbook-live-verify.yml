@@ -24,6 +24,7 @@ jobs:
         run: |
           python -m pip install playwright==1.57.0
           if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+          python scripts/songbook-font-live-check.py --sha "$EXPECTED_SHA"
           python scripts/songbook-live-check.py --sha "$EXPECTED_SHA"
       - uses: actions/upload-artifact@v4
         if: always()
