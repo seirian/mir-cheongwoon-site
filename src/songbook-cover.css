@@ -4,8 +4,7 @@
 .ck-production .sg-view-switch{display:inline-flex;gap:2px;padding:3px;background:#101722;border:1px solid #34425a;border-radius:9px;flex-shrink:0}
 .ck-production .sg-view-switch>button{min-height:36px;padding:7px 11px;border:1px solid transparent;border-radius:6px;background:transparent;color:#a4b4cd;font-size:12px;gap:6px;white-space:nowrap}
 .ck-production .sg-view-switch>button[aria-pressed=true]{background:#293d5c;color:#eef5ff;border-color:#6f91c2;box-shadow:0 1px 3px #0003}
-.ck-production .sg-cover-hint{margin:0 0 14px;font-size:11px;color:#96a9c7;line-height:1.7}
-.ck-production .sg-cover-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(164px,1fr));gap:18px 16px;align-items:stretch}
+.ck-production .sg-cover-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px 16px;align-items:stretch}
 .ck-production .sg-cover-card{display:flex;flex-direction:column;min-width:0;overflow:hidden;background:#141c2a;border:1px solid #293448;border-radius:10px;transition:border-color .16s ease,box-shadow .16s ease}
 .ck-production .sg-cover-card:hover,.ck-production .sg-cover-card:focus-within{border-color:#6788b8;box-shadow:0 5px 18px #0003}
 .ck-production .sg-cover-card.is-selected{border-color:#9fc7ff;box-shadow:0 0 0 1px #9fc7ff;background:#1a2b43}
@@ -39,6 +38,8 @@
 .ck-production .sg-card-difficulty>small{font-size:10px;color:#9badc7}
 .ck-production .sg-card-bottom .ck-status{font-size:9px;line-height:1.4;padding:3px 5px;white-space:nowrap;gap:3px}
 .ck-production .sg-card-edit{width:100%;min-height:36px;font-size:11px;margin-top:4px;padding:7px;border-radius:6px;background:#1b2a40}
+/* 24/48/96 fill complete rows: desktop 6, tablet 4, mobile 2 columns. */
+@media(min-width:621px) and (max-width:1023px){.ck-production .sg-cover-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:620px){
  .ck-production .sg-display-controls{gap:10px;justify-content:space-between;width:100%}
  .ck-production .sg-view-switch>button{min-height:38px;font-size:11px;padding:6px 8px}
@@ -51,7 +52,6 @@
  .ck-production .sg-card-favorite,.ck-production .sg-card-select{width:40px;height:40px;min-height:40px;top:5px}
  .ck-production .sg-card-favorite{right:5px}.ck-production .sg-card-select{left:5px}
  .ck-production .sg-card-edit{min-height:44px}
- .ck-production .sg-cover-hint{font-size:10px;margin-bottom:12px}
 }
 @media(max-width:370px){.ck-production .sg-display-controls{row-gap:8px}.ck-production .sg-display-controls .ck-page-size{flex-wrap:wrap;gap:2px;justify-content:flex-end;max-width:94px}.ck-production .sg-display-controls .ck-page-size select{min-height:40px}.ck-production .sg-card-content{padding:9px}.ck-production .sg-card-bottom{gap:4px}}
 @media(prefers-reduced-motion:reduce){.ck-production .sg-cover-card{transition:none}}

@@ -59,25 +59,32 @@ with sync_playwright() as pw:
   d=page.get_by_role('dialog',name='선택 곡 신청 상태 변경',exact=True);expect(d).to_be_visible();return d
  try:
   go();expect(page.locator('.ck-song')).to_have_count(25);before=page.locator('.ck-song').evaluate_all('(els)=>els.map(e=>e.dataset.songId)')
-  page.get_by_role('button',name='커버형',exact=True).click();expect(page.locator('.sg-cover-card')).to_have_count(25);assert before==page.locator('.sg-cover-card').evaluate_all('(els)=>els.map(e=>e.dataset.songId)')
+  page.get_by_role('button',name='커버형',exact=True).click();expect(page.locator('.sg-cover-card')).to_have_count(24);assert before[:24]==page.locator('.sg-cover-card').evaluate_all('(els)=>els.map(e=>e.dataset.songId)')
   assert not page.locator('.sg-card-select').count();checks.append('production viewer shares identical data between list/cover and gets no administrator selection')
   page.goto(base+'account/',wait_until='networkidle');page.get_by_label('아이디',exact=True).fill('mir.review');page.get_by_label('비밀번호',exact=True).fill('fixture password');page.locator('form').get_by_role('button',name='로그인',exact=True).click();expect(page.get_by_role('heading',name='mir.review',exact=True)).to_be_visible()
   go(layout='list',perPage='25');select(1);select(2);expect(toolbar()).to_contain_text('2곡 선택')
-  page.get_by_role('button',name='커버형',exact=True).click();expect(page.locator('.sg-card-select input:checked')).to_have_count(2);expect(toolbar()).to_contain_text('2곡 선택')
+  page.get_by_role('button',name='커버형',exact=True).click();expect(page.locator('.sg-card-select input:checked')).to_have_count(0);expect(toolbar()).to_contain_text('0곡 선택')
+  for n in (1,2):page.locator(f'.sg-cover-card[data-song-id="bulk-fixture-{n:03d}"] .sg-card-select input').check()
+  expect(toolbar()).to_contain_text('2곡 선택')
+  page.get_by_role('button',name='커버형',exact=True).click();expect(toolbar()).to_contain_text('2곡 선택')
   d=open_confirm('available');expect(d.locator('.ck-bulk-targets li')).to_have_count(2);d.get_by_role('button',name='취소',exact=True).click();assert not writes
-  checks.append('administrator checkbox selection survives presentation changes; bulk confirmation still targets only selected records, cancel never writes')
+  checks.append('layout-dependent page membership clears old selection; repeated active layout preserves it; new cover selection confirms exact targets and cancel never writes')
   page.locator('.sg-cover-card[data-song-id="bulk-fixture-001"]').get_by_role('button',name='일괄검증 001 곡 빠른 수정',exact=True).click();d=page.get_by_role('dialog',name='빠른 수정',exact=True);expect(d.get_by_label('신청 가능 상태',exact=True)).to_have_value('unreviewed');expect(d).to_contain_text('기존 공개 안내');d.get_by_role('button',name='취소',exact=True).click()
-  page.get_by_label('이 페이지 전체 선택',exact=True).check();expect(page.locator('.sg-card-select input:checked')).to_have_count(25)
-  page.get_by_role('button',name='목록형',exact=True).click();expect(page.locator('.ck-song-select input:checked')).to_have_count(25)
-  page.get_by_role('button',name='커버형',exact=True).click();page.get_by_label('페이지당 곡 수',exact=True).select_option('10');expect(page.locator('.sg-cover-card')).to_have_count(10);expect(toolbar()).to_contain_text('0곡 선택')
-  checks.append('quick editor preserves original metadata; select-page works in cover and returns to list, page-length change clears selection')
+  page.get_by_label('이 페이지 전체 선택',exact=True).check();expect(page.locator('.sg-card-select input:checked')).to_have_count(24)
+  page.get_by_role('button',name='목록형',exact=True).click();expect(page.locator('.ck-song-select input:checked')).to_have_count(0);expect(page.locator('.ck-song')).to_have_count(25)
+  page.get_by_role('button',name='커버형',exact=True).click();page.get_by_label('이 페이지 전체 선택',exact=True).check();page.get_by_label('페이지당 곡 수',exact=True).select_option('48');expect(page.locator('.sg-cover-card')).to_have_count(48);expect(toolbar()).to_contain_text('0곡 선택')
+  checks.append('quick editor preserves metadata; select-page uses24 cover songs, switching to list or changing to48 clears selection')
+  page.get_by_label('페이지당 곡 수',exact=True).select_option('96');page.get_by_label('이 페이지 전체 선택',exact=True).check();expect(page.locator('.sg-card-select input:checked')).to_have_count(96)
+  d=open_confirm('available');expect(d.locator('.ck-bulk-targets li')).to_have_count(96);d.get_by_role('button',name='취소',exact=True).click();assert not writes
+  page.get_by_label('페이지당 곡 수',exact=True).select_option('24');expect(toolbar()).to_contain_text('0곡 선택')
+  checks.append('cover96 select-all stays within100-song batch limit, confirms96 targets, and cancellation makes no writes')
   for width in [320,390,768,1440,1920]:
    page.set_viewport_size({'width':width,'height':1050});page.locator('.sg-display-controls').scroll_into_view_if_needed();assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
    for c in page.locator('.sg-cover-card').all():
     b=c.bounding_box();cb=c.locator('.sg-card-select').bounding_box();assert cb['x']>=b['x'] and cb['x']+cb['width']<=b['x']+b['width']
    page.screenshot(path=str(out/f'cover-admin-{width}.png'))
   checks.append('administrator cover selection/quick actions stay within cards at five widths without horizontal overflow')
-  state['admin']=False;page.reload(wait_until='networkidle');expect(page.locator('.sg-cover-card')).to_have_count(10);expect(page.locator('.sg-card-select,.ck-bulk-toolbar')).to_have_count(0)
+  state['admin']=False;page.reload(wait_until='networkidle');expect(page.locator('.sg-cover-card')).to_have_count(24);expect(page.locator('.sg-card-select,.ck-bulk-toolbar')).to_have_count(0)
   assert not writes and not errors;checks.append('server-denied member sees cover layout without bulk/quick-edit controls; no writes made')
   (out/'report.json').write_text(json.dumps({'checks':checks,'writes':writes,'javascript_errors':errors,'live_mutations':0},ensure_ascii=False,indent=2)+'\n')
  except Exception:

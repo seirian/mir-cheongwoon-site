@@ -2,7 +2,7 @@ import SongbookViewSwitch from '../components/songbook/SongbookViewSwitch.jsx';
 import SongbookCoverCard from '../components/songbook/SongbookCoverCard.jsx';
 import {SONGBOOK_LAYOUT_KEY,readSongbookLayout,resolveSongbookLayout,writeSongbookLayout} from '../lib/songbookLayout.js';
 import '../songbook-cover.css';
-import {SONGBOOK_PAGE_SIZES,songbookPage} from '../lib/songbookBulk.js';
+import {songbookPageSizes,songbookPage} from '../lib/songbookBulk.js';
 import BulkStatusDialog from '../components/songbook/BulkStatusDialog.jsx';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
@@ -34,7 +34,12 @@ export default function SongbookUsabilityPage({favoritesKey=FAVORITES_KEY,layout
  const [params,setParams]=useSearchParams(),store=useSongbookStore(false),admin=store.admin;
  const [preferredLayout,setPreferredLayout]=useState(()=>{try{return readSongbookLayout(window.localStorage,layoutKey);}catch{return 'list';}});
  const layout=resolveSongbookLayout(params.get('layout'),preferredLayout);
- function changeLayout(value){setPreferredLayout(value);try{writeSongbookLayout(window.localStorage,value,layoutKey);}catch{/* Storage is optional; URL/state still work. */}update({layout:value},false);}
+ function changeLayout(value){
+  if(value===layout)return;
+  setPreferredLayout(value);try{writeSongbookLayout(window.localStorage,value,layoutKey);}catch{/* Storage is optional; URL/state still work. */}
+  // Different page sizes change membership; never carry a hidden bulk selection.
+  setSelection({});update({layout:value,perPage:'',song:''});
+ }
  const [input,setInput]=useState(params.get('q')||''),[editing,setEditing]=useState(null),[fullEditing,setFullEditing]=useState(null),[deleting,setDeleting]=useState(null),[trashOpen,setTrashOpen]=useState(false),[manualCopy,setManualCopy]=useState(null);
  const [favorites,setFavorites]=useState(()=>{try{const v=JSON.parse(localStorage.getItem(favoritesKey)||'[]');return Array.isArray(v)?v.filter(id=>typeof id==='string'):[];}catch{return [];}});
  const [notice,showNotice,noticeProps]=useTimedNotice(),[deleteNotice,setDeleteNotice,deleteNoticeProps]=useTimedNotice();
@@ -46,9 +51,9 @@ export default function SongbookUsabilityPage({favoritesKey=FAVORITES_KEY,layout
  useEffect(()=>setInput(params.get('q')||''),[params.get('q')]);
  const songs=useMemo(()=>store.songs.map(enrichUsage),[store.songs]);
  const results=useMemo(()=>selectUsageSongs(songs,params,favorites,admin),[songs,params,favorites,admin]);
- const page=songbookPage(results,params.get('page'),params.get('perPage')),selected=songs.find(s=>s.id===params.get('song')),ready=store.ready;
+ const page=songbookPage(results,params.get('page'),params.get('perPage'),layout),selected=songs.find(s=>s.id===params.get('song')),ready=store.ready;
  const selectionScope=new URLSearchParams(params);selectionScope.delete('song');selectionScope.delete('layout');
- const scopeKey=selectionScope.toString();
+ const scopeKey=layout+':'+selectionScope.toString();
  useEffect(()=>{setSelection({});},[scopeKey]);
  const pageIds=page.items.map(s=>s.id).join('\n');
  useEffect(()=>{const ids=new Set(page.items.map(s=>s.id));setSelection(old=>Object.fromEntries(Object.entries(old).filter(([id])=>ids.has(id))));},[pageIds]);
@@ -86,7 +91,7 @@ export default function SongbookUsabilityPage({favoritesKey=FAVORITES_KEY,layout
   setEditing(nextSong?quickDraft(nextSong,store.revisionFor(nextSong.id)):null);
  }
  async function rate(id,value){try{await store.saveRating(id,value);showNotice('미르님의 숙련도를 저장했습니다.');}catch(e){showNotice(e.message,{autoDismiss:false});}}
- function deleted(song){setDeleting(null);setFullEditing(null);setEditing(null);setDeleteNotice(`「${song.title}」을 노래책에서 삭제했습니다.`);const next=favorites.filter(id=>id!==song.id);setFavorites(next);try{localStorage.setItem(favoritesKey,JSON.stringify(next));}catch{}const remaining=songbookPage(results.filter(s=>s.id!==song.id),page.page,page.pageSize);update({song:'',page:remaining.page>1?String(remaining.page):''},false);}
+ function deleted(song){setDeleting(null);setFullEditing(null);setEditing(null);setDeleteNotice(`「${song.title}」을 노래책에서 삭제했습니다.`);const next=favorites.filter(id=>id!==song.id);setFavorites(next);try{localStorage.setItem(favoritesKey,JSON.stringify(next));}catch{}const remaining=songbookPage(results.filter(s=>s.id!==song.id),page.page,page.pageSize,layout);update({song:'',page:remaining.page>1?String(remaining.page):''},false);}
  const chips=[];
  if(params.get('q'))chips.push(['q',`검색: ${params.get('q')}`]);cats.forEach(c=>chips.push(['category',c,c]));
  if(Object.hasOwn(STATUS,params.get('request')))chips.push(['request',STATUS[params.get('request')]]);
@@ -121,10 +126,9 @@ export default function SongbookUsabilityPage({favoritesKey=FAVORITES_KEY,layout
       <button type="button" className="ck-text-button" disabled={!chosen.length||store.saving} onClick={()=>setSelection({})}>선택 해제</button>
       <small>현재 페이지에서 선택한 곡만 변경합니다. 페이지·검색 조건 변경 시 선택은 해제됩니다.</small>
      </section>}
-     <div className="sg-display-controls"><SongbookViewSwitch value={layout} onChange={changeLayout}/><label className="ck-page-size">페이지당 곡 수<select aria-label="페이지당 곡 수" value={page.pageSize} onChange={e=>update({perPage:e.target.value,song:''})}>{SONGBOOK_PAGE_SIZES.map(size=><option key={size} value={size}>{size}곡씩</option>)}</select></label></div>
+     <div className="sg-display-controls"><SongbookViewSwitch value={layout} onChange={changeLayout}/><label className="ck-page-size">페이지당 곡 수<select aria-label="페이지당 곡 수" value={page.pageSize} onChange={e=>update({perPage:e.target.value,song:''})}>{songbookPageSizes(layout).map(size=><option key={size} value={size}>{size}곡씩</option>)}</select></label></div>
     </div>
     {layout==='list'&&<div className={`ck-list-heading ${admin?'ck-bulk-heading':''}`} aria-hidden="true">{admin&&<span>선택</span>}<span>곡 · 신청 안내</span><span>미르 숙련도 / 참고 난이도</span><span>신청 도구</span></div>}
-    {layout==='cover'&&<p className="sg-cover-hint">커버나 곡명을 누르면 신청 문구·연결 영상·미르 숙련도를 확인할 수 있습니다.</p>}
     {layout==='cover'?<div className="sg-cover-grid" id="songbook-results" data-layout="cover">{ready&&page.items.map(song=><SongbookCoverCard key={song.id} song={song} open={()=>update({song:song.id},false)} favorite={favorites.includes(song.id)} onFavorite={()=>toggleFavorite(song)} admin={admin} checked={Object.hasOwn(selection,song.id)} onSelect={checked=>selectSong(song,checked)} disabled={!store.canEdit||store.saving} onEdit={()=>openEditor(song)}/>)}</div>:(
     <div className="ck-songs" id="songbook-results" data-layout="list">{ready&&page.items.map(song=><article className={`ck-song sb2-song ${admin?'ck-bulk-song':''} ${Object.hasOwn(selection,song.id)?'is-selected':''}`} key={song.id} data-song-id={song.id}>{admin&&<label className="ck-song-select"><input type="checkbox" aria-label={`${song.title} 선택`} checked={Object.hasOwn(selection,song.id)} disabled={!store.canEdit||store.saving} onChange={e=>selectSong(song,e.target.checked)}/><span>곡 선택</span></label>}<div className="ck-track"><SongCover song={song}/><div className="ck-track-copy"><div className="ck-title"><button type="button" className="sb2-title" aria-label={`${song.title} 상세 보기`} onClick={()=>update({song:song.id},false)}>{song.title}</button><StatusBadge value={song.requestStatus}/></div><p>{song.artist||'가수 미확인'}</p></div><div className="ck-category-video-row"><SongCategories song={song}/><VideoLinks song={song} compact/></div>{song.publicNote&&<p className="ck-song-note">{song.publicNote}</p>}</div><UsageRating song={song} store={store} rate={rate}/><div className="ck-song-actions"><button type="button" className="ck-copy" aria-label={`${song.title} 신청 문구 복사`} disabled={song.requestStatus==='unavailable'} title={song.requestStatus==='unavailable'?'신청 불가로 안내된 곡입니다.':undefined} onClick={()=>copySong(song)}><Copy size={15}/>{song.requestStatus==='unavailable'?'신청 불가':'신청 문구'}</button><button type="button" className="ck-icon" aria-label={`${song.title} 곡 링크 복사`} onClick={()=>shareSong(song)}><Link2 size={17}/></button><button type="button" className="ck-icon" aria-label={`${song.title} 즐겨찾기`} aria-pressed={favorites.includes(song.id)} onClick={()=>toggleFavorite(song)}><Heart size={18} fill={favorites.includes(song.id)?'currentColor':'none'}/></button>{admin&&<button type="button" className="ck-quick" aria-label={`${song.title} 빠른 수정`} disabled={!store.canEdit||store.saving} onClick={()=>openEditor(song)}><Pencil size={14}/>빠른 수정</button>}</div></article>)}</div>
     )}
