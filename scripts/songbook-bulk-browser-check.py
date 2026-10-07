@@ -96,9 +96,15 @@ with sync_playwright() as pw:
    page.set_viewport_size({'width':width,'height':1050});page.locator('.ck-list-controls').scroll_into_view_if_needed();assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),width
    cb=page.locator('.ck-list-controls').bounding_box();sb=page.locator('.ck-page-size').bounding_box();assert abs(sb['x']+sb['width']-cb['x']-cb['width'])<2,(width,cb,sb)
    assert sb['y']+sb['height']<=page.locator('.ck-songs').bounding_box()['y']+1
+   if width<=620:
+    action=toolbar().get_by_role('button',name='선택 곡 상태 변경',exact=True);select_box=toolbar().get_by_label('일괄 변경할 신청 상태',exact=True)
+    action_box=action.bounding_box();select_bounds=select_box.bounding_box()
+    assert action_box['width']>=150 and 44<=action_box['height']<=50,(width,action_box)
+    assert action_box['y']>=select_bounds['y']+select_bounds['height'],(width,action_box,select_bounds)
+    assert action.evaluate('(el)=>el.scrollWidth<=el.clientWidth'),'bulk action text must fit without clipping'
    if width in [390,1440]:page.screenshot(path=str(out/f'bulk-admin-{width}.png'))
   page.set_viewport_size({'width':390,'height':1050});select(1);d=open_confirm('available');page.screenshot(path=str(out/'bulk-confirm-390.png'));d.get_by_role('button',name='취소',exact=True).click()
-  checks.append('six viewport widths: page size aligned to right edge above list, checkbox/toolbar accessible, dialog usable and no horizontal overflow')
+  checks.append('six viewport widths: page size aligned to right edge above list, checkbox/toolbar accessible, mobile action label fits on its own row, dialog usable and no horizontal overflow')
   state['admin']=False;go(mode='admin');expect(toolbar()).to_have_count(0);expect(page.locator('.ck-song-select')).to_have_count(0);expect(length).to_have_value('25')
   page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click();expect(toolbar()).to_have_count(0);expect(page.locator('.ck-song-select')).to_have_count(0)
   assert not errors

@@ -57,3 +57,14 @@
 @media(max-width:1000px){.ck-production .ck-song.ck-bulk-song,.ck-production .ck-bulk-heading{grid-template-columns:26px minmax(0,1fr) 145px 170px;column-gap:10px}}
 @media(max-width:760px){.ck-production .ck-bulk-toolbar{flex-basis:100%}.ck-production .ck-list-controls{gap:10px}}
 @media(max-width:620px){.ck-production .ck-song.ck-bulk-song{grid-template-columns:1fr}.ck-production .ck-song-select{justify-content:flex-start;width:auto;gap:8px;font-size:10px;min-height:32px}.ck-production .ck-song-select>span{display:inline}.ck-production .ck-bulk-toolbar button,.ck-production .ck-bulk-toolbar select,.ck-production .ck-select-page,.ck-production .ck-page-size select{min-height:44px}.ck-production .ck-bulk-toolbar{gap:8px;padding:10px}.ck-production .ck-bulk-toolbar select{flex:1;min-width:130px}.ck-production .ck-bulk-toolbar .ck-primary{flex:1}.ck-production .ck-page-size{font-size:10px}}
+
+/* Give mobile bulk actions their own rows instead of squeezing Korean labels. */
+@media(max-width:620px){
+ .ck-production .ck-bulk-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+ .ck-production .ck-bulk-toolbar .ck-select-page{grid-column:1;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>span{grid-column:2;justify-self:end;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>select{grid-column:1 / -1;width:100%;min-width:0}
+ .ck-production .ck-bulk-toolbar>.ck-primary{grid-column:1;min-width:0;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>.ck-text-button{grid-column:2;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>small{grid-column:1 / -1}
+}
