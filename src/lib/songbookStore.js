@@ -162,13 +162,15 @@ export function useSongbookStore(demo) {
   }
   async function saveSong(input) {
     if (!canEdit || writeLock.current) throw Error('편집 권한이 없거나 저장 중입니다.');
+    const previous = entries.find(e => e.id === input.id);
+    if (Object.hasOwn(input,'expectedRevision') && (previous?.revision||0)!==input.expectedRevision) throw Error('다른 화면에서 변경되었습니다. 창을 닫고 다시 불러온 뒤 저장해 주세요.');
     const payload = validateEntry({ ...input, id: input.id || 'custom-' + crypto.randomUUID() }, {allowUnknownArtist: !IS_REVIEW_PREVIEW});
     if (duplicateOf(songs, payload)) throw Error('같은 곡이 이미 있습니다. 기존 곡을 편집해주세요.');
     writeLock.current = true; setSaving(true);
     try {
       if (demo) persist([...entries.filter(e => e.id !== payload.id), payload], ratings);
       else {
-        const saved = await write(tables.entries, 'id', payload, entries.find(e => e.id === payload.id));
+        const saved = await write(tables.entries, 'id', payload, previous);
         if (!mode.current) setEntries(old => [...old.filter(e => e.id !== saved.id), saved]);
       }
       return payload.id;
@@ -187,5 +189,5 @@ export function useSongbookStore(demo) {
       }
     } finally { writeLock.current = false; setSaving(false); }
   }
-  return { songs, session, role, admin, authChecking, ready, error, autoError, saving, canEdit, canRate, canDelete, deleteSong, restoreSong, saveSong, saveRating, refresh, client: songbookClient };
+  return { songs, revisionFor:id=>entries.find(e=>e.id===id)?.revision||0, session, role, admin, authChecking, ready, error, autoError, saving, canEdit, canRate, canDelete, deleteSong, restoreSong, saveSong, saveRating, refresh, client: songbookClient };
 }
