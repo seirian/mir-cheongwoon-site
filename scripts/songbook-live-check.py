@@ -57,6 +57,20 @@ with sync_playwright() as pw:
   expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_have_count(0)
   page.goto(origin+'/songbook/review/',wait_until='domcontentloaded');expect(page).to_have_url(origin+'/songbook',timeout=20000)
   checks.append('production demo query cannot enable writes and review path redirects')
+  page.goto(origin+'/songbook/?mode=admin&data=sample&attention=artist&youtube=missing',wait_until='domcontentloaded')
+  expect(page.locator('.ck-production .ck-song')).to_have_count(24,timeout=20000)
+  expect(page.locator('.ck-admin')).to_have_count(0)
+  expect(page.get_by_role('button',name='관리자 체험',exact=True)).to_have_count(0)
+  first=page.locator('.ck-song').first
+  expect(first.locator('.ck-status')).to_be_visible()
+  expect(first.locator('.ck-song-categories')).to_be_visible()
+  expect(first.get_by_role('button',name=re.compile('신청 문구 복사$'))).to_be_visible()
+  expect(first.get_by_role('button',name=re.compile('곡 링크 복사$'))).to_be_visible()
+  for button in first.locator('.ck-video').all():
+   assert '대표' not in button.inner_text()
+   expect(button.locator('svg')).to_have_count(1)
+   expect(button).to_have_attribute('target','_blank')
+  checks.append('approved usage UI is active: per-song states/categories, row copy/share, platform labels without arrows; preview/admin URL flags ignored')
   assert not errors and not writes, {'errors':errors,'writes':writes}
   assert any(r['path']=='/rest/v1/songbook_entries' and r['status']==200 for r in api_responses)
   assert any(r['path']=='/rest/v1/songbook_ratings' and r['status']==200 for r in api_responses)

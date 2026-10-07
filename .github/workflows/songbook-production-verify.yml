@@ -69,6 +69,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-review-search-assertions.sql
           psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_deletion.sql
           psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-deletion-assertions.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/ops/songbook_usage.sql
+          psql -v ON_ERROR_STOP=1 -f tests/sql/songbook-usage-assertions.sql
       - name: Production build and isolated username login browser checks
         run: |
           sudo apt-get update -qq
@@ -87,6 +89,11 @@ jobs:
           python scripts/songbook-platform-production-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/platform-production
           python scripts/songbook-deletion-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/deletion
           python scripts/songbook-video-presence-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/video-presence
+          python scripts/songbook-usability-production-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/usability-production
+          node scripts/build-songbook-check.mjs --fixture
+          npx vite preview --config vite.songbook-check.config.js --base /_test_check/ --host 127.0.0.1 --port 4179 > /tmp/songbook-check.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4179/_test_check/songbook/ >/dev/null && break || sleep 1; done
+          python scripts/songbook-check-browser.py --url http://127.0.0.1:4179/_test_check/ --out songbook-production-report/preview-regression
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,0 +1,19 @@
+/* Round 3: category badges on the left, platform buttons on the right in one row. */
+.ck-song>.ck-track{display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:14px;row-gap:6px;align-items:start}
+.ck-track>.ck-track-copy{grid-column:2;min-width:0}
+.ck-track>.ck-category-video-row,.ck-track>.ck-song-note{grid-column:2;min-width:0}
+.ck-category-video-row{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;min-width:0;max-width:100%}
+.ck-category-video-row>.ck-song-categories{flex:0 1 auto;min-width:0;margin:0;align-items:center}
+.ck-category-video-row>.ck-videos.compact{flex:0 0 auto;flex-wrap:nowrap;gap:5px;margin:0;white-space:nowrap}
+.ck-category-video-row .ck-song-categories>span{font-size:10px;padding:3px 6px}
+.ck-video{white-space:nowrap}
+.ck-video>svg{width:16px;height:14px}
+.ck-video.is-youtube{color:#ffa6aa;background:#241f2a;border-color:#544050}
+.ck-video.is-soop{color:#9bd0fc;background:#192435;border-color:#344b68}
+.ck-video:hover{filter:brightness(1.15);text-decoration:none}
+.ck-video.is-youtube small,.ck-video.is-soop small{color:inherit}
+.ck-more-videos{font-size:10px;color:var(--ck-muted);white-space:nowrap}
+.ck-track>p.ck-song-note{font-size:11px;color:#bfcae0;border-left:2px solid #455a7b;padding-left:8px;margin:2px 0;line-height:1.6;overflow-wrap:anywhere}
+/* Keep narrow layouts within the card rather than clipping category text or wrapping the video group. */
+@media(max-width:1000px){.ck-track>.ck-category-video-row,.ck-track>.ck-song-note{grid-column:1/-1}}
+@media(max-width:620px){.ck-song>.ck-track{grid-template-columns:44px minmax(0,1fr);column-gap:10px}.ck-videos.compact .ck-video{min-height:44px;padding:5px 7px;gap:4px}.ck-category-video-row{gap:6px}.ck-track>p.ck-song-note{font-size:10px}}
