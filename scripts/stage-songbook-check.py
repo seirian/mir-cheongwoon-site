@@ -34,5 +34,5 @@ def main():
  Path('songbook-check-deploy.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
  print('PREVIEW:',report['preview_url'])
  if os.environ.get('GITHUB_STEP_SUMMARY'):
-  with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('### Songbook UX review 1\n\n'+report['preview_url']+'\n\n'+report['admin_url']+'\n\nStage only. Production routing unchanged.\n')
+  with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('### Songbook UX review 3\n\n'+report['preview_url']+'\n\n'+report['admin_url']+'\n\nStage only. Production routing unchanged.\n')
 if __name__=='__main__':main()

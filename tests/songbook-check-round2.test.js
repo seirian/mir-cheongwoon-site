@@ -57,5 +57,5 @@ test('round2: categories render in list, detail and quick edit, with wrap-only s
  const badges=readFileSync('src/songbook-check/SongCategories.jsx','utf8');assert.match(badges,/categories\.map/);assert.doesNotMatch(badges,/\.slice\(/);
  const css=readFileSync('src/songbook-check/round2.css','utf8');assert.match(css,/flex-wrap:wrap/);assert.match(css,/overflow-wrap:anywhere/);assert.doesNotMatch(css,/display:none|line-clamp|text-overflow|overflow:hidden/);
  assert.match(dialogs,/const rep=representative\(draft\)/);assert.doesNotMatch(dialogs,/type="radio" name="representative"/);
- for(const text of [page,dialogs,readFileSync('songbook-check.html','utf8')]){assert.match(text,/2차 검토/);assert.doesNotMatch(text,/1차 검토/);}
+ for(const text of [page,dialogs,readFileSync('songbook-check.html','utf8')]){assert.match(text,/3차 검토/);assert.doesNotMatch(text,/1차 검토/);}
 });

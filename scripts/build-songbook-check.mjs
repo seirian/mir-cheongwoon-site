@@ -55,7 +55,7 @@ RewriteRule ^(?:songbook/?)?$ songbook/index.html [END]
 `);
 await copyFile('public/icon_img.png',`${out}/icon_img.png`);
 await writeFile(`${out}/songbook-check-snapshot.json`,JSON.stringify(snapshot));
-await writeFile(`${out}/check-version.json`,JSON.stringify({preview:true,reviewVersion:2,release:rid,commit:process.env.SOURCE_COMMIT||'local',snapshotAt:snapshot.capturedAt,count:snapshot.songs.length}));
+await writeFile(`${out}/check-version.json`,JSON.stringify({preview:true,reviewVersion:3,release:rid,commit:process.env.SOURCE_COMMIT||'local',snapshotAt:snapshot.capturedAt,count:snapshot.songs.length}));
 for(const entry of await readdir(`${out}/assets`)){
  const text=await readFile(`${out}/assets/${entry}`,'utf8');
  for(const disallowed of ['supabase.co','service_role','/auth/v1/','songbook_entries','gurmir.com','mir427.vercel.app','originalProficiency'])if(text.includes(disallowed))throw Error(`Unexpected production dependency in ${entry}`);
