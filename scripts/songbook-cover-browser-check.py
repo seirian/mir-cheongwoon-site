@@ -50,11 +50,16 @@ with sync_playwright() as pw:
   expect(length.locator('option')).to_have_text(['24곡씩','48곡씩','96곡씩']);expect(length).to_have_value('24')
   for n in (24,48,96):
    length.select_option(str(n));expect(page.locator('.sg-cover-card')).to_have_count(min(n,len(songs)))
+   expect(page.locator('.ck-pagination')).to_contain_text(f'1 / {(len(songs)+n-1)//n}')
    first=ids();page.get_by_role('button',name='다음 페이지',exact=True).click()
-   expect(page.locator('.sg-cover-card')).to_have_count(min(n,len(songs)-n));assert not set(first).intersection(ids())
+   # Equal-sized pages can have the same count before navigation renders.
+   # Wait for the actual page indicator before comparing all displayed IDs.
    expect(page.locator('.ck-pagination')).to_contain_text(f'2 / {(len(songs)+n-1)//n}')
+   expect(page.locator('.sg-cover-card')).to_have_count(min(n,len(songs)-n));assert not set(first).intersection(ids())
    page.reload(wait_until='domcontentloaded');expect(page.locator('.sg-cover-card')).to_have_count(min(n,len(songs)-n));expect(length).to_have_value(str(n))
-   page.get_by_role('button',name='이전 페이지',exact=True).click();assert ids()==first
+   page.get_by_role('button',name='이전 페이지',exact=True).click()
+   expect(page.locator('.ck-pagination')).to_contain_text(f'1 / {(len(songs)+n-1)//n}')
+   expect(page.locator('.sg-cover-card')).to_have_count(min(n,len(songs)));assert ids()==first
   length.select_option('24');checks.append('cover offers only24/48/96, default24; each length pages without overlap and survives reload')
   toggle('list');expect(length.locator('option')).to_have_text(['10곡씩','25곡씩','50곡씩','100곡씩']);expect(length).to_have_value('25')
   for n in (10,25,50,100):length.select_option(str(n));expect(page.locator('.ck-song')).to_have_count(min(n,len(songs)))
