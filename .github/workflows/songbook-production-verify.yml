@@ -35,6 +35,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Preserve tracked source for reproducible verification
+        run: |
+          mkdir -p songbook-production-source
+          git archive HEAD -o songbook-production-source/repository.tar
+          git rev-parse HEAD > songbook-production-source/commit.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: songbook-production-source
+          path: songbook-production-source/
+          retention-days: 3
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
