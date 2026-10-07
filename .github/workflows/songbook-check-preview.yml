@@ -9,10 +9,12 @@ concurrency:
   group: songbook-check-preview
   cancel-in-progress: false
 jobs:
-  source:
+  preview:
     if: github.ref == 'refs/heads/feature/songbook_check'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    env:
+      SOURCE_COMMIT: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,16 +23,48 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Preserve source and public dependencies for offline verification
-        run: |
-          mkdir -p songbook-check-source
-          git archive HEAD -o songbook-check-source/repository.tar
-          git rev-parse HEAD > songbook-check-source/commit.txt
-          git status --short > songbook-check-source/status.txt
-          npm ci --ignore-scripts --no-audit --no-fund
-          tar -czf songbook-check-source/node-modules.tar.gz node_modules
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: songbook-check-source
-          path: songbook-check-source/
-          retention-days: 3
+          python-version: '3.13'
+      - name: Verify unchanged production code and new pure logic
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+      - name: Browser dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
+          python -m pip install playwright==1.57.0 paramiko==5.0.0
+          if ! command -v google-chrome && ! command -v chromium; then python -m playwright install --with-deps chromium; fi
+      - name: Isolated fixture build and browser checks
+        run: |
+          node scripts/build-songbook-check.mjs --fixture
+          npx vite preview --config vite.songbook-check.config.js --base /_test_check/ --host 127.0.0.1 --port 4179 > /tmp/songbook-check.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4179/_test_check/songbook/ >/dev/null && break || sleep 1; done
+          python scripts/songbook-check-browser.py --url http://127.0.0.1:4179/_test_check/ --out check-report/local
+      - name: Read-only public catalog configuration
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: bash scripts/prepare-public-build-config.sh
+      - name: Build isolated noindex review from a public snapshot
+        run: |
+          rid="r$(date -u +%Y%m%d%H%M%S)_${SOURCE_COMMIT:0:8}"
+          echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
+          RELEASE_ID="$rid" CHECK_BASE="/_yeop_releases/${rid}/" node scripts/build-songbook-check.mjs
+      - name: Upload only a new static preview directory; never activate production
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+        run: python scripts/stage-songbook-check.py
+      - name: Public preview verification with local-only review edits
+        run: python scripts/songbook-check-browser.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out check-report/live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: songbook-check-preview
+          path: |
+            check-report/
+            songbook-check-deploy.json
+            dist-songbook-check/check-version.json
+          retention-days: 14
