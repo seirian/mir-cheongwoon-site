@@ -61,6 +61,29 @@ def main():
         def add():
             page.get_by_role('button',name='노래 추가',exact=True).click();d=page.get_by_role('dialog',name='노래 추가',exact=True);expect(d).to_be_visible();return d
         def artist(d):return d.locator('label').filter(has_text='가수·작품').locator('input')
+        def check_identity_alignment(d, mode):
+            title=d.get_by_label('곡명',exact=True)
+            singer=artist(d)
+            group=d.locator('.sb2-form-grid').first
+            hint=group.get_by_text('선택 · 모르면 공란으로 두세요',exact=True)
+            expect(hint).to_be_visible()
+            assert title.evaluate('(e)=>e.required') and not singer.evaluate('(e)=>e.required')
+            for width in (320,390,768,1024,1440,1920):
+                page.set_viewport_size({'width':width,'height':1050})
+                group.scroll_into_view_if_needed()
+                t=title.bounding_box();a=singer.bounding_box();h=hint.bounding_box()
+                assert t and a and h,(mode,width,'missing fields')
+                assert abs(t['height']-a['height'])<=1,(mode,width,t,a)
+                if width>620:
+                    assert abs(t['y']-a['y'])<=1,(mode,width,'input tops differ',t,a)
+                else:
+                    assert a['y']>=t['y']+t['height'],(mode,width,'mobile fields overlap')
+                    assert abs(t['x']-a['x'])<=1 and abs(t['width']-a['width'])<=1
+                assert h['y']>=a['y']+a['height'],(mode,width,'hint must be below artist input')
+                assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
+                group.screenshot(path=str(out/f'editor-{mode}-aligned-{width}.png'))
+            page.set_viewport_size({'width':1440,'height':1050})
+            checks.append(f'{mode} editor: title/artist inputs align with equal height; optional hint below input; six responsive widths')
         def search(d):
             d.get_by_label('추가할 곡 검색',exact=True).fill('검증곡');d.get_by_role('button',name='플랫폼 검색',exact=True).click()
             expect(d.locator('[data-provider=youtube] .sp-result')).to_have_count(1)
@@ -72,7 +95,7 @@ def main():
             expect(page.get_by_role('dialog')).to_have_count(0);expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
             expect(page.locator('.sp-preview,.sp-local-notice')).to_have_count(0)
             checks.append('production query parameters cannot enable preview editing or local-only mode')
-            login();d=add();search(d)
+            login();d=add();check_identity_alignment(d,'add');search(d)
             expect(d.get_by_role('button',name='Melon',exact=True)).to_have_count(0)
             assert not re.search(r'멜론|Melon|이 브라우저에서만',d.inner_text())
             for width in (1440,1024,768,390):
@@ -92,6 +115,7 @@ def main():
             page.reload(wait_until='networkidle');d=page.get_by_role('dialog',name='운영 저장 검증곡',exact=True);expect(d).to_be_visible()
             expect(d.get_by_text('가수 미확인',exact=True)).to_be_visible();d.get_by_role('button',name='곡 정보 편집',exact=True).click()
             d=page.get_by_role('dialog',name='곡 정보 편집',exact=True);expect(artist(d)).to_have_value('')
+            check_identity_alignment(d,'edit')
             for width in (1440,390):
                 page.set_viewport_size({'width':width,'height':1050});artist(d).scroll_into_view_if_needed();page.screenshot(path=str(out/f'production-empty-artist-{width}.png'))
             artist(d).fill('확인된 가수');state['fail_write']=True
