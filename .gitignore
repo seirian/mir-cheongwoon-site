@@ -7,3 +7,6 @@ dist
 # Runtime credential files are provisioned directly, never built or committed.
 **/_songbook_youtube_key.php
 .mir_songbook_keys/
+
+# Isolated cover-view preview build output.
+dist-songbook-cover
