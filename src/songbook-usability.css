@@ -35,3 +35,36 @@
 
 /* Reuse the site's already-loaded Korean web font; CI/desktop OS fonts are not required. */
 .ck-production,.ck-dialog{font-family:'Noto Sans KR',Inter,Pretendard,'Noto Sans CJK KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+
+/* Page length stays at the right edge immediately above the list header. */
+.ck-production .ck-list-controls{display:flex;align-items:flex-end;justify-content:flex-end;gap:16px;margin:8px 0 12px;flex-wrap:wrap}
+.ck-production .ck-page-size{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:11px;color:var(--ck-muted);flex-shrink:0;white-space:nowrap}
+.ck-production .ck-page-size select{width:98px;min-height:38px;font-size:12px;padding:8px 10px}
+.ck-production .ck-bulk-toolbar{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #354b6b;border-radius:10px;background:#152136;font-size:11px}
+.ck-production .ck-bulk-toolbar select{width:140px;min-height:38px;font-size:11px;padding:8px}
+.ck-production .ck-bulk-toolbar button{min-height:38px;font-size:11px;padding:8px 10px}
+.ck-production .ck-bulk-toolbar small{flex-basis:100%;color:var(--ck-muted);line-height:1.6;font-size:10px}
+.ck-production .ck-select-page,.ck-production .ck-song-select{display:flex;align-items:center;gap:6px;min-height:38px;cursor:pointer;margin:0}
+.ck-production .ck-select-page input,.ck-production .ck-song-select input{appearance:auto;accent-color:#91b9f6;width:18px;height:18px;min-height:18px;margin:0;flex-shrink:0;padding:0}
+.ck-production .ck-song.ck-bulk-song,.ck-production .ck-bulk-heading{grid-template-columns:32px minmax(0,1fr) 178px 200px;column-gap:14px}
+.ck-production .ck-song-select{align-self:start;justify-content:center;min-height:44px;width:32px}
+.ck-production .ck-song-select>span{display:none}
+.ck-production .ck-song.is-selected{background:#1a294044;box-shadow:inset 3px 0 #91b9f6}
+.ck-bulk-confirm{font-size:13px;line-height:1.8}.ck-bulk-confirm p{overflow-wrap:anywhere}
+.ck-bulk-targets{max-height:32vh;overflow:auto;list-style:none;margin:12px 0;padding:0;border:1px solid #35435b;border-radius:8px}
+.ck-bulk-targets li{display:flex;flex-direction:column;padding:8px 12px;border-bottom:1px solid #35435b;overflow-wrap:anywhere}
+.ck-bulk-targets li:last-child{border-bottom:0}.ck-bulk-targets span,.ck-bulk-targets small{font-size:11px;color:#aebdd4}
+@media(max-width:1000px){.ck-production .ck-song.ck-bulk-song,.ck-production .ck-bulk-heading{grid-template-columns:26px minmax(0,1fr) 145px 170px;column-gap:10px}}
+@media(max-width:760px){.ck-production .ck-bulk-toolbar{flex-basis:100%}.ck-production .ck-list-controls{gap:10px}}
+@media(max-width:620px){.ck-production .ck-song.ck-bulk-song{grid-template-columns:1fr}.ck-production .ck-song-select{justify-content:flex-start;width:auto;gap:8px;font-size:10px;min-height:32px}.ck-production .ck-song-select>span{display:inline}.ck-production .ck-bulk-toolbar button,.ck-production .ck-bulk-toolbar select,.ck-production .ck-select-page,.ck-production .ck-page-size select{min-height:44px}.ck-production .ck-bulk-toolbar{gap:8px;padding:10px}.ck-production .ck-bulk-toolbar select{flex:1;min-width:130px}.ck-production .ck-bulk-toolbar .ck-primary{flex:1}.ck-production .ck-page-size{font-size:10px}}
+
+/* Give mobile bulk actions their own rows instead of squeezing Korean labels. */
+@media(max-width:620px){
+ .ck-production .ck-bulk-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+ .ck-production .ck-bulk-toolbar .ck-select-page{grid-column:1;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>span{grid-column:2;justify-self:end;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>select{grid-column:1 / -1;width:100%;min-width:0}
+ .ck-production .ck-bulk-toolbar>.ck-primary{grid-column:1;min-width:0;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>.ck-text-button{grid-column:2;white-space:nowrap}
+ .ck-production .ck-bulk-toolbar>small{grid-column:1 / -1}
+}

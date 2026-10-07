@@ -136,7 +136,7 @@ with sync_playwright() as pw:
   checks.append('ordinary members remain read-only; initial 503 retries never expose static fallback and finish with actionable error')
   before=len(writes);state['fail_read']=False
   page.locator('.sb2-error').get_by_role('button',name='다시 불러오기',exact=True).click()
-  expect(page.locator('.sb2-song')).to_have_count(24,timeout=15000);expect(page.locator('.sb2-error')).to_have_count(0)
+  expect(page.locator('.sb2-song')).to_have_count(25,timeout=15000);expect(page.locator('.sb2-error')).to_have_count(0)
   go(manual['title']);expect(page.get_by_role('button',name=manual['title']+' 상세 보기',exact=True)).to_be_visible()
   go(seed['title']);expect(page.get_by_role('button',name=seed['title']+' 상세 보기',exact=True)).to_have_count(0)
   go(auto['title']);expect(page.get_by_role('button',name=auto['title']+' 상세 보기',exact=True)).to_have_count(0)

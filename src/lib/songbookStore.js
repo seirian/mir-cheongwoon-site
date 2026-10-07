@@ -1,3 +1,4 @@
+import {statusWriteJob,runStatusBatch} from './songbookBulk.js';
 import {visibleSongs, deletionResult} from './songbookDeletion.js';
 import { timelineSongs } from './songbookTimeline.js';
 import { songbookEditAccess } from './songbookAccess.js';
@@ -126,6 +127,25 @@ export function useSongbookStore(demo) {
   const songs = visibleSongs(timelineSongs(catalog, entries, ratings, automatic, media), IS_REVIEW_PREVIEW ? [] : deletions);
   const { canEdit, canRate } = songbookEditAccess({ ready: ready && !authChecking, admin, role, demo, reviewPreview: IS_REVIEW_PREVIEW, songbookPreview: IS_SONGBOOK_PREVIEW });
   const canDelete = canEdit && admin && !IS_REVIEW_PREVIEW;
+  const bulkAccess=useRef(null);
+  bulkAccess.current={userId:session?.user?.id,allowed:canEdit&&admin&&!demo&&!IS_REVIEW_PREVIEW};
+  async function saveRequestStatuses(targets,status,progress) {
+    if(!bulkAccess.current.allowed||writeLock.current)throw Error('관리자 권한이 없거나 저장 중입니다.');
+    const account=bulkAccess.current.userId;
+    writeLock.current=true;setSaving(true);
+    try {
+      return await runStatusBatch(targets,status,{
+        allowed:()=>bulkAccess.current.allowed&&bulkAccess.current.userId===account,
+        prepare:(target,value)=>statusWriteJob(songs.find(s=>s.id===target.id),entries.find(e=>e.id===target.id),target,value),
+        write:job=>write(tables.entries,'id',job.payload,job.previous),
+        committed:saved=>{
+          ++readGeneration.current;
+          if(!mode.current)setEntries(old=>[...old.filter(e=>e.id!==saved.id),saved]);
+        },
+        progress,
+      });
+    } finally {writeLock.current=false;setSaving(false);}
+  }
   async function deleteSong(id) {
     if (!canDelete || writeLock.current || !songs.some(s=>s.id===id)) throw Error('삭제할 곡과 관리자 권한을 확인해 주세요.');
     writeLock.current=true; setSaving(true);
@@ -189,5 +209,5 @@ export function useSongbookStore(demo) {
       }
     } finally { writeLock.current = false; setSaving(false); }
   }
-  return { songs, revisionFor:id=>entries.find(e=>e.id===id)?.revision||0, session, role, admin, authChecking, ready, error, autoError, saving, canEdit, canRate, canDelete, deleteSong, restoreSong, saveSong, saveRating, refresh, client: songbookClient };
+  return { songs, revisionFor:id=>entries.find(e=>e.id===id)?.revision||0, session, role, admin, authChecking, ready, error, autoError, saving, canEdit, canRate, canDelete, deleteSong, restoreSong, saveSong, saveRequestStatuses, saveRating, refresh, client: songbookClient };
 }

@@ -14,7 +14,7 @@ with sync_playwright() as pw:
  page.route('**/*',guard)
  try:
   page.goto('https://mir.yeop.net/songbook/',wait_until='domcontentloaded')
-  expect(page.locator('.ck-song')).to_have_count(24,timeout=30000)
+  expect(page.locator('.ck-song')).to_have_count(25,timeout=30000)
   marker=page.locator('meta[name=yeop-release]').get_attribute('content');assert marker.endswith('_'+a.sha[:8])
   info=page.evaluate('''async()=>{
     const family=getComputedStyle(document.querySelector('.ck-production')).fontFamily;

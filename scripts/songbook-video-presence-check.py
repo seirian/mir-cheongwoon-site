@@ -45,7 +45,7 @@ with sync_playwright() as pw:
   return route.continue_() if u.netloc==urlsplit(base).netloc else route.abort()
  ctx.route('**/*',handler)
  def go(**kwargs):page.goto(base+'songbook/?'+urlencode({'q':'링크검증',**kwargs}),wait_until='networkidle')
- def count(n):expect(page.locator('.sb-result-bar>p')).to_contain_text(f'{n}곡');expect(page.locator('.sb2-song')).to_have_count(min(n,24))
+ def count(n):expect(page.locator('.sb-result-bar>p')).to_contain_text(f'{n}곡');expect(page.locator('.sb2-song')).to_have_count(min(n,25))
  def filters():return page.locator('.sb-video-filters')
  def select(y='',s=''):
   page.get_by_label('YouTube 링크 유무',exact=True).select_option(y)
@@ -60,7 +60,7 @@ with sync_playwright() as pw:
   expect(page.locator('.sb2-song')).to_contain_text('영상 없음')
   checks.append('verified admin gets independent selectors; all nine AND combinations match across the complete catalog')
   select('missing','present');count(28)
-  page.get_by_role('button',name='다음 페이지',exact=True).click();expect(page.locator('.sb2-song')).to_have_count(4)
+  page.get_by_role('button',name='다음 페이지',exact=True).click();expect(page.locator('.sb2-song')).to_have_count(3)
   expect(page.locator('.sb2-song').last).to_contain_text('자동 숲 연결')
   with page.expect_download() as dl:page.get_by_role('button',name='CSV',exact=True).click()
   export=Path(dl.value.path()).read_text(encoding='utf-8-sig')
