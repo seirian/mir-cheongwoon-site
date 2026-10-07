@@ -100,6 +100,7 @@ jobs:
           python scripts/songbook-deletion-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/deletion
           python scripts/songbook-video-presence-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/video-presence
           python scripts/songbook-usability-production-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/usability-production
+          python scripts/songbook-bulk-browser-check.py --url http://127.0.0.1:4173/_test_release/ --out songbook-production-report/bulk-status
           node scripts/build-songbook-check.mjs --fixture
           npx vite preview --config vite.songbook-check.config.js --base /_test_check/ --host 127.0.0.1 --port 4179 > /tmp/songbook-check.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS http://127.0.0.1:4179/_test_check/songbook/ >/dev/null && break || sleep 1; done

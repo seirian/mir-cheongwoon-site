@@ -27,7 +27,7 @@ with sync_playwright() as pw:
  page.on('response',record)
  try:
   page.goto(origin+'/songbook/',wait_until='domcontentloaded')
-  expect(page.locator('.sb2-song')).to_have_count(24,timeout=30000)
+  expect(page.locator('.sb2-song')).to_have_count(25,timeout=30000)
   expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_have_count(0)
   expect(page.locator('.songbook-page input[type=password]')).to_have_count(0)
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0)
@@ -52,13 +52,13 @@ with sync_playwright() as pw:
   for w in [1440,390]:
    page.set_viewport_size({'width':w,'height':1000});page.screenshot(path=str(out/f'account-login-{w}.png'))
   checks.append('existing footer login link opens the shared username/password account form')
-  page.goto(origin+'/songbook/?demo=1',wait_until='domcontentloaded');expect(page.locator('.sb2-song')).to_have_count(24,timeout=20000)
+  page.goto(origin+'/songbook/?demo=1',wait_until='domcontentloaded');expect(page.locator('.sb2-song')).to_have_count(25,timeout=20000)
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0)
   expect(page.get_by_role('button',name='편집 로그인',exact=True)).to_have_count(0)
   page.goto(origin+'/songbook/review/',wait_until='domcontentloaded');expect(page).to_have_url(origin+'/songbook',timeout=20000)
   checks.append('production demo query cannot enable writes and review path redirects')
   page.goto(origin+'/songbook/?mode=admin&data=sample&attention=artist&youtube=missing',wait_until='domcontentloaded')
-  expect(page.locator('.ck-production .ck-song')).to_have_count(24,timeout=20000)
+  expect(page.locator('.ck-production .ck-song')).to_have_count(25,timeout=20000)
   expect(page.locator('.ck-admin')).to_have_count(0)
   expect(page.get_by_role('button',name='관리자 체험',exact=True)).to_have_count(0)
   first=page.locator('.ck-song').first

@@ -74,7 +74,7 @@ with sync_playwright() as pw:
   expect(page.get_by_role('button',name='계정 연결',exact=True)).to_have_count(0)
  def visit_songbook():
   page.goto(base+'songbook/',wait_until='networkidle')
-  expect(page.locator('.sb2-song')).to_have_count(24)
+  expect(page.locator('.sb2-song')).to_have_count(25)
   no_duplicate_login()
  def account_login():
   page.goto(base+'account/',wait_until='networkidle')
@@ -105,7 +105,7 @@ with sync_playwright() as pw:
   checks.append('existing footer account entry and wrong-password handling remain functional')
   account_login();visit_songbook()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_be_visible()
-  expect(page.locator('.sb2-picker')).to_have_count(24)
+  expect(page.locator('.sb2-picker')).to_have_count(25)
   expect(page.locator('.sb2-toolbar button')).to_have_count(1)
   page.get_by_role('button',name='노래 추가',exact=True).click();expect(page.get_by_role('dialog')).to_be_visible()
   page.keyboard.press('Escape');expect(page.get_by_role('dialog')).to_have_count(0)
@@ -147,7 +147,7 @@ with sync_playwright() as pw:
   no_duplicate_login();page.locator('.site-footer').get_by_role('button',name='로그아웃',exact=True).click()
   expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);no_duplicate_login()
   checks.append('admin proficiency persists and logout is only provided by the shared site menu')
-  page.goto(base+'songbook/?demo=1',wait_until='networkidle');expect(page.locator('.sb2-song')).to_have_count(24);expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0);no_duplicate_login()
+  page.goto(base+'songbook/?demo=1',wait_until='networkidle');expect(page.locator('.sb2-song')).to_have_count(25);expect(page.get_by_role('button',name='노래 추가',exact=True)).to_have_count(0);expect(page.locator('.sb2-demo')).to_have_count(0);no_duplicate_login()
   page.goto(base+'songbook/review/',wait_until='networkidle');expect(page).to_have_url(base+'songbook');no_duplicate_login()
   checks.append('demo query cannot enable production editing; review path remains redirected')
   for legacy in ['owner', 'manager']:
