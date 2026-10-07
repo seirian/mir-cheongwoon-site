@@ -1,0 +1,14 @@
+/* Inside the existing library section: no additional page width or gutter override. */
+.sb-video-filters{min-width:0;margin:22px 0 0;padding:16px 18px;border:1px dashed var(--line,#334564);border-radius:12px;background:var(--surface,#172238)}
+.sb-video-filters>legend{padding:0 6px;font-weight:700}
+.sb-video-filters>legend small{margin-left:8px;color:var(--muted,#a1b6d9);font-size:12px;font-weight:400}
+.sb-video-filter-options{display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.sb-video-filter-options>label{display:grid;gap:8px;flex:1 1 170px;min-width:0;max-width:22rem;font-weight:600}
+.sb-video-filter-options>label>span{display:flex;align-items:center;gap:7px}
+.sb-video-filter-options select{box-sizing:border-box;width:100%;min-height:44px;padding:9px 12px;border:1px solid var(--line,#334564);border-radius:9px;background:#111c2c;color:inherit;font:inherit}
+.sb-video-filter-options select:focus-visible{outline:2px solid #91b8ff;outline-offset:2px}
+.sb-video-filter-options>.sb-button{min-height:44px;white-space:normal}
+.sb-video-filters>.sb-note{margin:12px 0 0;line-height:1.7;overflow-wrap:anywhere}
+.sb-video-filters>.sb-auto-warning{margin:10px 0 0}
+.sb-video-filters:disabled{opacity:.7}
+@media(max-width:560px){.sb-video-filters{padding:12px}.sb-video-filter-options>label{flex-basis:100%;max-width:none}.sb-video-filter-options>.sb-button{width:100%}}
