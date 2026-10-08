@@ -7,6 +7,21 @@ from pathlib import Path
 from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright
 
+REMOVED_POLICY_LEADS = (
+    '필요한 정보만 받고, 사용 목적과 삭제 방법을 알려드립니다.',
+    '무료 비공식 팬 아카이브를 함께 이용하는 기준입니다.',
+    '좋아하는 마음으로 기록하고, 오류와 권리침해에 대응합니다.',
+)
+
+
+def assert_policy_heading(page, title):
+    hero = page.locator('.policy-page .policy-hero')
+    assert hero.get_by_role('heading', name=title, exact=True, level=1).is_visible()
+    assert hero.locator('.policy-lead').count() == 0
+    assert hero.locator('.policy-meta').is_visible()
+    text = page.locator('.policy-page').inner_text()
+    assert all(lead not in text for lead in REMOVED_POLICY_LEADS)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -42,6 +57,7 @@ def main():
                     response = page.goto(base + 'policies/' + key, wait_until='domcontentloaded')
                     assert response.status == 200
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()
+                    assert_policy_heading(page, title)
                     assert '검토' not in page.title() and '미시행' not in page.locator('.policy-page').inner_text()
                     assert page.locator('.review-banner').count() == 0
                     assert page.locator('.policy-page .policy-pending').count() == 0
@@ -49,6 +65,8 @@ def main():
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
                     page.reload(wait_until='domcontentloaded')
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()
+                    assert_policy_heading(page, title)
+                    page.screenshot(path=str(out / f'{name}-{key}-heading.png'))
                     assert page.locator('.policy-page .policy-pending').count() == 0
                     if key == 'privacy':
                         for snippet in ['옆군', 'sengyb@naver.com', '추가 처리 필요가 없어지면 지체 없이 삭제', '만 14세 이상 확인란', '확인 중']:
@@ -57,7 +75,7 @@ def main():
                         assert page.locator('#retention').is_visible()
                         assert '동시에 모든 사본이 삭제되는 것은 아닙니다' in page.locator('.policy-deletion-scope').inner_text()
                     page.screenshot(path=str(out / f'{name}-{key}.png'))
-                    report['checks'].append({'viewport': name, 'document': key, 'direct_reload': True, 'internal_review_notes_absent': True})
+                    report['checks'].append({'viewport': name, 'document': key, 'direct_reload': True, 'internal_review_notes_absent': True, 'introductory_leads_absent': True})
                 page.goto(base, wait_until='domcontentloaded')
                 footer = page.locator('footer.site-footer')
                 footer.scroll_into_view_if_needed()
@@ -65,6 +83,7 @@ def main():
                 for title in ['개인정보처리방침', '이용약관', '운영정책·비공식 안내']:
                     page.get_by_role('navigation', name='사이트 정책').get_by_role('link', name=title, exact=True).click()
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()
+                    assert_policy_heading(page, title)
                     report['checks'].append({'viewport': name, 'footer': title, 'passed': True})
                 page.goto(base + 'account', wait_until='domcontentloaded')
                 page.get_by_role('heading', name='회원 로그인', exact=True).wait_for()
