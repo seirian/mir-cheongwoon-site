@@ -124,7 +124,7 @@ test('withdrawal cleanup: only the matching account key can be removed',async()=
   await finishAccountWithdrawal(c,storage,'auth',id);assert.deepEqual(c.calls,[]);assert.ok(m.has('auth'));
 });
 test('withdrawal policy: contact, actual deletion scope and no blanket child ban are consistent',()=>{
-  assert.equal(POLICY_VERSION,'v0.2 · 미시행');assert.deepEqual(POLICY_CONTACT,{name:'옆군',email:'sengyb@naver.com'});
+  assert.equal(POLICY_VERSION,'v0.3 · 미시행');assert.deepEqual(POLICY_CONTACT,{name:'옆군',email:'sengyb@naver.com'});
   const text=JSON.stringify(policyDocuments);assert.match(text,/탈퇴 완료 즉시 운영 DB/);assert.match(text,/법정대리인/);assert.match(text,/일괄 제한하는 정책을 두지 않는/);
   assert.match(text,/SMTP/);assert.match(text,/별도.*백업/);
 });
