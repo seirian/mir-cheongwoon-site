@@ -1,0 +1,23 @@
+/* Review-only surface: do not change the production account form or site theme. */
+.withdrawal-review {
+  background: #10121c;
+}
+.withdrawal-review .withdrawal-review-heading h1 {
+  color: #f4f6ff;
+}
+.withdrawal-review .withdrawal-review-heading p {
+  color: #c4cede;
+}
+.withdrawal-review .withdrawal-review-heading .policy-kicker {
+  color: #99cee8;
+}
+.withdrawal-review .withdrawal-review-links a {
+  color: #cdbfff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.withdrawal-review .withdrawal-review-links a:focus-visible {
+  outline: 3px solid #99cee8;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
