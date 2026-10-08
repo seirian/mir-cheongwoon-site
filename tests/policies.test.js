@@ -22,7 +22,7 @@ test('draft routes have direct static documents and stay noindex', () => {
     for (const preview of [false, true]) {
       const meta = getPageMetadata(route, { preview, assetBase: '/_yeop_releases/r20261008000000_12345678/' });
       assert.equal(meta.robots, 'noindex, nofollow');
-      assert.ok(meta.title.includes('검토'));
+      assert.equal(meta.title.includes('검토'), preview || key === 'review');
     }
   }
 });

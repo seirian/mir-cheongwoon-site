@@ -1,7 +1,9 @@
 import { loginWithUsername } from '../lib/usernameLogin';
 import { useEffect, useMemo, useState } from 'react';
 import { KeyRound, LogIn, LogOut, Mail, ShieldCheck, UserPlus } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import SignupPolicyNotice from '../components/SignupPolicyNotice';
+import { PUBLISHED_POLICY_VERSION, POLICY_EFFECTIVE_DATE } from '../data/policyPublished';
 import PageHero from '../components/PageHero';
 import PasswordChangeForm from '../components/PasswordChangeForm';
 import AccountWithdrawalForm from '../components/AccountWithdrawalForm';
@@ -29,6 +31,7 @@ export default function AccountPage() {
   const [profile, setProfile] = useState(null);
   const [login, setLogin] = useState({ identifier: '', password: '' });
   const [signup, setSignup] = useState({ username: '', email: '', password: '', passwordConfirm: '' });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
@@ -73,7 +76,7 @@ export default function AccountPage() {
         next.set('mode', 'recovery');
         setSearchParams(next, { replace: true });
       }
-      loadProfile(nextSession);
+      setTimeout(() => { if (active) loadProfile(nextSession); }, 0);
     });
 
     return () => {
@@ -93,6 +96,7 @@ export default function AccountPage() {
   const switchMode = (nextMode) => {
     setMode(nextMode);
     setMessage('');
+    setTermsAccepted(false);
     const next = new URLSearchParams(searchParams);
     next.delete('verified');
     if (nextMode === 'reset') next.set('mode', 'recovery');
@@ -122,6 +126,7 @@ export default function AccountPage() {
     event.preventDefault();
     if (!supabase || busy) return;
 
+    if (!termsAccepted) { setMessage('이용약관을 확인하고 동의해 주세요.'); return; }
     const username = normalizeUsername(signup.username);
     const email = signup.email.trim().toLowerCase();
 
@@ -160,7 +165,7 @@ export default function AccountPage() {
       email,
       password: signup.password,
       options: {
-        data: { username },
+        data: { username, terms_version: PUBLISHED_POLICY_VERSION, terms_accepted_at: new Date().toISOString() },
         emailRedirectTo: `${window.location.origin}/account?verified=1`,
       },
     });
@@ -177,6 +182,7 @@ export default function AccountPage() {
       return;
     }
 
+    setTermsAccepted(false);
     setSignup({ username: '', email: '', password: '', passwordConfirm: '' });
     setMessage('회원가입 요청이 완료되었습니다. 입력한 이메일로 전송된 인증 링크를 눌러 가입을 완료해 주세요.');
     setMode('login');
@@ -307,6 +313,7 @@ export default function AccountPage() {
         description="아이디, 비밀번호, 이메일만으로 계정을 관리합니다."
       />
       <section className="section-wrap account-auth-wrap">
+        <aside className="policy-account-notice">{POLICY_EFFECTIVE_DATE} 개인정보 처리·운영 안내를 공개했습니다. <Link to="/policies/privacy">안내 확인</Link> · 기존 회원의 약관 동의를 자동으로 간주하지 않습니다.</aside>
         {mode !== 'reset' && (
           <div className="account-auth-tabs">
             <button className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>로그인</button>
@@ -331,6 +338,7 @@ export default function AccountPage() {
             <label>비밀번호<input type="password" value={signup.password} onChange={(e) => setSignup({ ...signup, password: e.target.value })} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
             <label>비밀번호 확인<input type="password" value={signup.passwordConfirm} onChange={(e) => setSignup({ ...signup, passwordConfirm: e.target.value })} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
             <label>이메일<input type="email" value={signup.email} onChange={(e) => setSignup({ ...signup, email: e.target.value })} autoComplete="email" required /></label>
+            <SignupPolicyNotice accepted={termsAccepted} onAccepted={setTermsAccepted} disabled={busy}/>
             <button className="btn btn-primary" disabled={busy}>{busy ? '가입 처리 중...' : '회원가입'}</button>
           </form>
         )}

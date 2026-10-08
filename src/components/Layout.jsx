@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import PageMetadata from './PageMetadata';
 import PolicyFooter from './PolicyFooter';
+import PublishedPolicyFooter from './PublishedPolicyFooter';
 import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW, IS_SONGBOOK_PLATFORM_PREVIEW, IS_POLICY_PREVIEW } from '../lib/preview';
 import { supabase } from '../lib/supabase';
 
@@ -67,10 +68,10 @@ export default function Layout() {
         <nav id="site-navigation" aria-label="주 메뉴" className={open ? 'main-nav is-open' : 'main-nav'}>{links.map(([to,label]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({isActive}) => isActive ? 'active' : ''}>{label}</NavLink>)}{authReady && session && <NavLink to="/account" onClick={() => setOpen(false)} className={({isActive}) => isActive ? 'active' : ''}>내 정보</NavLink>}</nav>
       </header>
       <main id="main-content" tabIndex={-1}><Outlet/></main>
-      <footer className={IS_POLICY_PREVIEW ? 'site-footer policy-footer-shell' : 'site-footer'}>
+      <footer className={IS_POLICY_PREVIEW || !IS_REVIEW_PREVIEW ? 'site-footer policy-footer-shell' : 'site-footer'}>
         <div><strong>미르 × 청운밴드 Archive</strong><p>미르님과 청운밴드가 같이 만들어간 추억을 오래 남기기 위한 비공식 사이트 입니다.</p></div>
         <div className="footer-account-links">{IS_REVIEW_PREVIEW && <Link className="footer-admin" to={reviewPath}>{IS_POLICY_PREVIEW ? '3차 검토실' : IS_SONGBOOK_PREVIEW ? '노래책 검토실' : '개선안 검토실'}</Link>}{IS_POLICY_PREVIEW && <Link className="footer-admin" to="/policies/review#signup">가입 안내 시안</Link>}{!IS_REVIEW_PREVIEW && (authReady && session ? <button type="button" className="footer-admin footer-logout" onClick={handleLogout}>로그아웃</button> : <Link to="/account" className="footer-admin">로그인 / 회원가입</Link>)}{authReady && session && isAdmin && <Link to="/admin" className="footer-admin">관리자</Link>}</div>
-        {IS_POLICY_PREVIEW && <PolicyFooter />}
+        {IS_POLICY_PREVIEW ? <PolicyFooter /> : !IS_REVIEW_PREVIEW && <PublishedPolicyFooter />}
       </footer>
     </div>
   );

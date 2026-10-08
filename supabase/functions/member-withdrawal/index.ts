@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { createWithdrawalHandler } from "./handler.js";
-// Deploy separately with JWT verification enabled after review; no credentials in the frontend.
+// JWT gateway verification and server-side user/password verification are both required.
 Deno.serve(createWithdrawalHandler({
   createClient,
   url: Deno.env.get('SUPABASE_URL'),
