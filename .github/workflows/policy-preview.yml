@@ -42,7 +42,7 @@ jobs:
         with:
           deno-version: v2.x
       - name: Check withdrawal Edge entry point without deploying it
-        run: deno check supabase/functions/member-withdrawal/index.ts
+        run: deno check --node-modules-dir=none supabase/functions/member-withdrawal/index.ts
       - name: Account UI with synthetic credentials and intercepted endpoints only
         run: |
           VITE_SUPABASE_URL=https://policy-fixture.supabase.co VITE_SUPABASE_ANON_KEY=synthetic-public-key npm run dev -- --host 127.0.0.1 --port 5175 > /tmp/withdrawal-fixture.log 2>&1 &
