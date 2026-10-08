@@ -5,6 +5,13 @@
 - 구조는 [docs/architecture.md](docs/architecture.md), 검증 절차는 [docs/harness.md](docs/harness.md)를 읽는다.
 - 설치는 Node 24에서 `npm ci`, 기본 검증은 `npm run verify`를 사용한다.
 
+## GitHub 권한과 배포 경로 — 반복 오판 금지
+- 이 프로젝트의 운영 소스는 GitHub `main`, 운영 배포 경로는 `.github/workflows/deploy-yeop.yml`의 GitHub Actions다. 원격 PC, YEOP-PC, Desktop Commander의 접속 여부는 배포 전제조건이 아니다. 사용자가 원격 PC 작업을 명시하지 않으면 그 경로부터 확인하지 않는다.
+- 연결된 GitHub 도구로 브랜치 생성, 파일/커밋 쓰기, ref 갱신, PR 및 Actions 작업을 수행해 온 프로젝트다. 도구가 없다고 가정하지 말고 연결 도구를 발견한 뒤 해당 작업을 실제로 시도한다. 권한은 현재 실행 결과로 판단한다.
+- 워크플로 YAML의 `permissions: contents: read`는 해당 작업 안의 `GITHUB_TOKEN` 권한이다. ChatGPT GitHub 연결, 사용자 계정, 다른 워크플로의 권한이 읽기 전용이라는 의미가 아니다.
+- GET 전용 fetch 도구의 URL 제한, 로컬 git/DNS 실패, 특정 API의 403/404, 특정 secret 부재를 GitHub 전체 쓰기 또는 Actions 배포 권한 부재로 확대 해석하지 않는다. 실패한 도구·API·작업의 범위만 정확히 설명하고 해당 목적의 연결 도구 또는 기존 Actions 경로를 사용한다.
+- 필수 PR/브랜치 보호 규칙은 그대로 준수한다. 접근 실패를 우회하려고 보호 규칙을 해제하거나 권한을 무단 확대하지 않는다. 사용자에게 권한 변경이나 원격 PC 실행을 요청하기 전에 기존 배포 워크플로와 실제 실행 이력을 확인한다.
+
 ## 브랜치 흐름
 - 개발은 `develop`에서 시작한다. 작업 전 `git fetch origin` 후 `git switch develop`, `git pull --ff-only origin develop`으로 최신 상태를 확인한다. 기존 미커밋 변경이 있으면 먼저 보존한다.
 - `main`에서 직접 수정하거나 push하지 않는다. 개발 변경을 `develop`에 반영하고 검증한다.
