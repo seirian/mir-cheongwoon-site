@@ -62,8 +62,17 @@ jobs:
           PY
       - name: Local desktop and mobile checks before upload
         run: |
-          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/policy-vite.log 2>&1 &
+          npx vite preview --base "/_yeop_releases/${RELEASE_ID}/" --host 127.0.0.1 --port 4173 > /tmp/policy-vite.log 2>&1 &
           for n in $(seq 1 30); do curl -fsS "http://127.0.0.1:4173/_yeop_releases/${RELEASE_ID}/" >/dev/null && break || sleep 1; done
+          python - <<'PY'
+          import os, urllib.request
+          from pathlib import Path
+          asset = next(Path('dist/assets').glob('index-*.js')).name
+          url = 'http://127.0.0.1:4173/_yeop_releases/' + os.environ['RELEASE_ID'] + '/assets/' + asset
+          with urllib.request.urlopen(url, timeout=15) as response:
+              assert 'javascript' in response.headers.get('Content-Type', ''), 'Preview asset served with incorrect MIME type'
+              assert response.status == 200
+          PY
           python scripts/policy-browser-check.py --url "http://127.0.0.1:4173/_yeop_releases/${RELEASE_ID}/" --out browser-report
       - name: Stage review without production activation
         env:
