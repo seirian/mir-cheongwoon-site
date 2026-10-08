@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Read-only UI checks; block all account writes and external providers."""
 import argparse
+import os
 import json
 from pathlib import Path
 from urllib.parse import urlparse
@@ -18,7 +19,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     report = {'base': base, 'checks': [], 'attempted_writes': [], 'page_errors': []}
     with sync_playwright() as pw:
-        browser = pw.chromium.launch()
+        browser = pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_EXECUTABLE') or None)
         try:
             for name, width, height in [('desktop', 1440, 1000), ('mobile', 390, 844)]:
                 context = browser.new_context(viewport={'width': width, 'height': height}, reduced_motion='reduce')
@@ -33,7 +34,7 @@ def main():
                         return route.abort()
                     return route.continue_()
                 page.route('**/*', intercept)
-                for key, title in [('review', '이용자 안내 1차 검토실'), ('privacy', '개인정보처리방침'), ('terms', '이용약관'), ('operation', '운영정책·비공식 안내')]:
+                for key, title in [('review', '이용자 안내 2차 검토실'), ('privacy', '개인정보처리방침'), ('terms', '이용약관'), ('operation', '운영정책·비공식 안내')]:
                     response = page.goto(base + 'policies/' + key + '/index.html', wait_until='domcontentloaded')
                     assert response.status == 200
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()

@@ -7,7 +7,7 @@ from pathlib import Path
 import mir_shared_root_deploy_ci as deploy
 import yeop_deploy_ci as base
 
-BRANCH = 'refs/heads/feature/privacy-policy-review'
+BRANCH = 'refs/heads/feature/privacy-account-review'
 ROOTS = ('/web/.htaccess', '/web/_mir_site/.htaccess')
 
 def routing_fingerprints():
@@ -20,7 +20,7 @@ def main():
     if any(os.environ.get(flag) != 'true' for flag in ('VITE_REVIEW_PREVIEW', 'VITE_POLICY_PREVIEW')):
         raise SystemExit('Read-only policy preview flags are required.')
     dist = Path(os.environ.get('DIST_DIR', 'dist'))
-    for route in ('index.html', 'policies/review/index.html', 'policies/privacy/index.html', 'policies/terms/index.html', 'policies/operation/index.html'):
+    for route in ('index.html', 'policies/review/index.html', 'policies/privacy/index.html', 'policies/terms/index.html', 'policies/operation/index.html', 'account/withdraw-review/index.html'):
         if 'noindex, nofollow' not in (dist / route).read_text(encoding='utf-8'):
             raise SystemExit('Missing noindex: ' + route)
     os.environ['ACTIVATE'] = 'false'

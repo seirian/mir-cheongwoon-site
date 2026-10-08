@@ -2,7 +2,7 @@ name: Policy review preview
 
 on:
   push:
-    branches: [feature/privacy-policy-review]
+    branches: [feature/privacy-account-review]
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   review:
-    if: github.ref == 'refs/heads/feature/privacy-policy-review'
+    if: github.ref == 'refs/heads/feature/privacy-account-review'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -38,6 +38,16 @@ jobs:
         run: |
           python -m pip install playwright==1.57.0 paramiko==5.0.0
           python -m playwright install --with-deps chromium
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check withdrawal Edge entry point without deploying it
+        run: deno check supabase/functions/member-withdrawal/index.ts
+      - name: Account UI with synthetic credentials and intercepted endpoints only
+        run: |
+          VITE_SUPABASE_URL=https://policy-fixture.supabase.co VITE_SUPABASE_ANON_KEY=synthetic-public-key npm run dev -- --host 127.0.0.1 --port 5175 > /tmp/withdrawal-fixture.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS http://127.0.0.1:5175/ >/dev/null && break || sleep 1; done
+          python scripts/withdrawal-browser-check.py --account-fixture --url http://127.0.0.1:5175/ --out withdrawal-fixture-report
       - name: Prepare existing public read-only configuration
         env:
           SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
@@ -74,6 +84,7 @@ jobs:
               assert response.status == 200
           PY
           python scripts/policy-browser-check.py --url "http://127.0.0.1:4173/_yeop_releases/${RELEASE_ID}/" --out browser-report
+          python scripts/withdrawal-browser-check.py --url "http://127.0.0.1:4173/_yeop_releases/${RELEASE_ID}/" --out withdrawal-review-report
       - name: Stage review without production activation
         env:
           YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
@@ -83,6 +94,7 @@ jobs:
       - name: Verify public review routes and footer
         run: |
           python scripts/policy-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out live-browser-report
+          python scripts/withdrawal-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out withdrawal-live-report
           python - <<'PY'
           import json
           from pathlib import Path
@@ -101,5 +113,8 @@ jobs:
             live-browser-report/
             deploy_report.json
             policy-source-audit.json
+            withdrawal-fixture-report/
+            withdrawal-review-report/
+            withdrawal-live-report/
           if-no-files-found: warn
           retention-days: 14

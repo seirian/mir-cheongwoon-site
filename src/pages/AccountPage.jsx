@@ -4,6 +4,8 @@ import { KeyRound, LogIn, LogOut, Mail, ShieldCheck, UserPlus } from 'lucide-rea
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageHero from '../components/PageHero';
 import PasswordChangeForm from '../components/PasswordChangeForm';
+import AccountWithdrawalForm from '../components/AccountWithdrawalForm';
+import { requestAccountWithdrawal, finishAccountWithdrawal } from '../lib/accountWithdrawal';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const normalizeUsername = (value) => value.trim().toLowerCase();
@@ -20,7 +22,7 @@ export default function AccountPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedMode = searchParams.get('mode');
-  const initialMode = requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : 'login';
+  const initialMode = requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : requestedMode === 'withdraw' ? 'withdraw' : 'login';
   const [mode, setMode] = useState(initialMode);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
@@ -81,11 +83,11 @@ export default function AccountPage() {
   }, []);
 
   useEffect(() => {
-    setMode((previous) => requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : ['reset', 'password'].includes(previous) ? 'login' : previous);
+    setMode((previous) => requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : requestedMode === 'withdraw' ? 'withdraw' : ['reset', 'password', 'withdraw'].includes(previous) ? 'login' : previous);
   }, [requestedMode]);
 
   useEffect(() => {
-    if (session && nextPath && mode !== 'reset' && mode !== 'password') navigate(nextPath, { replace: true });
+    if (session && nextPath && !['reset', 'password', 'withdraw'].includes(mode)) navigate(nextPath, { replace: true });
   }, [session, nextPath, mode, navigate]);
 
   const switchMode = (nextMode) => {
@@ -94,7 +96,7 @@ export default function AccountPage() {
     const next = new URLSearchParams(searchParams);
     next.delete('verified');
     if (nextMode === 'reset') next.set('mode', 'recovery');
-    else if (nextMode === 'password') next.set('mode', 'password');
+    else if (['password', 'withdraw'].includes(nextMode)) next.set('mode', nextMode);
     else next.delete('mode');
     setSearchParams(next, { replace: true });
   };
@@ -250,8 +252,28 @@ export default function AccountPage() {
     );
   }
 
-  if (mode === 'password' && authLoading) {
-    return <><PageHero eyebrow="ACCOUNT SECURITY" title="비밀번호 변경" description="로그인 상태를 확인하고 있습니다."/><section className="section-wrap account-auth-wrap"><p role="status">로그인 정보를 확인하는 중…</p></section></>;
+  if (['password', 'withdraw'].includes(mode) && authLoading) {
+    return <><PageHero eyebrow="ACCOUNT SECURITY" title={mode === 'withdraw' ? '회원 탈퇴' : '비밀번호 변경'} description="로그인 상태를 확인하고 있습니다."/><section className="section-wrap account-auth-wrap"><p role="status">로그인 정보를 확인하는 중…</p></section></>;
+  }
+
+  if (session && mode === 'withdraw') {
+    const withdrawnId = session.user.id;
+    return <><PageHero eyebrow="ACCOUNT" title="회원 탈퇴" description="현재 비밀번호로 본인을 확인한 뒤 계정정보를 삭제합니다."/>
+      <section className="section-wrap account-auth-wrap"><AccountWithdrawalForm key={withdrawnId} userId={withdrawnId}
+        onRequest={(values, id) => requestAccountWithdrawal(supabase, values, id)} onCancel={() => switchMode('login')}
+        onDeleted={async () => {
+          let storage; try { storage = window.localStorage; } catch { /* Browser storage can be blocked. */ }
+          const key = `sb-${new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+          await finishAccountWithdrawal(supabase, storage, key, withdrawnId);
+          const remaining = await supabase.auth.getSession().catch(() => ({ data: {} }));
+          if (remaining.data?.session?.user?.id && remaining.data.session.user.id !== withdrawnId) {
+            switchMode('login');
+            setMessage('이전에 선택한 계정의 탈퇴가 완료되었습니다. 현재 다른 계정의 로그인은 유지됩니다.'); return;
+          }
+          setSession(null); setProfile(null); setLogin({ identifier: '', password: '' });
+          const next = new URLSearchParams(); setSearchParams(next, { replace: true }); setMode('login');
+          setMessage('회원 탈퇴가 완료되었습니다. 운영 DB의 회원 계정정보를 삭제했습니다.');
+        }}/></section></>;
   }
 
   if (session && mode === 'password') {
@@ -270,6 +292,7 @@ export default function AccountPage() {
             <p>{profile?.email || session.user.email}</p>
             <button type="button" className="btn btn-primary" onClick={() => switchMode('password')}><KeyRound size={17}/> 비밀번호 변경</button>
             <button className="btn btn-ghost" onClick={() => supabase.auth.signOut()}><LogOut size={17}/> 로그아웃</button>
+            <button type="button" className="withdrawal-entry" onClick={() => switchMode('withdraw')}>회원 탈퇴</button>
           </div>
         </section>
       </>
@@ -292,7 +315,7 @@ export default function AccountPage() {
           </div>
         )}
 
-        {(mode === 'login' || mode === 'password') && (
+        {(mode === 'login' || mode === 'password' || mode === 'withdraw') && (
           <form className="account-auth-card" onSubmit={handleLogin}>
             <div className="account-auth-title"><LogIn size={20}/><strong>로그인</strong></div>
             <label>아이디<input value={login.identifier} onChange={(e) => setLogin({ ...login, identifier: e.target.value })} type="text" name="username" autoCapitalize="none" spellCheck={false} maxLength={24} autoComplete="username" required /></label>
