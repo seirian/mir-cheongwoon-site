@@ -1,0 +1,96 @@
+name: Policy review preview
+
+on:
+  push:
+    branches: [feature/privacy-policy-review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: policy-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: github.ref == 'refs/heads/feature/privacy-policy-review'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify source and inventory data handling references
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
+          npm run check:backend
+          python scripts/policy-source-audit.py
+      - name: Install browser tooling
+        run: |
+          python -m pip install playwright==1.57.0 paramiko==5.0.0
+          python -m playwright install --with-deps chromium
+      - name: Prepare existing public read-only configuration
+        env:
+          SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: bash scripts/prepare-public-build-config.sh
+      - name: Build isolated noindex policy preview
+        run: |
+          rid="r$(date -u +%Y%m%d%H%M%S)_${GITHUB_SHA:0:8}"
+          echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
+          echo "VITE_REVIEW_PREVIEW=true" >> "$GITHUB_ENV"
+          echo "VITE_POLICY_PREVIEW=true" >> "$GITHUB_ENV"
+          VITE_REVIEW_PREVIEW=true VITE_POLICY_PREVIEW=true npx vite build --base "/_yeop_releases/${rid}/"
+          RELEASE_ID="$rid" python - <<'PY'
+          import os
+          from pathlib import Path
+          marker = '<meta name="yeop-release" content="' + os.environ['RELEASE_ID'] + '" />'
+          for path in Path('dist').rglob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              if text.count('</head>') != 1 or 'noindex, nofollow' not in text:
+                  raise SystemExit('Invalid preview metadata: ' + str(path))
+              path.write_text(text.replace('</head>', marker + '\n</head>'), encoding='utf-8')
+          PY
+      - name: Local desktop and mobile checks before upload
+        run: |
+          npx vite preview --host 127.0.0.1 --port 4173 > /tmp/policy-vite.log 2>&1 &
+          for n in $(seq 1 30); do curl -fsS "http://127.0.0.1:4173/_yeop_releases/${RELEASE_ID}/" >/dev/null && break || sleep 1; done
+          python scripts/policy-browser-check.py --url "http://127.0.0.1:4173/_yeop_releases/${RELEASE_ID}/" --out browser-report
+      - name: Stage review without production activation
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+          DIST_DIR: dist
+          SERVER_SOURCE_DIR: server
+        run: python scripts/stage-policy-preview.py
+      - name: Verify public review routes and footer
+        run: |
+          python scripts/policy-browser-check.py --url "https://mir.yeop.net/_yeop_releases/${RELEASE_ID}/" --out live-browser-report
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('deploy_report.json').read_text())
+          assert report['phase'] == 'staged'
+          assert report['production_routing_unchanged'] is True
+          print('VERIFIED REVIEW:', report['policy_review_url'])
+          PY
+      - name: Save review reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-preview-review
+          path: |
+            browser-report/
+            live-browser-report/
+            deploy_report.json
+            policy-source-audit.json
+          if-no-files-found: warn
+          retention-days: 14

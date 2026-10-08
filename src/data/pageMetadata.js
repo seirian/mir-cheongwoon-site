@@ -12,6 +12,10 @@ const pages = {
   '/account': ['계정 — 미르 × 청운밴드', '미르 × 청운밴드 팬 아카이브 계정'],
   '/admin': ['관리자 — 미르 × 청운밴드', '미르 × 청운밴드 팬 아카이브 관리'],
   '/review': ['개선안 검토실 — 미르 × 청운밴드', '운영 사이트와 분리된 홍보 페이지 개선안 미리보기'],
+  '/policies/review': ['이용자 안내 1차 검토실 — 미르 × 청운밴드', '개인정보처리방침·이용약관·운영정책의 미시행 검토안'],
+  '/policies/privacy': ['개인정보처리방침 검토안 — 미르 × 청운밴드', '회원 인증·접속정보·국외 이전을 다루는 미시행 초안'],
+  '/policies/terms': ['이용약관 검토안 — 미르 × 청운밴드', '계정 및 비공식 팬 아카이브 이용에 관한 미시행 초안'],
+  '/policies/operation': ['운영정책·비공식 안내 검토안 — 미르 × 청운밴드', '출처·저작권·수정 요청 기준에 관한 미시행 초안'],
 };
 
 export const metadataRoutes = [...Object.keys(pages), ...performances.map(event => `/history/${event.slug}`)];
@@ -26,6 +30,6 @@ export function getPageMetadata(pathname, { preview = false, assetBase = '/', or
     canonical: `${origin}${path === '/' ? '/' : path}`,
     image: new URL(`${base}og/${event?.slug === 'blued-2025' ? 'blued' : 'home'}.png`, origin).href,
     imageAlt: event?.slug === 'blued-2025' ? '미르 × 청운밴드 BLUED 공연 기록' : '미르 캐릭터와 미르 × 청운밴드 팬 아카이브',
-    robots: preview || ['/review', '/songbook/review', '/account', '/admin'].includes(path) || !entry ? 'noindex, nofollow' : 'index, follow',
+    robots: preview || path.startsWith('/policies/') || ['/review', '/songbook/review', '/account', '/admin'].includes(path) || !entry ? 'noindex, nofollow' : 'index, follow',
   };
 }
