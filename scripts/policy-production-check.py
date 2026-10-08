@@ -44,16 +44,20 @@ def main():
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()
                     assert '검토' not in page.title() and '미시행' not in page.locator('.policy-page').inner_text()
                     assert page.locator('.review-banner').count() == 0
+                    assert page.locator('.policy-page .policy-pending').count() == 0
+                    assert '추가 확인 안내' not in page.locator('.policy-page').inner_text()
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
                     page.reload(wait_until='domcontentloaded')
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()
+                    assert page.locator('.policy-page .policy-pending').count() == 0
                     if key == 'privacy':
                         for snippet in ['옆군', 'sengyb@naver.com', '추가 처리 필요가 없어지면 지체 없이 삭제', '만 14세 이상 확인란', '확인 중']:
                             assert snippet in page.locator('.policy-page').inner_text()
                         page.locator('.policy-toc').get_by_text('4. 보유기간과 파기', exact=True).click()
                         assert page.locator('#retention').is_visible()
+                        assert '동시에 모든 사본이 삭제되는 것은 아닙니다' in page.locator('.policy-deletion-scope').inner_text()
                     page.screenshot(path=str(out / f'{name}-{key}.png'))
-                    report['checks'].append({'viewport': name, 'document': key, 'direct_reload': True})
+                    report['checks'].append({'viewport': name, 'document': key, 'direct_reload': True, 'internal_review_notes_absent': True})
                 page.goto(base, wait_until='domcontentloaded')
                 footer = page.locator('footer.site-footer')
                 footer.scroll_into_view_if_needed()
