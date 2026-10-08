@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import PerformanceDetailPage from './pages/PerformanceDetailPage';
 import ReviewPage, { PreviewAccountNotice } from './pages/ReviewPage';
-import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW } from './lib/preview';
+import { IS_REVIEW_PREVIEW, IS_SONGBOOK_PREVIEW, IS_POLICY_PREVIEW } from './lib/preview';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import MirPage from './pages/MirPage';
@@ -13,6 +13,9 @@ import GalleryPage from './pages/GalleryPage';
 import GalleryDetailPage from './pages/GalleryDetailPage';
 import AdminPage from './pages/AdminPage';
 import AccountPage from './pages/AccountPage';
+import PolicyPage from './pages/PolicyPage';
+import PublishedPolicyPage from './pages/PublishedPolicyPage';
+import WithdrawalReviewPage from './pages/WithdrawalReviewPage';
 
 const SongbookPage = lazy(() => import('./pages/SongbookPage'));
 const SongbookReviewPage = lazy(() => import('./pages/SongbookReviewPage'));
@@ -34,7 +37,9 @@ export default function App() {
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="/gallery/view" element={<GalleryDetailPage />} />
         <Route path="/gallery/:id" element={<GalleryDetailPage />} />
-        <Route path="/account" element={IS_REVIEW_PREVIEW ? <PreviewAccountNotice /> : <AccountPage />} />
+        <Route path="/policies/:document" element={IS_POLICY_PREVIEW ? <PolicyPage /> : <PublishedPolicyPage />} />
+        <Route path="/account/withdraw-review" element={IS_POLICY_PREVIEW ? <WithdrawalReviewPage /> : <Navigate to="/account" replace />} />
+        <Route path="/account" element={IS_POLICY_PREVIEW ? <Navigate to="/policies/review#signup" replace /> : IS_REVIEW_PREVIEW ? <PreviewAccountNotice /> : <AccountPage />} />
         <Route path="/admin" element={IS_REVIEW_PREVIEW ? <PreviewAccountNotice /> : <AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

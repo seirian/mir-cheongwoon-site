@@ -1,9 +1,7 @@
 name: Deploy mir.yeop.net
-
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'src/**'
       - 'public/**'
@@ -15,262 +13,105 @@ on:
       - 'scripts/yeop_deploy_ci.py'
       - 'scripts/mir_deploy_ci.py'
       - 'scripts/mir_shared_root_deploy_ci.py'
+      - 'scripts/mir_policy_deploy_ci.py'
+      - 'scripts/policy-production-check.py'
+      - 'scripts/prepare-public-build-config.sh'
       - 'scripts/generate-home-share-image.py'
       - 'scripts/verify-home-share-image.py'
       - '.github/workflows/deploy-yeop.yml'
       - 'deploy/**'
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: yeop-production-deploy
   cancel-in-progress: false
-
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
       VITE_REVIEW_PREVIEW: 'false'
+      VITE_POLICY_PREVIEW: 'false'
       VITE_SONGBOOK_PREVIEW: 'false'
       VITE_SONGBOOK_PLATFORM_PREVIEW: 'false'
-
     steps:
       - name: Check out main
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-
       - name: Require deployment secret
-        shell: bash
-        run: |
-          if [ -z "${YEOP_SFTP_PASSWORD:-}" ]; then
-            echo "::error::Repository secret YEOP_SFTP_PASSWORD is not configured."
-            exit 1
-          fi
-
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+        run: test -n "$YEOP_SFTP_PASSWORD"
       - name: Generate release ID
-        shell: bash
         run: |
           rid="r$(date -u +%Y%m%d%H%M%S)_${GITHUB_SHA:0:8}"
           echo "RELEASE_ID=$rid" >> "$GITHUB_ENV"
           echo "Release: $rid"
-
       - name: Prepare verified public Supabase build config
-        shell: bash
         env:
           SUPABASE_URL_SECRET: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_ANON_KEY_SECRET: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: bash scripts/prepare-public-build-config.sh
+      - name: Install and verify frontend dependencies
         run: |
-          if [ -n "${SUPABASE_URL_SECRET:-}" ] || [ -n "${SUPABASE_ANON_KEY_SECRET:-}" ]; then
-            if [ -z "${SUPABASE_URL_SECRET:-}" ] || [ -z "${SUPABASE_ANON_KEY_SECRET:-}" ]; then
-              echo "::error::Both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY secrets must be configured together."
-              exit 1
-            fi
-            python - <<'PY'
-          import json
-          import os
-          import urllib.parse
-          import urllib.request
-
-          expected_ref = "nohboljeugjmtwnvtayu"
-          url = os.environ["SUPABASE_URL_SECRET"].strip().rstrip("/")
-          key = os.environ["SUPABASE_ANON_KEY_SECRET"].strip()
-          host = urllib.parse.urlsplit(url).hostname or ""
-          if host != expected_ref + ".supabase.co":
-              raise SystemExit("Configured Supabase URL does not match the production project")
-          request = urllib.request.Request(
-              url + "/rest/v1/schedule_events?select=id&limit=0",
-              headers={"User-Agent": "YeopGitHubDeploy/1.0", "apikey": key, "Accept": "application/json"},
-          )
-          with urllib.request.urlopen(request, timeout=30) as response:
-              body = response.read(1024 * 1024)
-              if response.status != 200 or not isinstance(json.loads(body), list):
-                  raise SystemExit("Configured public Supabase settings failed read-only verification")
-          with open(".env.local", "w", encoding="utf-8") as handle:
-              handle.write("VITE_SUPABASE_URL=" + url + "\n")
-              handle.write("VITE_SUPABASE_ANON_KEY=" + key + "\n")
-          print("GitHub Supabase secrets verified without printing key material")
-          PY
-            exit 0
-          fi
-
-          python - <<'PY'
-          import base64
-          import json
-          import re
-          import urllib.parse
-          import urllib.request
-
-          def get(url, headers=None):
-              request = urllib.request.Request(
-                  url,
-                  headers={"User-Agent": "YeopGitHubDeploy/1.0", **(headers or {})},
-              )
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  return response.status, response.read(20 * 1024 * 1024)
-
-          def jwt_matches(key, project_ref):
-              if not key.startswith("eyJ"):
-                  return True
-              try:
-                  payload = key.split(".")[1]
-                  payload += "=" * (-len(payload) % 4)
-                  data = json.loads(base64.urlsafe_b64decode(payload))
-              except Exception:
-                  return False
-              return data.get("role") == "anon" and (not data.get("ref") or data.get("ref") == project_ref)
-
-          chosen = None
-          sources = [
-              ("current-production", "https://mir.yeop.net/"),
-              ("verified-bootstrap", "https://mir.yeop.net/_yeop_releases/r20260921045522_14bc82ae/index.html"),
-          ]
-          for label, index_url in sources:
-              try:
-                  _, html = get(index_url)
-                  text = html.decode("utf-8")
-                  match = re.search(r'<script[^>]+src="([^"]+assets/[^"]+\.js)"', text)
-                  if not match:
-                      continue
-                  bundle_url = urllib.parse.urljoin(index_url, match.group(1))
-                  _, bundle = get(bundle_url)
-                  source = bundle.decode("utf-8", "ignore")
-              except Exception:
-                  continue
-
-              urls = list(dict.fromkeys(re.findall(r"https://[a-z0-9]{10,40}\.supabase\.co", source)))
-              raw_keys = re.findall(
-                  r"sb_publishable_[A-Za-z0-9_-]{15,250}|"
-                  r"eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+",
-                  source,
-              )
-              for url in urls:
-                  project_ref = urllib.parse.urlsplit(url).hostname.split(".")[0]
-                  for key in raw_keys:
-                      if not jwt_matches(key, project_ref):
-                          continue
-                      try:
-                          status, body = get(
-                              url + "/rest/v1/schedule_events?select=id&limit=0",
-                              {"apikey": key, "Accept": "application/json"},
-                          )
-                          if status == 200 and isinstance(json.loads(body), list):
-                              chosen = (url, key)
-                              break
-                      except Exception:
-                          continue
-                  if chosen:
-                      break
-              if chosen:
-                  print("Existing public Supabase config recovered from " + label + " without printing key material")
-                  break
-
-          if not chosen:
-              raise SystemExit("Could not recover and verify existing public Supabase config")
-
-          url, key = chosen
-          with open(".env.local", "w", encoding="utf-8") as handle:
-              handle.write("VITE_SUPABASE_URL=" + url + "\n")
-              handle.write("VITE_SUPABASE_ANON_KEY=" + key + "\n")
-          print("Existing public Supabase config recovered and verified without printing key material")
-          PY
-
-      - name: Install frontend dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
-
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run verify
       - name: Stamp release marker
-        shell: bash
         run: |
           python - <<'PY'
           import os
           from pathlib import Path
-
-          rid = os.environ["RELEASE_ID"]
-          path = Path("index.html")
-          text = path.read_text(encoding="utf-8")
-          marker = f'<meta name="yeop-release" content="{rid}" />'
-          if marker not in text:
-              if text.count("</head>") != 1:
-                  raise SystemExit("Unexpected index.html structure")
-              text = text.replace("</head>", marker + "\n</head>")
-              path.write_text(text, encoding="utf-8")
+          p=Path('index.html'); text=p.read_text(encoding='utf-8')
+          marker='<meta name="yeop-release" content="'+os.environ['RELEASE_ID']+'" />'
+          assert text.count('</head>') == 1
+          p.write_text(text.replace('</head>',marker+'\n</head>'),encoding='utf-8')
           PY
-
       - name: Build release
-        shell: bash
+        run: npx vite build --base "/_yeop_releases/${RELEASE_ID}/"
+      - name: Install browser and SFTP tooling
         run: |
-          npx vite build --base "/_yeop_releases/${RELEASE_ID}/"
-
-      - name: Generate current home sharing thumbnail
-        shell: bash
-        env:
-          YEOP_SFTP_PASSWORD: ''
-        run: |
-          python -m pip install --disable-pip-version-check --no-input playwright==1.57.0
+          python -m pip install --disable-pip-version-check --no-input playwright==1.57.0 paramiko==5.0.0
           python -m playwright install --with-deps chromium
-          python scripts/generate-home-share-image.py --asset-base "/_yeop_releases/${RELEASE_ID}/"
-
+      - name: Generate current home sharing thumbnail
+        run: python scripts/generate-home-share-image.py --asset-base "/_yeop_releases/${RELEASE_ID}/"
       - name: Verify build contents
-        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-
-          dist = Path("dist")
-          if not (dist / "index.html").is_file():
-              raise SystemExit("dist/index.html is missing")
-          gif = dist / "mir-profile-live.gif"
-          if not gif.is_file():
-              raise SystemExit("mir-profile-live.gif is missing from build")
-          if gif.read_bytes()[:6] not in (b"GIF87a", b"GIF89a"):
-              raise SystemExit("mir-profile-live.gif has invalid GIF header")
-          expected_supabase = b"https://nohboljeugjmtwnvtayu.supabase.co"
-          bundle_has_supabase = False
-          for path in dist.rglob("*"):
-              if not path.is_file():
-                  continue
-              data = path.read_bytes()
-              if b"/.netlify/functions/" in data:
-                  raise SystemExit(f"Netlify function reference remains in {path}")
-              if path.suffix == ".js" and expected_supabase in data:
-                  bundle_has_supabase = True
-          if not bundle_has_supabase:
-              raise SystemExit("Production Supabase config is missing from the built JS bundle")
-          print("Build verification passed")
+          dist=Path('dist')
+          for route in ['index.html','policies/privacy/index.html','policies/terms/index.html','policies/operation/index.html']:
+              assert (dist/route).is_file(),route
+          assert (dist/'mir-profile-live.gif').read_bytes()[:6] in (b'GIF87a',b'GIF89a')
+          configured=False
+          for p in dist.rglob('*'):
+              if not p.is_file(): continue
+              data=p.read_bytes()
+              assert b'/.netlify/functions/' not in data,str(p)
+              if p.suffix=='.js' and b'https://nohboljeugjmtwnvtayu.supabase.co' in data: configured=True
+          assert configured,'Production public configuration missing'
           PY
-
-      - name: Verify deployment script syntax
-        run: python -m py_compile scripts/yeop_deploy_ci.py scripts/mir_deploy_ci.py scripts/mir_shared_root_deploy_ci.py
-
-      - name: Install SFTP dependency
-        run: python -m pip install --disable-pip-version-check --no-input "paramiko==5.0.0"
-
-      - name: Deploy, verify and activate
+      - name: Verify deployment syntax
+        run: python -m py_compile scripts/yeop_deploy_ci.py scripts/mir_deploy_ci.py scripts/mir_shared_root_deploy_ci.py scripts/mir_policy_deploy_ci.py
+      - name: Deploy, verify and activate with policy rollback checks
         env:
           ACTIVATE: 'true'
           DIST_DIR: dist
           SERVER_SOURCE_DIR: server
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
           SONGBOOK_YOUTUBE_API_KEY: ${{ secrets.SONGBOOK_YOUTUBE_API_KEY }}
-        run: python scripts/mir_shared_root_deploy_ci.py
-
+        run: python scripts/mir_policy_deploy_ci.py
       - name: Verify public sharing metadata and thumbnail
-        env:
-          YEOP_SFTP_PASSWORD: ''
         run: python scripts/verify-home-share-image.py --expected-sha "$GITHUB_SHA"
-
       - name: Upload deployment report and rollback material
         if: always()
         uses: actions/upload-artifact@v4
@@ -281,14 +122,13 @@ jobs:
             platform-report/youtube-runtime.json
             deployment-backup/
             share-image-report/
+            policy-live-report/
           if-no-files-found: ignore
           retention-days: 30
-
       - name: Deployment summary
         if: success()
-        shell: bash
         run: |
           echo "### mir.yeop.net production deployment" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Release: \`${RELEASE_ID}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Commit: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- mir.yeop.net deployed under /web/_mir_site via a stable host-only bridge; yeop.net is not redirected and remains available for personal projects." >> "$GITHUB_STEP_SUMMARY"
+          echo "Release: ${RELEASE_ID}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: ${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Published policies, signup notice and password-confirmed withdrawal UI. Original atomic routing and rollback engine preserved." >> "$GITHUB_STEP_SUMMARY"

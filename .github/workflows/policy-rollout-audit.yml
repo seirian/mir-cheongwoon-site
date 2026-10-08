@@ -1,0 +1,51 @@
+name: Policy rollout audit
+on:
+  push:
+    branches: [feature/privacy-production]
+    paths: [.github/workflows/policy-rollout-audit.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/feature/privacy-production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Snapshot version-controlled source only
+        run: |
+          mkdir -p rollout-audit
+          git archive HEAD -o rollout-audit/source.zip
+          git rev-parse HEAD > rollout-audit/source-sha.txt
+      - name: Read narrowly scoped provider configuration when management credential exists
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os,json,urllib.request
+          from pathlib import Path
+          token=os.environ.get('SUPABASE_ACCESS_TOKEN','')
+          out={'management_credential_available':bool(token)}
+          if token:
+              base='https://api.supabase.com/v1/projects/nohboljeugjmtwnvtayu/'
+              for endpoint,label in [('config/auth','auth'),('database/backups','backups')]:
+                  try:
+                      req=urllib.request.Request(base+endpoint,headers={'Authorization':'Bearer '+token})
+                      with urllib.request.urlopen(req,timeout=20) as r: data=json.load(r)
+                      if label=='auth':
+                          keys=['smtp_host','smtp_port','smtp_admin_email','smtp_sender_name','mailer_autoconfirm','jwt_exp','disable_signup','security_audit_log_enabled','security_audit_log_retention_period']
+                          out[label]={k:data[k] for k in keys if k in data}
+                      else:
+                          out[label]={'region':data.get('region'),'pitr_enabled':data.get('pitr_enabled'),'backup_count':len(data.get('backups',[]))}
+                  except Exception as exc: out[label]={'available':False,'error_type':type(exc).__name__}
+          Path('rollout-audit/provider-config.json').write_text(json.dumps(out,indent=2),encoding='utf-8')
+          print('Audit completed without printing credentials or member data')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: policy-rollout-source-audit
+          path: rollout-audit/
+          retention-days: 3

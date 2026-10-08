@@ -1,9 +1,13 @@
 import { loginWithUsername } from '../lib/usernameLogin';
 import { useEffect, useMemo, useState } from 'react';
 import { KeyRound, LogIn, LogOut, Mail, ShieldCheck, UserPlus } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import SignupPolicyNotice from '../components/SignupPolicyNotice';
+import { PUBLISHED_POLICY_VERSION, POLICY_EFFECTIVE_DATE } from '../data/policyPublished';
 import PageHero from '../components/PageHero';
 import PasswordChangeForm from '../components/PasswordChangeForm';
+import AccountWithdrawalForm from '../components/AccountWithdrawalForm';
+import { requestAccountWithdrawal, finishAccountWithdrawal } from '../lib/accountWithdrawal';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const normalizeUsername = (value) => value.trim().toLowerCase();
@@ -20,13 +24,14 @@ export default function AccountPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedMode = searchParams.get('mode');
-  const initialMode = requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : 'login';
+  const initialMode = requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : requestedMode === 'withdraw' ? 'withdraw' : 'login';
   const [mode, setMode] = useState(initialMode);
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [profile, setProfile] = useState(null);
   const [login, setLogin] = useState({ identifier: '', password: '' });
   const [signup, setSignup] = useState({ username: '', email: '', password: '', passwordConfirm: '' });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
@@ -71,7 +76,7 @@ export default function AccountPage() {
         next.set('mode', 'recovery');
         setSearchParams(next, { replace: true });
       }
-      loadProfile(nextSession);
+      setTimeout(() => { if (active) loadProfile(nextSession); }, 0);
     });
 
     return () => {
@@ -81,20 +86,21 @@ export default function AccountPage() {
   }, []);
 
   useEffect(() => {
-    setMode((previous) => requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : ['reset', 'password'].includes(previous) ? 'login' : previous);
+    setMode((previous) => requestedMode === 'recovery' ? 'reset' : requestedMode === 'password' ? 'password' : requestedMode === 'withdraw' ? 'withdraw' : ['reset', 'password', 'withdraw'].includes(previous) ? 'login' : previous);
   }, [requestedMode]);
 
   useEffect(() => {
-    if (session && nextPath && mode !== 'reset' && mode !== 'password') navigate(nextPath, { replace: true });
+    if (session && nextPath && !['reset', 'password', 'withdraw'].includes(mode)) navigate(nextPath, { replace: true });
   }, [session, nextPath, mode, navigate]);
 
   const switchMode = (nextMode) => {
     setMode(nextMode);
     setMessage('');
+    setTermsAccepted(false);
     const next = new URLSearchParams(searchParams);
     next.delete('verified');
     if (nextMode === 'reset') next.set('mode', 'recovery');
-    else if (nextMode === 'password') next.set('mode', 'password');
+    else if (['password', 'withdraw'].includes(nextMode)) next.set('mode', nextMode);
     else next.delete('mode');
     setSearchParams(next, { replace: true });
   };
@@ -120,6 +126,7 @@ export default function AccountPage() {
     event.preventDefault();
     if (!supabase || busy) return;
 
+    if (!termsAccepted) { setMessage('이용약관을 확인하고 동의해 주세요.'); return; }
     const username = normalizeUsername(signup.username);
     const email = signup.email.trim().toLowerCase();
 
@@ -158,7 +165,7 @@ export default function AccountPage() {
       email,
       password: signup.password,
       options: {
-        data: { username },
+        data: { username, terms_version: PUBLISHED_POLICY_VERSION, terms_accepted_at: new Date().toISOString() },
         emailRedirectTo: `${window.location.origin}/account?verified=1`,
       },
     });
@@ -175,6 +182,7 @@ export default function AccountPage() {
       return;
     }
 
+    setTermsAccepted(false);
     setSignup({ username: '', email: '', password: '', passwordConfirm: '' });
     setMessage('회원가입 요청이 완료되었습니다. 입력한 이메일로 전송된 인증 링크를 눌러 가입을 완료해 주세요.');
     setMode('login');
@@ -250,8 +258,28 @@ export default function AccountPage() {
     );
   }
 
-  if (mode === 'password' && authLoading) {
-    return <><PageHero eyebrow="ACCOUNT SECURITY" title="비밀번호 변경" description="로그인 상태를 확인하고 있습니다."/><section className="section-wrap account-auth-wrap"><p role="status">로그인 정보를 확인하는 중…</p></section></>;
+  if (['password', 'withdraw'].includes(mode) && authLoading) {
+    return <><PageHero eyebrow="ACCOUNT SECURITY" title={mode === 'withdraw' ? '회원 탈퇴' : '비밀번호 변경'} description="로그인 상태를 확인하고 있습니다."/><section className="section-wrap account-auth-wrap"><p role="status">로그인 정보를 확인하는 중…</p></section></>;
+  }
+
+  if (session && mode === 'withdraw') {
+    const withdrawnId = session.user.id;
+    return <><PageHero eyebrow="ACCOUNT" title="회원 탈퇴" description="현재 비밀번호로 본인을 확인한 뒤 계정정보를 삭제합니다."/>
+      <section className="section-wrap account-auth-wrap"><AccountWithdrawalForm key={withdrawnId} userId={withdrawnId}
+        onRequest={(values, id) => requestAccountWithdrawal(supabase, values, id)} onCancel={() => switchMode('login')}
+        onDeleted={async () => {
+          let storage; try { storage = window.localStorage; } catch { /* Browser storage can be blocked. */ }
+          const key = `sb-${new URL(import.meta.env.VITE_SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+          await finishAccountWithdrawal(supabase, storage, key, withdrawnId);
+          const remaining = await supabase.auth.getSession().catch(() => ({ data: {} }));
+          if (remaining.data?.session?.user?.id && remaining.data.session.user.id !== withdrawnId) {
+            switchMode('login');
+            setMessage('이전에 선택한 계정의 탈퇴가 완료되었습니다. 현재 다른 계정의 로그인은 유지됩니다.'); return;
+          }
+          setSession(null); setProfile(null); setLogin({ identifier: '', password: '' });
+          const next = new URLSearchParams(); setSearchParams(next, { replace: true }); setMode('login');
+          setMessage('회원 탈퇴가 완료되었습니다. 운영 DB의 회원 계정정보를 삭제했습니다.');
+        }}/></section></>;
   }
 
   if (session && mode === 'password') {
@@ -270,6 +298,7 @@ export default function AccountPage() {
             <p>{profile?.email || session.user.email}</p>
             <button type="button" className="btn btn-primary" onClick={() => switchMode('password')}><KeyRound size={17}/> 비밀번호 변경</button>
             <button className="btn btn-ghost" onClick={() => supabase.auth.signOut()}><LogOut size={17}/> 로그아웃</button>
+            <button type="button" className="withdrawal-entry" onClick={() => switchMode('withdraw')}>회원 탈퇴</button>
           </div>
         </section>
       </>
@@ -284,6 +313,7 @@ export default function AccountPage() {
         description="아이디, 비밀번호, 이메일만으로 계정을 관리합니다."
       />
       <section className="section-wrap account-auth-wrap">
+        <aside className="policy-account-notice">{POLICY_EFFECTIVE_DATE} 개인정보 처리·운영 안내를 공개했습니다. <Link to="/policies/privacy">안내 확인</Link> · 기존 회원의 약관 동의를 자동으로 간주하지 않습니다.</aside>
         {mode !== 'reset' && (
           <div className="account-auth-tabs">
             <button className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>로그인</button>
@@ -292,7 +322,7 @@ export default function AccountPage() {
           </div>
         )}
 
-        {(mode === 'login' || mode === 'password') && (
+        {(mode === 'login' || mode === 'password' || mode === 'withdraw') && (
           <form className="account-auth-card" onSubmit={handleLogin}>
             <div className="account-auth-title"><LogIn size={20}/><strong>로그인</strong></div>
             <label>아이디<input value={login.identifier} onChange={(e) => setLogin({ ...login, identifier: e.target.value })} type="text" name="username" autoCapitalize="none" spellCheck={false} maxLength={24} autoComplete="username" required /></label>
@@ -308,6 +338,7 @@ export default function AccountPage() {
             <label>비밀번호<input type="password" value={signup.password} onChange={(e) => setSignup({ ...signup, password: e.target.value })} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
             <label>비밀번호 확인<input type="password" value={signup.passwordConfirm} onChange={(e) => setSignup({ ...signup, passwordConfirm: e.target.value })} autoComplete="new-password" minLength="8" maxLength="128" required /></label>
             <label>이메일<input type="email" value={signup.email} onChange={(e) => setSignup({ ...signup, email: e.target.value })} autoComplete="email" required /></label>
+            <SignupPolicyNotice accepted={termsAccepted} onAccepted={setTermsAccepted} disabled={busy}/>
             <button className="btn btn-primary" disabled={busy}>{busy ? '가입 처리 중...' : '회원가입'}</button>
           </form>
         )}
