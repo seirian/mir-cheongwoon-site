@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { mirProfile } from '../data/siteData';
 import { featuredPerformance } from '../data/promotionData';
 import { HERO_LIVE_URL } from '../lib/heroImage';
+import { IS_POLICY_PREVIEW } from '../lib/preview';
 import usePromotionContent from '../hooks/usePromotionContent';
 import useSoopStatus from '../hooks/useSoopStatus';
 import StartHere from '../components/StartHere';
@@ -10,6 +11,7 @@ import UpcomingSchedule from '../components/UpcomingSchedule';
 import OfficialChannels from '../components/OfficialChannels';
 import VideoCard from '../components/VideoCard';
 import HomeHeroImage from '../components/HomeHeroImage';
+import PolicyPreviewHero from '../components/PolicyPreviewHero';
 import CHEONGWOON_HERO_IMAGE from '../data/cheongwoonHeroImage';
 
 export default function HomePage() {
@@ -28,7 +30,7 @@ export default function HomePage() {
         <a className={`promo-live-status ${liveStatus === 'live' ? 'is-live' : ''}`} href={soop} target="_blank" rel="noopener noreferrer"><span aria-hidden="true"/><span aria-live="polite">{statusLabel}</span></a>
         <Link className="promo-text-link promo-hero-archive" to="/history/blued-2025">미르와 청운밴드가 함께한 공연 기록<ArrowRight size={15}/></Link>
       </div>
-      <HomeHeroImage/>
+      {IS_POLICY_PREVIEW ? <PolicyPreviewHero/> : <HomeHeroImage/>}
     </section>
     <div className="section-wrap promo-intro-line"><span><Radio size={16}/>방송에서 만나고</span><i aria-hidden="true"/><span><Music2 size={16}/>음악으로 가까워지고</span><i aria-hidden="true"/><span><Sparkles size={16}/>무대의 기억을 함께 남깁니다</span></div>
     <StartHere {...content}/>

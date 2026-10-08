@@ -1,0 +1,10 @@
+/* The real site footer is dark. Keep every draft link readable on that background. */
+.site-footer.policy-footer-shell .policy-footer-row{border-top-color:#344256}
+.site-footer.policy-footer-shell .policy-footer-nav a{color:#bdd3e7;font-size:13px}
+.site-footer.policy-footer-shell .policy-footer-nav .policy-privacy-link{color:#f0f7ff;font-weight:800}
+.site-footer.policy-footer-shell .policy-footer-status{color:#ddc68f}
+.site-footer.policy-footer-shell .footer-admin{color:#a8c9e7}
+.site-footer.policy-footer-shell a:hover{color:#fff;text-decoration:underline;text-underline-offset:4px}
+.site-footer.policy-footer-shell :focus-visible{outline:3px solid #9cd7ef;outline-offset:4px}
+.policy-legal-scope{border-left:3px solid #7198ab;background:#f3f8fa}
+.policy-legal-scope strong{color:#214d66}

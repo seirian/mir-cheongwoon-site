@@ -1,7 +1,9 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowUpRight, CheckCircle2, ClipboardCheck, FileText, ShieldCheck } from 'lucide-react';
 import { POLICY_REVIEW_DATE, POLICY_VERSION, policyBlockers, policyDocuments, policySources } from '../data/policyContent';
+import PolicyLegalScope from '../components/PolicyLegalScope';
 import '../policies.css';
+import '../policyReviewAdditions.css';
 
 function ReviewNotice() {
   return <aside className="policy-draft-notice" aria-label="검토안 상태">
@@ -17,7 +19,7 @@ function PolicyTable({ table }) {
   </div>;
 }
 function Sources() {
-  return <details className="policy-sources"><summary>판단 근거와 참고 자료</summary><p>검토 기준: {POLICY_REVIEW_DATE}. 아래 법령의 제2조·제15조·제21조·제22조의2·제26조·제28조의8·제30조·제35~38조 및 시행령 제31조 등을 대조했습니다. 적용 시점의 시행 법령과 실제 운영 상태를 함께 확인해야 합니다.</p><ul>{policySources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.label} <span aria-hidden="true">↗</span></a></li>)}</ul></details>;
+  return <details className="policy-sources"><summary>판단 근거와 참고 자료</summary><p>검토 기준: {POLICY_REVIEW_DATE}. 아래 법령의 제2조·제15조·제21조·제22조의2·제26조·제28조의8·제30조·제35~38조·제58조 및 시행령 제31조 등을 대조했습니다. 적용 시점의 시행 법령과 실제 운영 상태를 함께 확인해야 합니다.</p><ul>{policySources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer">{source.label} <span aria-hidden="true">↗</span></a></li>)}</ul></details>;
 }
 function SignupPreview() {
   return <section id="signup" className="policy-section">
@@ -27,7 +29,7 @@ function SignupPreview() {
       <div className="policy-demo-fields"><div><span>아이디</span><div>mir_fan_example</div></div><div><span>이메일</span><div>example@example.invalid</div></div><div><span>비밀번호</span><div>•••••••• <small>실제 입력란이 아닙니다</small></div></div></div>
       <div className="policy-signup-notice"><strong>계정 이용을 위한 개인정보 처리 안내</strong><p>아이디·이메일·비밀번호 인증정보로 회원을 구분하고, 로그인·이메일 인증·계정 복구를 처리합니다. 회원 식별값과 인증·세션 정보(IP·브라우저 정보 포함)도 생성됩니다.</p><p>Supabase를 사용하며 DB는 인도 리전에 저장됩니다. 보유기간·수탁자 세부사항·국외 이전 근거와 거부 방법은 정식 가입 안내 전 확정해야 합니다.</p><Link to="/policies/privacy">처리 항목과 미확정 사항 자세히 보기 <ArrowUpRight size={14}/></Link></div>
       <label className="policy-demo-check"><input type="checkbox" disabled /> <span>이용약관 동의 위치 예시 <Link to="/policies/terms">약관 보기</Link></span></label>
-      <p className="policy-caption">개인정보처리방침 전체에 대한 포괄 동의는 넣지 않았습니다. 계약 이행상 필수 처리와 별도 동의가 필요한 처리를 구분해 최종 설계합니다. 연령 정책도 미확정입니다.</p>
+      <p className="policy-caption">개인정보처리방침 전체에 대한 포괄 동의는 넣지 않았습니다. 법 적용 범위와 처리 근거를 확인하고, 별도 동의가 필요한 처리를 구분해 최종 설계합니다. 연령 정책도 미확정입니다.</p>
       <button type="button" className="policy-demo-submit" disabled>검토용 · 회원가입을 받지 않습니다</button>
     </div>
   </section>;
@@ -35,7 +37,7 @@ function SignupPreview() {
 function ReviewContent() {
   return <>
     <section className="policy-review-cards" aria-label="문서별 검토">
-      {Object.entries(policyDocuments).map(([key, doc]) => <Link className="policy-review-card" key={key} to={`/policies/${key}`}><FileText size={22}/><h2>{doc.title}</h2><p>{key === 'privacy' ? '회원정보 처리에 맞춘 법정 공개 문서. 자동 생성 정보와 국외 이전을 포함합니다.' : key === 'terms' ? '계정과 서비스 이용 조건. 임의 면책이나 포괄 동의 없이 구성했습니다.' : '비공식 관계, 출처·저작권, 오류 수정과 요청 처리의 기준입니다.'}</p><span>초안 살펴보기 <ArrowUpRight size={16}/></span></Link>)}
+      {Object.entries(policyDocuments).map(([key, doc]) => <Link className="policy-review-card" key={key} to={`/policies/${key}`}><FileText size={22}/><h2>{doc.title}</h2><p>{key === 'privacy' ? '실제 처리 항목을 안내하는 초안. 자동 생성 정보와 국외 이전, 법 적용 범위를 포함합니다.' : key === 'terms' ? '계정과 서비스 이용 조건. 임의 면책이나 포괄 동의 없이 구성했습니다.' : '비공식 관계, 출처·저작권, 오류 수정과 요청 처리의 기준입니다.'}</p><span>초안 살펴보기 <ArrowUpRight size={16}/></span></Link>)}
     </section>
     <section id="findings" className="policy-section"><div className="policy-section-heading"><span className="policy-kicker">VERIFIED</span><h2>실제 확인한 내용</h2></div>
       <div className="policy-findings">
@@ -48,14 +50,14 @@ function ReviewContent() {
     </section>
     <section id="before-publish" className="policy-section"><div className="policy-section-heading"><span className="policy-kicker">BEFORE PUBLICATION</span><h2>정식 반영 전, 확정할 다섯 가지</h2></div><ol className="policy-blockers">{policyBlockers.map(item => <li key={item.title}><strong>{item.title}</strong><p>{item.detail}</p><span className="policy-status-chip">확정 필요</span></li>)}</ol></section>
     <SignupPreview/>
-    <section id="preview-safety" className="policy-section"><div className="policy-section-heading"><span className="policy-kicker">REVIEW SCOPE</span><h2>이번 검토안의 범위</h2></div><p>기존 사이트의 공통 푸터에 세 문서를 연결했습니다. 로그인 없이 열람할 수 있고, 모바일과 데스크톱에서 같은 내용을 제공합니다. 위의 가입 화면은 안내 위치를 보여 주는 시안이며 실제 계정을 만들지 않습니다.</p><p>검토용 빌드는 운영 활성화와 분리하며 검색 노출을 막기 위한 noindex를 적용합니다. noindex는 접근통제가 아니므로 비밀정보나 회원정보를 게시하지 않습니다. 운영 회원·비밀번호·권한·DB 스키마를 변경하지 않습니다.</p><p>법령상 요구되는 안내와 실제 운영 절차를 모두 갖춘 뒤 별도 검토를 거쳐 정식 반영해야 합니다. 문서만 추가한다고 탈퇴·파기·국외 이전 문제가 자동으로 해결되지는 않습니다.</p></section>
+    <section id="preview-safety" className="policy-section"><div className="policy-section-heading"><span className="policy-kicker">REVIEW SCOPE</span><h2>이번 검토안의 범위</h2></div><p>기존 사이트의 공통 푸터에 세 문서를 연결했습니다. 로그인 없이 열람할 수 있고, 모바일과 데스크톱에서 같은 내용을 제공합니다. 위의 가입 화면은 안내 위치를 보여 주는 시안이며 실제 계정을 만들지 않습니다.</p><p>검토용 빌드는 운영 활성화와 분리하며 검색 노출을 막기 위한 noindex를 적용합니다. noindex는 접근통제가 아니므로 비밀정보나 회원정보를 게시하지 않습니다. 운영 회원·비밀번호·권한·DB 스키마를 변경하지 않습니다.</p><p>법 적용 범위를 판단하고 필요한 안내와 실제 운영 절차를 갖춘 뒤 별도 검토를 거쳐 정식 반영해야 합니다. 문서만 추가한다고 탈퇴·파기·국외 이전 문제가 자동으로 해결되지는 않습니다.</p></section>
     <Sources/>
   </>;
 }
 export default function PolicyPage() {
   const { document } = useParams();
   const isReview = document === 'review';
-  const doc = policyDocuments[document];
+  const doc = Object.hasOwn(policyDocuments, document) ? policyDocuments[document] : null;
   if (!isReview && !doc) return <Navigate to="/policies/review" replace/>;
   const title = isReview ? '이용자 안내 1차 검토실' : doc.title;
   return <div className="policy-page">
@@ -72,6 +74,7 @@ export default function PolicyPage() {
         <Sources/>
         <div className="policy-end"><span>{POLICY_VERSION} / 검토 기준 {POLICY_REVIEW_DATE}</span><Link to="/policies/review#before-publish">남은 확인 사항 보기 <ArrowUpRight size={16}/></Link></div>
       </>}
+      <PolicyLegalScope/>
     </div>
   </div>;
 }
