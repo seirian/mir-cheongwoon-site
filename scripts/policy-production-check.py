@@ -23,6 +23,27 @@ def assert_policy_heading(page, title):
     assert all(lead not in text for lead in REMOVED_POLICY_LEADS)
 
 
+def assert_provider_copy(page):
+    providers = page.locator('#processors')
+    transfer = page.locator('#overseas')
+    for section in [providers, transfer]:
+        text = section.inner_text()
+        assert all(term not in text for term in ['확인 중', '확인 범위', '미확인 처리경로'])
+    assert providers.locator('thead th').count() == 2
+    assert providers.locator('tbody tr').count() == 4
+    for name in ['Supabase Pte. Ltd.', 'NAVER 메일', 'inour.net', '가입 인증·복구 메일']:
+        assert name in providers.inner_text()
+    assert '문의 접수용 NAVER 메일' in providers.inner_text()
+    assert '운영 DB 저장 국가: 인도(뭄바이, ap-south-1)' in transfer.inner_text()
+    assert '운영 DB 저장 국가 외의 지역' in transfer.inner_text()
+    references = transfer.locator('.policy-provider-sources a')
+    assert references.count() == 2
+    for link, path in zip(references.all(), ['data-processing-addendum', 'subprocessor-list']):
+        assert link.get_attribute('href') == 'https://supabase.com/legal/customer-resources/' + path
+        assert link.get_attribute('target') == '_blank'
+        assert 'noopener' in link.get_attribute('rel')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', required=True)
@@ -58,6 +79,8 @@ def main():
                     assert response.status == 200
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()
                     assert_policy_heading(page, title)
+                    if key == 'privacy':
+                        assert_provider_copy(page)
                     assert '검토' not in page.title() and '미시행' not in page.locator('.policy-page').inner_text()
                     assert page.locator('.review-banner').count() == 0
                     assert page.locator('.policy-page .policy-pending').count() == 0
@@ -69,8 +92,12 @@ def main():
                     page.screenshot(path=str(out / f'{name}-{key}-heading.png'))
                     assert page.locator('.policy-page .policy-pending').count() == 0
                     if key == 'privacy':
-                        for snippet in ['옆군', 'sengyb@naver.com', '추가 처리 필요가 없어지면 지체 없이 삭제', '만 14세 이상 확인란', '확인 중']:
+                        assert_provider_copy(page)
+                        for snippet in ['옆군', 'sengyb@naver.com', '추가 처리 필요가 없어지면 지체 없이 삭제', '만 14세 이상 확인란']:
                             assert snippet in page.locator('.policy-page').inner_text()
+                        for section_id in ['processors', 'overseas']:
+                            page.locator(f'#{section_id}').screenshot(path=str(out / f'{name}-{section_id}.png'))
+                        report['checks'].append({'viewport': name, 'provider_status_copy_absent': True, 'all_services_and_transfer_scope_preserved': True})
                         page.locator('.policy-toc').get_by_text('4. 보유기간과 파기', exact=True).click()
                         assert page.locator('#retention').is_visible()
                         assert '동시에 모든 사본이 삭제되는 것은 아닙니다' in page.locator('.policy-deletion-scope').inner_text()
@@ -84,6 +111,8 @@ def main():
                     page.get_by_role('navigation', name='사이트 정책').get_by_role('link', name=title, exact=True).click()
                     page.get_by_role('heading', name=title, exact=True, level=1).wait_for()
                     assert_policy_heading(page, title)
+                    if title == '개인정보처리방침':
+                        assert_provider_copy(page)
                     report['checks'].append({'viewport': name, 'footer': title, 'passed': True})
                 page.goto(base + 'account', wait_until='domcontentloaded')
                 page.get_by_role('heading', name='회원 로그인', exact=True).wait_for()
