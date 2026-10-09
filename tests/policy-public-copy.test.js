@@ -19,7 +19,7 @@ test('public deletion scope remains truthful without the internal-review box', (
   assert.match(page, /동시에 모든 사본이 삭제되는 것은 아닙니다/);
   assert.match(page, /실제 보관기간과 삭제 주기는 아직 확인되지 않았습니다/);
   const privacy = publishedPolicies.privacy.sections;
-  assert.match(JSON.stringify(privacy.find(s => s.id === 'processors').table), /확인 중/);
+  assert.doesNotMatch(JSON.stringify(privacy.find(s => s.id === 'processors').table), /확인 중/);
   assert.match(JSON.stringify(privacy.find(s => s.id === 'overseas').table), /Supabase.*인도/);
 });
 
