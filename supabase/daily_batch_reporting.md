@@ -1,50 +1,22 @@
 # 일배치 Discord 결과 리포트
 
-현재 운영 중인 정기 배치의 성공/실패 결과를 기존 일정 자동 점검 Discord Webhook 채널로 통합 전송합니다.
-
 ## 현재 업무 배치
-
 | 배치 | KST 실행 시각 | 성공 판정 |
 | --- | --- | --- |
 | 일정 동기화 `schedule-sync-midnight-kst` | 00:00 / 12:00 | `schedule_sync_runs.status = success` |
 | 최신 영상 `recent-video-sync-midnight-kst` | 00:00 | `success` 또는 `no_change` |
 | 최신 쇼츠 `recent-shorts-sync-midnight-kst` | 00:00 | `success` 또는 `no_change` |
-| 팬아트 백업 `fanart-daily-backup-0100-kst` | 01:00 | 상태 API의 당일 `lastRun.status = success` |
+| 팬아트 백업 `fanart-daily-backup-0100-kst` | 01:00 | 당일 성공 실행과 정상 저장본 |
 
-일정 배치에는 아래 보조 작업도 함께 확인합니다.
+일정 복구는 00:03/12:03, 사후 점검은 00:10/12:10이다. 일정·영상·쇼츠의 결과 보고는 기존 `daily-batch-report` 함수로 00:12/12:12에 수행한다. 이 영역의 동작은 변경하지 않았다.
 
-- `schedule-sync-recovery-kst`: 00:03 / 12:03, 원 배치 실패 시 조건부 재시도
-- `schedule-sync-monitor-kst`: 00:10 / 12:10, 원본/DB 미반영 여부 사후 검증
+## 팬아트 보고 / 자동 복구 (2026-10-12 보완)
+`daily-batch-report-fanart-kst`의 이름과 01:05 시각을 유지하되 대상은 전용 `fanart-daily-recovery` 함수(initial 모드)로 전환한다. 제한 대기를 최종 실패와 구분하고, 재시도 가능 시각·실제 시도 횟수·기존 저장본 시각을 알린다.
 
-## 결과 알림
+01~23시 매시 20/50분에 상태를 확인하고, 제한이 만료된 ready 상태에서만 실제 재시도한다. 실제 수집은 하루 총4회, 최소30분 간격, 401/403/429 후6시간 보호를 유지한다. 성공 또는 시도 소진 시 final 결과를 보고하며, 계속 대기 중이면 23:55에 당일 미완료를 최종 보고한다. 23:50 이후 새 수집은 시작하지 않는다.
 
-동일한 `daily-batch-report` Edge Function을 세 번 호출합니다.
+팬아트 기록은 `fanart_recovery_state`와 `fanart_recovery_notifications`에 저장한다. 다른 배치와 기존 과거 보고는 `daily_batch_report_runs`에 그대로 남는다. 새 알림 원장은 날짜+단계 유일 키로 중복 전송을 막는다. 이미 최초 성공을 보고한 날에는 최종 성공을 중복 발송하지 않는다.
 
-- 00:12 KST: 일정 + 최신 영상 + 쇼츠 + 일정 사후 점검
-- 01:05 KST: 팬아트 일일 백업
-- 12:12 KST: 일정 + 일정 사후 점검
+인증 토큰과 Discord Webhook은 기존 `schedule_monitor_config`를 서버에서만 재사용한다. 새 함수의 dry-run 본문은 `{"mode":"tick","dry_run":true}`이며, 현재 한국 날짜의 읽기 전용 판정만 수행하고 실제 수집/DB 기록/Discord 전송은 하지 않는다. `mode`는 initial/tick/final이다. 과거 날짜나 강제 수집 인자는 받지 않는다.
 
-성공과 실패 모두 Discord로 발송합니다. 일정 배치에서 기존 오류 전용 자동 점검 알림은 안전망으로 그대로 유지되므로, 일정 장애 시 즉시 오류 알림 후 00:12/12:12 통합 결과 요약이 추가로 도착할 수 있습니다.
-
-## 판정 원칙
-
-- pg_cron 자체가 호출됐더라도 실제 업무 실행 기록이 없으면 실패로 판정합니다.
-- 일정 복구 cron으로 최종 성공한 경우 성공으로 처리하고 메시지에 `자동 복구 사용`을 표시합니다.
-- 영상/쇼츠의 `no_change`는 정상 성공입니다.
-- 팬아트는 `/api/naver-fanart-daily.php?status=1`의 당일 실행 결과를 사용합니다.
-- 날짜/구간별 Discord 전송 결과는 `daily_batch_report_runs`에 저장하며, 이미 `sent`인 구간은 중복 전송하지 않습니다.
-- Discord Webhook URL과 호출 토큰은 기존 `schedule_monitor_config`를 재사용하며 저장소에 비밀값을 기록하지 않습니다.
-
-## Dry-run
-
-운영 알림 없이 과거/현재 결과 판정만 확인할 때는 함수에 다음 body를 전달합니다.
-
-```json
-{
-  "mode": "midnight",
-  "report_date": "2026-10-01",
-  "dry_run": true
-}
-```
-
-`mode`는 `midnight`, `fanart`, `noon` 중 하나입니다.
+상세 정책, 배포·되돌리기 및 전송 불확실성 처리: [팬아트 복구 작업 기록](../docs/tasks/fanart-recovery-20261012.md).
