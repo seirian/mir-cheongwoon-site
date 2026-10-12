@@ -194,6 +194,7 @@ final class DailyFanartStore {
             if ($policy['state'] === 'waiting') {
                 $run = ['status'=>'deferred','batchDate'=>$date,'error'=>$policy['reason'],
                     'attemptsToday'=>$policy['attemptsToday'],'nextAttemptAt'=>$policy['nextAttemptAt'],
+                    'retryAfter'=>$policy['nextAttemptAt'], // Preserve existing retry-response consumers.
                     'backoffUntil'=>$policy['backoffUntil'],'finishedAt'=>gmdate('c', $now),'reused'=>true];
                 // Keep the bounded history for actual source attempts, not periodic waiting checks.
                 $this->json('runs.php', ['lastRun'=>$run,'history'=>$runs['history'] ?? []]);
