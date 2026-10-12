@@ -29,7 +29,7 @@ jobs:
           node-version-file: .nvmrc
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: v2.9.7
       - name: Offline policy, source budget and snapshot regression
         run: |
           php -l server/api/_fanart_daily.php
@@ -37,7 +37,7 @@ jobs:
           php scripts/fanart-daily-check.php
           php scripts/fanart-daily-retry-check.php
           node --test tests/fanart-recovery.test.js
-          deno check supabase/functions/fanart-daily-recovery/index.ts
+          deno check --node-modules-dir=auto supabase/functions/fanart-daily-recovery/index.ts
       - name: Isolated PostgreSQL schema, RLS, phase uniqueness and compare-and-set
         env:
           PGHOST: localhost
