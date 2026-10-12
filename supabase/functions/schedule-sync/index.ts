@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "npm:@supabase/server@1.6.1";
 import { strFromU8, unzipSync } from "fflate";
+import { resolveCalendarGridStart } from "./calendar-grid.mjs";
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const MAX_CELL_LENGTH = 6000;
@@ -296,8 +297,13 @@ async function loadMonth(sheetId: string, year: number, month: number): Promise<
     requests.push(fetchCsv(sheetId, key, `B${EVENT_ROWS[week]}:N${EVENT_ROWS[week]}`));
   }
   const raw = await Promise.all(requests);
-  const first = new Date(Date.UTC(year, month - 1, 1));
-  const gridStart = new Date(Date.UTC(year, month - 1, 1 - first.getUTCDay()));
+  const dateGrid = DATE_ROWS.map((_, week) => {
+    const fields = parseCsv(raw[week * 2])[0] || [];
+    return CALENDAR_OFFSETS.map((offset) => normalizeCell(fields[offset]));
+  });
+  let gridStart: Date;
+  try { gridStart = resolveCalendarGridStart(year, month, dateGrid); }
+  catch { throw new SyncError("calendar_layout_changed", 422); }
   const events: SyncEvent[] = [];
   const updatedAt = new Date().toISOString();
 
