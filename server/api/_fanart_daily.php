@@ -3,6 +3,84 @@
 declare(strict_types=1);
 namespace YeopMigration;
 if (PHP_SAPI !== 'cli' && !defined('YEOP_API')) { http_response_code(404); exit; }
+function fanartTimestamp($value): int {
+    if (!is_string($value)) return 0;
+    $time = strtotime($value);
+    return $time === false ? 0 : $time;
+}
+
+function fanartBackoffUntil(?SharedCache $cache, int $now): int {
+    if (!$cache) return 0; // The independent store still works if live cache is absent.
+    $until = 0;
+    try {
+        foreach (['fanart', 'fanart-image-denied'] as $key) {
+            $entry = $cache->peek($key);
+            if (!$entry || $entry['expires'] <= $now) continue;
+            $reason = $entry['value']['public']['reason'] ?? '';
+            if ($key === 'fanart-image-denied' || in_array($reason, ['upstream_access_restricted', 'upstream_rate_limited'], true)) {
+                $until = max($until, $entry['expires']);
+            }
+        }
+    } catch (\Throwable $error) {
+        // A corrupt/unreadable denial record is not permission to hammer upstream.
+        return max($until, $now + 1800);
+    }
+    return $until;
+}
+
+function fanartRetryPolicy(array $status, int $externalUntil, int $now): array {
+    $kst = (new \DateTimeImmutable('@'.$now))->setTimezone(new \DateTimeZone('Asia/Seoul'));
+    $date = $kst->format('Y-m-d');
+    $last = is_array($status['lastRun'] ?? null) ? $status['lastRun'] : [];
+    $sameDate = ($last['batchDate'] ?? '') === $date;
+    $attempts = 0; $lastFinished = 0;
+    foreach ($status['history'] ?? [] as $item) {
+        if (!is_array($item) || ($item['batchDate'] ?? '') !== $date
+            || !in_array($item['status'] ?? '', ['success', 'failed'], true)
+            || ($item['error'] ?? '') === 'upstream_backoff_active') continue;
+        $attempts++;
+        $lastFinished = max($lastFinished, fanartTimestamp($item['finishedAt'] ?? null));
+    }
+    // Carry forward an interrupted attempt or a deferred run without filling history.
+    if ($sameDate) {
+        $attempts = max($attempts, (int)($last['attemptsToday'] ?? 0));
+        if (($last['status'] ?? '') === 'running') {
+            $attempts = max(1, $attempts);
+            $lastFinished = max($lastFinished, fanartTimestamp($last['startedAt'] ?? null));
+        }
+    }
+    $backoff = max($externalUntil, fanartTimestamp($last['backoffUntil'] ?? null));
+    $policy = ['version'=>2, 'batchDate'=>$date, 'checkedAt'=>gmdate('c', $now),
+        'state'=>'ready', 'attemptsToday'=>$attempts, 'maxAttempts'=>4,
+        'backoffUntil'=>$backoff > $now ? gmdate('c', $backoff) : null,
+        'nextAttemptAt'=>null, 'reason'=>null];
+    if ($sameDate && ($last['status'] ?? '') === 'success') {
+        $policy['state'] = 'success'; return $policy;
+    }
+    if ((int)$kst->format('H') < 1) {
+        $policy['state'] = 'not_due';
+        $policy['nextAttemptAt'] = gmdate('c', strtotime($date.'T01:00:00+09:00'));
+        return $policy;
+    }
+    if ($sameDate && ($last['status'] ?? '') === 'running'
+        && fanartTimestamp($last['startedAt'] ?? null) + 120 > $now) {
+        $policy['state'] = 'running'; return $policy;
+    }
+    if ($attempts >= 4) {
+        $policy['state'] = 'exhausted'; $policy['reason'] = 'daily_attempts_exhausted'; return $policy;
+    }
+    if ((int)$kst->format('H') * 60 + (int)$kst->format('i') >= 23 * 60 + 50) {
+        $policy['state'] = 'closed'; $policy['reason'] = 'daily_retry_window_closed'; return $policy;
+    }
+    $next = max($backoff, $lastFinished > 0 ? $lastFinished + 1800 : 0,
+        $sameDate ? fanartTimestamp($last['nextAttemptAt'] ?? null) : 0);
+    if ($next > $now) {
+        $policy['state'] = 'waiting';
+        $policy['reason'] = $backoff > $now ? 'upstream_backoff_active' : 'retry_interval';
+        $policy['nextAttemptAt'] = gmdate('c', $next);
+    }
+    return $policy;
+}
 
 final class DailyFanartStore {
     private const PREFIX = "<?php http_response_code(404); exit; __halt_compiler();\n";
@@ -90,8 +168,8 @@ final class DailyFanartStore {
         return ['lastRun'=>$run['lastRun'] ?? null, 'history'=>$run['history'] ?? [],
             'snapshot'=>$snapshot ? array_intersect_key($snapshot, array_flip(['articleId','sourceDate','imageCount','batchDate','batchCollectedAt'])) : null];
     }
-    /** Fixed daily warm-up, once per KST date after 01:00; independent of live cache TTL. */
-    public function refresh(callable $collect, callable $download): array {
+    /** Once successful per KST date; deferred checks never consume the four collection attempts. */
+    public function refresh(callable $collect, callable $download, ?callable $backoff = null): array {
         if (!is_writable($this->dir)) throw new \RuntimeException('daily_store_readonly');
         $now = ($this->clock)();
         $kst = (new \DateTimeImmutable('@'.$now))->setTimezone(new \DateTimeZone('Asia/Seoul'));
@@ -105,22 +183,24 @@ final class DailyFanartStore {
         if (!flock($lock, LOCK_EX | LOCK_NB)) { fclose($lock); return ['status'=>'running','batchDate'=>$date]; }
         try {
             $runs = $this->read('runs.php');
-            $lastRun = $runs['lastRun'] ?? null;
-            if (is_array($lastRun) && ($lastRun['batchDate'] ?? '') === $date) {
-                $lastStatus = (string)($lastRun['status'] ?? '');
-                if (in_array($lastStatus, ['success','running'], true)) return $lastRun + ['reused'=>true];
-                $attemptsToday = count(array_filter(
-                    $runs['history'] ?? [],
-                    static fn($item): bool => is_array($item) && ($item['batchDate'] ?? '') === $date
-                ));
-                if ($attemptsToday >= 4) return $lastRun + ['reused'=>true,'retryExhausted'=>true];
-                $finishedAt = $lastRun['finishedAt'] ?? null;
-                $finishedTs = is_string($finishedAt) ? strtotime($finishedAt) : false;
-                if ($finishedTs !== false && $now - $finishedTs < 1800) {
-                    return $lastRun + ['reused'=>true,'retryAfter'=>gmdate('c', $finishedTs + 1800)];
-                }
+            $lastRun = $runs['lastRun'] ?? [];
+            $policy = fanartRetryPolicy($runs, $backoff ? (int)$backoff() : 0, $now);
+            if (in_array($policy['state'], ['success','running'], true)) return $lastRun + ['reused'=>true];
+            if ($policy['state'] === 'exhausted') {
+                return ['status'=>'failed','batchDate'=>$date,'error'=>$lastRun['error'] ?? 'daily_attempts_exhausted',
+                    'attemptsToday'=>$policy['attemptsToday'],'reused'=>true,'retryExhausted'=>true];
             }
-            $run = ['status'=>'running','batchDate'=>$date,'startedAt'=>gmdate('c', $now)];
+            if ($policy['state'] === 'closed') return ['status'=>'not_due','batchDate'=>$date,'error'=>'daily_retry_window_closed'];
+            if ($policy['state'] === 'waiting') {
+                $run = ['status'=>'deferred','batchDate'=>$date,'error'=>$policy['reason'],
+                    'attemptsToday'=>$policy['attemptsToday'],'nextAttemptAt'=>$policy['nextAttemptAt'],
+                    'backoffUntil'=>$policy['backoffUntil'],'finishedAt'=>gmdate('c', $now),'reused'=>true];
+                // Keep the bounded history for actual source attempts, not periodic waiting checks.
+                $this->json('runs.php', ['lastRun'=>$run,'history'=>$runs['history'] ?? []]);
+                return $run;
+            }
+            $run = ['status'=>'running','batchDate'=>$date,'startedAt'=>gmdate('c', $now),
+                'attemptsToday'=>$policy['attemptsToday'] + 1];
             $this->json('runs.php', ['lastRun'=>$run,'history'=>$runs['history'] ?? []]);
             try {
                 $data = $collect();
@@ -166,6 +246,10 @@ final class DailyFanartStore {
                 $run['status'] = 'failed';
                 $message = $error->getMessage();
                 $run['error'] = preg_match('/^[a-z0-9_]{1,80}$/D', $message) ? $message : 'daily_collection_failed';
+                // Persist across release changes, even if the live cache cannot be written.
+                $delay = preg_match('/^upstream_http_(401|403|429)$/D', $run['error']) ? 21600 : 1800;
+                $run['nextAttemptAt'] = gmdate('c', ($this->clock)() + $delay);
+                if ($delay === 21600) $run['backoffUntil'] = $run['nextAttemptAt'];
             }
             $run['finishedAt'] = gmdate('c', ($this->clock)());
             $history = array_slice(array_merge([$run], $runs['history'] ?? []), 0, 31);
