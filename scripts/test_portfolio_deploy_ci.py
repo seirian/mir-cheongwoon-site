@@ -62,6 +62,10 @@ class PortfolioSafetyTests(unittest.TestCase):
         self.assertIn("assets/avatar-yeop.webp", ALLOWED)
         self.assertNotIn("index.php", ALLOWED)
 
+    def test_reapplying_identical_main_release_is_idempotent(self):
+        initial = BRIDGE + make_block(SHA, RID)
+        self.assertEqual(apply_portfolio_block(initial, make_block(SHA, RID)), initial)
+
     def test_versioned_avatar_is_scoped_to_v4_release(self):
         original = (b'<head><link href="/assets/site.css"><link href="/assets/favicon.svg">'
                     b'<script src="/assets/site.js"></script></head>'
