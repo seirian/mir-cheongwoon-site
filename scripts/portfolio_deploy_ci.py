@@ -33,6 +33,7 @@ ALLOWED = {
     "assets/site.css",
     "assets/site.js",
     "assets/favicon.svg",
+    "assets/avatar-yeop.webp",
     "robots.txt",
     "sitemap.xml",
 }
@@ -72,16 +73,18 @@ def read_source():
         if rel not in ALLOWED or not entry.is_file() or entry.stat().st_size > 180_000:
             stop("Unexpected portfolio source file: " + rel)
         files[rel] = entry.read_bytes()
-    if observed != ALLOWED:
+    legacy_allowed = ALLOWED - {"assets/avatar-yeop.webp"}
+    if observed not in (ALLOWED, legacy_allowed):
         stop("File manifest does not match allowlist")
     html = files["index.html"]
     if not any(marker in html for marker in (
         b'data-site="yeop-portfolio-v1"',
         b'data-site="yeop-portfolio-v2"',
         b'data-site="yeop-portfolio-v3"',
+        b'data-site="yeop-portfolio-v4"',
     )):
         stop("Portfolio ownership marker is missing")
-    if b'data-site="yeop-portfolio-v3"' in html:
+    if b'data-site="yeop-portfolio-v3"' in html or b'data-site="yeop-portfolio-v4"' in html:
         # All Notion-documented professional projects must be present
         # and published before the separate personal hobby section.
         project_ids = (
@@ -111,8 +114,27 @@ def read_source():
             stop("Professional-work case study markers are incomplete")
         if html.index(b'id="project-air"') >= html.index(b'id="side"'):
             stop("Hobby section must not precede professional work")
-    for entry in ["assets/site.css", "assets/site.js", "assets/favicon.svg"]:
-        if b'"/assets/' + entry.split("/")[-1].encode() not in files["index.html"]:
+    if b'data-site="yeop-portfolio-v4"' in html:
+        if observed != ALLOWED:
+            stop("v4 requires the source Notion photo asset")
+        must_contain = (
+            "13년 8개월".encode(),
+            b"(2012.03 ~ 2026.02)",
+            "개발 경력 기간".encode(),
+            "함께 고민하겠습니다.".encode(),
+            b"https://isegye-idol.kr/",
+        )
+        if not all(key in html for key in must_contain):
+            stop("Portfolio v4 content requirements are missing")
+        if html.count(b'class="project-scene"') != 12:
+            stop("Exactly twelve project illustrations are required")
+        if not files["assets/avatar-yeop.webp"].startswith(b"RIFF"):
+            stop("Actual Notion portrait is not a WEBP image")
+    expected_assets = ["assets/site.css", "assets/site.js", "assets/favicon.svg"]
+    if b'data-site="yeop-portfolio-v4"' in html:
+        expected_assets.append("assets/avatar-yeop.webp")
+    for entry in expected_assets:
+        if b'"/assets/' + entry.split("/")[-1].encode() not in html:
             stop("Expected asset reference missing: " + entry)
     return sha, files
 
@@ -121,7 +143,8 @@ def release_files(sha, files):
     rid = sha[:12]
     patched = dict(files)
     html = patched["index.html"]
-    if html.count(b"</head>") != 1 or html.count(b'"/assets/') != 3:
+    expected_refs = 4 if b'data-site="yeop-portfolio-v4"' in html else 3
+    if html.count(b"</head>") != 1 or html.count(b'"/assets/') != expected_refs:
         stop("Unexpected HTML asset references")
     html = html.replace(b'"/assets/', b'"/_portfolio_releases/' + rid.encode() + b'/assets/')
     html = html.replace(b"</head>", b'<meta name="portfolio-release" content="' + sha.encode() + b'">\n</head>')
@@ -217,7 +240,10 @@ def production_smoke(sha, rid, files):
         results[path] = {"http": code, "passed": ok}
         if not ok:
             stop("Personal-host route failed: " + path)
-    for path in ("assets/site.css", "assets/site.js", "assets/favicon.svg"):
+    assets = ("assets/site.css", "assets/site.js", "assets/favicon.svg")
+    if "assets/avatar-yeop.webp" in files:
+        assets += ("assets/avatar-yeop.webp",)
+    for path in assets:
         code, response = get(PERSONAL_ORIGIN + "/_portfolio_releases/" + rid + "/" + path, 180_000)
         if code != 200 or response != files[path]:
             stop("Live versioned asset failed: " + path)
