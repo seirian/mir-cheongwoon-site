@@ -47,6 +47,13 @@ class PortfolioSafetyTests(unittest.TestCase):
         with self.assertRaises(shared.Stop):
             apply_portfolio_block(BRIDGE + 2 * make_block(SHA, RID), make_block(SHA, RID))
 
+    def test_portfolio_rules_never_capture_mir_hostname(self):
+        block = make_block(SHA, RID)
+        self.assertEqual(block.count(b"RewriteCond %{HTTP_HOST}"), 2)
+        self.assertIn(b"yeop\\.net", block)
+        self.assertNotIn(b"mir\\.yeop\\.net", block)
+        self.assertNotIn(b"RewriteRule ^(.*)$", block)
+
     def test_versioned_assets_are_release_scoped(self):
         original = b'<head><link href="/assets/site.css"><link href="/assets/favicon.svg"><script src="/assets/site.js"></script></head>'
         rid, output = release_files(SHA, {"index.html": original})
