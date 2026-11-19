@@ -34,6 +34,7 @@ ALLOWED = {
     "assets/site.js",
     "assets/favicon.svg",
     "assets/avatar-yeop.webp",
+    "assets/og-portfolio.jpg",
     "robots.txt",
     "sitemap.xml",
 }
@@ -73,8 +74,9 @@ def read_source():
         if rel not in ALLOWED or not entry.is_file() or entry.stat().st_size > 180_000:
             stop("Unexpected portfolio source file: " + rel)
         files[rel] = entry.read_bytes()
-    legacy_allowed = ALLOWED - {"assets/avatar-yeop.webp"}
-    if observed not in (ALLOWED, legacy_allowed):
+    allowed_without_social = ALLOWED - {"assets/og-portfolio.jpg"}
+    legacy_allowed = allowed_without_social - {"assets/avatar-yeop.webp"}
+    if observed not in (ALLOWED, allowed_without_social, legacy_allowed):
         stop("File manifest does not match allowlist")
     html = files["index.html"]
     if not any(marker in html for marker in (
@@ -115,7 +117,7 @@ def read_source():
         if html.index(b'id="project-air"') >= html.index(b'id="side"'):
             stop("Hobby section must not precede professional work")
     if b'data-site="yeop-portfolio-v4"' in html:
-        if observed != ALLOWED:
+        if "assets/avatar-yeop.webp" not in files:
             stop("v4 requires the source Notion photo asset")
         must_contain = (
             "13년 8개월".encode(),
@@ -130,6 +132,24 @@ def read_source():
             stop("Exactly twelve project illustrations are required")
         if not files["assets/avatar-yeop.webp"].startswith(b"RIFF"):
             stop("Actual Notion portrait is not a WEBP image")
+        if b'property="og:image"' in html:
+            if observed != ALLOWED:
+                stop("Portfolio sharing metadata requires a durable JPEG asset")
+            if html.count(b'property="og:image"') != 1:
+                stop("There must be exactly one OG primary image")
+            expected_social = (b"https://yeop.net/_portfolio_releases/"
+                               b"__PORTFOLIO_RELEASE__/assets/og-portfolio.jpg")
+            if html.count(expected_social) != 3:
+                stop("OG and Twitter image URLs must reference the same versioned JPEG")
+            if b'<meta property="og:image:type" content="image/jpeg">' not in html:
+                stop("OG image MIME metadata is missing")
+            if b'<meta property="og:image:width" content="1200">' not in html or b'<meta property="og:image:height" content="630">' not in html:
+                stop("OG image dimensions are missing")
+            jpeg = files["assets/og-portfolio.jpg"]
+            if not jpeg.startswith(b"\\xff\\xd8\\xff") or not (20000 < len(jpeg) < 175000):
+                stop("Open Graph preview is not a valid sized JPEG asset")
+        elif "assets/og-portfolio.jpg" in files:
+            stop("Social image present without absolute sharing metadata")
     expected_assets = ["assets/site.css", "assets/site.js", "assets/favicon.svg"]
     if b'data-site="yeop-portfolio-v4"' in html:
         expected_assets.append("assets/avatar-yeop.webp")
@@ -146,6 +166,13 @@ def release_files(sha, files):
     expected_refs = 4 if b'data-site="yeop-portfolio-v4"' in html else 3
     if html.count(b"</head>") != 1 or html.count(b'"/assets/') != expected_refs:
         stop("Unexpected HTML asset references")
+    social_marker = b"__PORTFOLIO_RELEASE__"
+    if b'property="og:image"' in html:
+        if html.count(social_marker) != 3 or "assets/og-portfolio.jpg" not in files:
+            stop("Social-sharing release marker is missing or inconsistent")
+        html = html.replace(social_marker, rid.encode())
+    elif social_marker in html:
+        stop("Unrecognized release marker in portfolio HTML")
     html = html.replace(b'"/assets/', b'"/_portfolio_releases/' + rid.encode() + b'/assets/')
     html = html.replace(b"</head>", b'<meta name="portfolio-release" content="' + sha.encode() + b'">\n</head>')
     patched["index.html"] = html
@@ -243,10 +270,26 @@ def production_smoke(sha, rid, files):
     assets = ("assets/site.css", "assets/site.js", "assets/favicon.svg")
     if "assets/avatar-yeop.webp" in files:
         assets += ("assets/avatar-yeop.webp",)
+    if "assets/og-portfolio.jpg" in files:
+        assets += ("assets/og-portfolio.jpg",)
     for path in assets:
         code, response = get(PERSONAL_ORIGIN + "/_portfolio_releases/" + rid + "/" + path, 180_000)
         if code != 200 or response != files[path]:
             stop("Live versioned asset failed: " + path)
+    if "assets/og-portfolio.jpg" in files:
+        expected_og = (PERSONAL_ORIGIN + "/_portfolio_releases/" + rid
+                       + "/assets/og-portfolio.jpg")
+        if files["index.html"].count(
+            ('content="' + expected_og + '"').encode("utf-8")
+        ) != 3:
+            stop("Public OG/Twitter metadata must use a unique versioned JPEG")
+        request = urllib.request.Request(
+            expected_og, headers={"User-Agent": "YeopPortfolioDeploy/1.0"}
+        )
+        with urllib.request.urlopen(request, timeout=25) as response:
+            if response.status != 200 or response.headers.get_content_type() != "image/jpeg":
+                stop("OG JPEG is not served with HTTP 200 image/jpeg")
+        results["social_image"] = {"url": expected_og, "mime": "image/jpeg", "passed": True}
     if sha.encode() not in results_body_marker(files["index.html"]):
         stop("Release marker not found")
     return results
