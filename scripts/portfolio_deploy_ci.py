@@ -78,10 +78,32 @@ def read_source():
     if not any(marker in html for marker in (
         b'data-site="yeop-portfolio-v1"',
         b'data-site="yeop-portfolio-v2"',
+        b'data-site="yeop-portfolio-v3"',
     )):
         stop("Portfolio ownership marker is missing")
-    if b'data-site="yeop-portfolio-v2"' in html:
-        # Career-first layout: do not accidentally promote hobby projects.
+    if b'data-site="yeop-portfolio-v3"' in html:
+        # All Notion-documented professional projects must be present
+        # and published before the separate personal hobby section.
+        project_ids = (
+            "sme", "kb-fcc", "fitpet", "eqst", "groupware", "learningpro",
+            "judicial", "kifin", "health-edu", "startup-school",
+            "avalon", "samsung-learning",
+        )
+        required = (b'id="work"', b'id="career"', b'id="skills"',
+                    b'id="about"', b'id="side"') + tuple(
+            ('id="project-' + key + '"').encode() for key in project_ids
+        )
+        if not all(marker in html for marker in required):
+            stop("Notion-sourced professional project markers are incomplete")
+        if html.count(b'class="project-card ') != 12:
+            stop("Exactly twelve Notion project cards are required")
+        for section in (b'id="work"', b'id="career"', b'id="skills"'):
+            if html.index(section) >= html.index(b'id="side"'):
+                stop("Hobby section must come after professional content")
+        for sensitive in (b"1984. 09. 25", "남부순환로".encode()):
+            if sensitive in html:
+                stop("Sensitive personal information in public portfolio")
+    elif b'data-site="yeop-portfolio-v2"' in html:
         required = (b'id="project-air"', b'id="project-water"',
                     b'id="project-haps"', b'id="project-plan"',
                     b'id="experience"', b'id="side"')
