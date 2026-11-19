@@ -1,0 +1,84 @@
+name: Deploy yeop.net portfolio (main-only)
+
+on:
+  # GitHub schedules run on this repository's default branch (develop).
+  # Deployable content is fetched exclusively from portfolio/main.
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/portfolio-deploy.yml'
+      - 'scripts/portfolio_deploy_ci.py'
+      - 'scripts/test_portfolio_deploy_ci.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  # Shared with the existing MIR production workflow to serialize access to
+  # the single Inour hosting account and shared root .htaccess.
+  group: yeop-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  portfolio:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout trusted deployment code (MIR repository)
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          persist-credentials: false
+      - name: Checkout only portfolio production main
+        uses: actions/checkout@v4
+        with:
+          repository: seirian/seirian.github.io
+          ref: main
+          path: portfolio-source
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Pin portfolio commit for this run
+        run: |
+          echo "Portfolio source main SHA: $(git -C portfolio-source rev-parse HEAD)"
+          test -f portfolio-source/site/index.html
+          test -f scripts/portfolio_deploy_ci.py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate deployment code and routing invariants
+        run: |
+          python -m py_compile scripts/portfolio_deploy_ci.py scripts/test_portfolio_deploy_ci.py
+          python -m unittest discover -s scripts -p 'test_portfolio_deploy_ci.py' -v
+      - name: Install pinned SFTP library
+        run: python -m pip install --disable-pip-version-check --no-input paramiko==5.0.0
+      - name: Publish isolated release and verify both domains
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+        run: |
+          test -n "$YEOP_SFTP_PASSWORD"
+          python scripts/portfolio_deploy_ci.py
+      - name: Preserve audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-deploy-${{ github.run_id }}
+          path: portfolio_deploy_report.json
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Deployment summary
+        if: success()
+        run: |
+          python - <<'PY'
+          import json, os
+          data=json.load(open("portfolio_deploy_report.json",encoding="utf-8"))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+              f.write("### yeop.net portfolio main release\n\n")
+              f.write("- Commit: "+data["main_sha"]+"\n")
+              f.write("- Phase: "+data["phase"]+"\n")
+              f.write("- MIR checks: preserved\n")
+              f.write("- Existing MIR site and its deployment pipeline remain independent\n")
+          PY
