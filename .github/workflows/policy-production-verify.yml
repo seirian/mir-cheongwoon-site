@@ -9,7 +9,8 @@ permissions:
   contents: read
 jobs:
   policy:
-    runs-on: ubuntu-latest
+    # Playwright 1.55/1.57 Chromium is not supported on ubuntu-26.04 latest.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
