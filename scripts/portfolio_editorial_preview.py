@@ -21,7 +21,7 @@ from yeop_deploy_ci import Remote, Stop
 SOURCE_ROOT = Path("portfolio-source")
 REVIEW_REL = "preview/editorial/index.html"
 AVATAR_REL = "site/assets/avatar-yeop.webp"
-PREVIEW_NAME = "editorial-20261119"
+PREVIEW_NAME = "editorial-20261119-v2"
 ROOT = "/web"
 PARENT = ROOT + "/_portfolio_previews"
 RELEASE = PARENT + "/" + PREVIEW_NAME
@@ -80,7 +80,7 @@ def load_release():
         raise Stop("Review must include all 12 original professional projects")
     if b'<meta name="robots" content="noindex,nofollow,noarchive">' not in html:
         raise Stop("Review must opt out of indexing")
-    if b'./avatar-yeop.webp' not in html:
+    if b'./avatar-yeop.jpg' not in html:
         raise Stop("Review must use the original portrait locally")
     if not face.startswith(b"RIFF") or not (1000 < len(face) < 100_000):
         raise Stop("Notion avatar is missing or not WebP")
@@ -88,7 +88,15 @@ def load_release():
         raise Stop("Required Notion career evidence is missing")
     if b'src="/_portfolio_releases/' in html or b'__PORTFOLIO_RELEASE__' in html:
         raise Stop("Preview must not pretend to be production")
-    return sha, {"index.html": html, "avatar-yeop.webp": face}
+    from io import BytesIO
+    from PIL import Image
+    with Image.open(BytesIO(face)) as original:
+        stream = BytesIO()
+        original.convert("RGB").save(stream, "JPEG", quality=88, optimize=True)
+        jpeg = stream.getvalue()
+    if not jpeg.startswith(bytes.fromhex("ffd8ff")) or not (5000 < len(jpeg) < 80000):
+        raise Stop("Generated review JPEG failed validation")
+    return sha, {"index.html": html, "avatar-yeop.jpg": jpeg}
 
 
 def assert_untouched(before, after, label):
@@ -136,7 +144,7 @@ def main():
             for relative, expected in files.items():
                 url = ORIGIN + "/_portfolio_previews/" + PREVIEW_NAME + "/" + relative
                 status, body, mime = get(url, 250_000)
-                expected_type = "text/html" if relative.endswith(".html") else "image/webp"
+                expected_type = "text/html" if relative.endswith(".html") else "image/jpeg"
                 if status != 200 or body != expected or mime != expected_type:
                     raise Stop("Review HTTP check failed for " + relative + ": " + str((status, mime)))
                 report["files"][relative] = {
