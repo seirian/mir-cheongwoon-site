@@ -74,8 +74,21 @@ def read_source():
         files[rel] = entry.read_bytes()
     if observed != ALLOWED:
         stop("File manifest does not match allowlist")
-    if b'data-site="yeop-portfolio-v1"' not in files["index.html"]:
+    html = files["index.html"]
+    if not any(marker in html for marker in (
+        b'data-site="yeop-portfolio-v1"',
+        b'data-site="yeop-portfolio-v2"',
+    )):
         stop("Portfolio ownership marker is missing")
+    if b'data-site="yeop-portfolio-v2"' in html:
+        # Career-first layout: do not accidentally promote hobby projects.
+        required = (b'id="project-air"', b'id="project-water"',
+                    b'id="project-haps"', b'id="project-plan"',
+                    b'id="experience"', b'id="side"')
+        if not all(marker in html for marker in required):
+            stop("Professional-work case study markers are incomplete")
+        if html.index(b'id="project-air"') >= html.index(b'id="side"'):
+            stop("Hobby section must not precede professional work")
     for entry in ["assets/site.css", "assets/site.js", "assets/favicon.svg"]:
         if b'"/assets/' + entry.split("/")[-1].encode() not in files["index.html"]:
             stop("Expected asset reference missing: " + entry)
