@@ -1,0 +1,80 @@
+name: Preview yeop.net portfolio — editorial review
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/portfolio-editorial-preview.yml'
+      - 'scripts/portfolio_editorial_preview.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# All changes on the shared Inour account must be serialized. This preview
+# never changes the production router or any MIR files.
+concurrency:
+  group: yeop-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: github.repository == 'seirian/mir-cheongwoon-site' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout trusted preview deployer from MIR develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          persist-credentials: false
+      - name: Checkout portfolio develop preview only
+        uses: actions/checkout@v4
+        with:
+          repository: seirian/seirian.github.io
+          ref: develop
+          path: portfolio-source
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate source and preview boundaries
+        run: |
+          python -m py_compile scripts/portfolio_editorial_preview.py
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('portfolio-source/preview/editorial/index.html').read_text(encoding='utf-8')
+          assert source.count('class="project-entry"') == 12
+          assert source.count('class="side-project"') == 3
+          assert 'name="robots" content="noindex,nofollow,noarchive"' in source
+          assert source.find('id="work"') < source.find('id="side"')
+          assert '<h1>안녕하세요.' in source
+          assert '13년 8개월' in source
+          assert '<meta property="og:url" content="https://yeop.net/">' not in source
+          assert 'https://yeop.net/_portfolio_releases/' not in source
+          assert 'src="./avatar-yeop.webp"' in source
+          print('Editorial review structure and isolation verified')
+          PY
+      - name: Install pinned SFTP dependency
+        run: python -m pip install --disable-pip-version-check --no-input paramiko==5.0.0
+      - name: Publish review assets ONLY to isolated preview directory
+        env:
+          YEOP_SFTP_PASSWORD: ${{ secrets.YEOP_SFTP_PASSWORD }}
+        run: |
+          test -n "$YEOP_SFTP_PASSWORD"
+          python scripts/portfolio_editorial_preview.py
+      - name: Archive publication checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yeop-editorial-preview-${{ github.run_id }}
+          path: portfolio_preview_report.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Show independent preview URL
+        if: success()
+        run: |
+          echo '### Editorial portfolio review published' >> "$GITHUB_STEP_SUMMARY"
+          echo 'https://yeop.net/_portfolio_previews/editorial-20261119/index.html' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Source: develop, unrelated to production main and MIR releases' >> "$GITHUB_STEP_SUMMARY"
