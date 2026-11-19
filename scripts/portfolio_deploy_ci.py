@@ -146,7 +146,7 @@ def read_source():
             if b'<meta property="og:image:width" content="1200">' not in html or b'<meta property="og:image:height" content="630">' not in html:
                 stop("OG image dimensions are missing")
             jpeg = files["assets/og-portfolio.jpg"]
-            if not jpeg.startswith(b"\\xff\\xd8\\xff") or not (20000 < len(jpeg) < 175000):
+            if not jpeg.startswith(bytes.fromhex("ffd8ff")) or not (20000 < len(jpeg) < 175000):
                 stop("Open Graph preview is not a valid sized JPEG asset")
         elif "assets/og-portfolio.jpg" in files:
             stop("Social image present without absolute sharing metadata")
