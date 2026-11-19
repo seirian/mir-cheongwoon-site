@@ -54,6 +54,13 @@ class PortfolioSafetyTests(unittest.TestCase):
         self.assertNotIn(b"mir\\.yeop\\.net", block)
         self.assertNotIn(b"RewriteRule ^(.*)$", block)
 
+    def test_notions_career_filter_is_enforced_for_v3(self):
+        from portfolio_deploy_ci import ALLOWED
+        self.assertEqual(len(ALLOWED), 6)
+        self.assertIn("index.html", ALLOWED)
+        self.assertIn("assets/site.js", ALLOWED)
+        self.assertNotIn("index.php", ALLOWED)
+
     def test_versioned_assets_are_release_scoped(self):
         original = b'<head><link href="/assets/site.css"><link href="/assets/favicon.svg"><script src="/assets/site.js"></script></head>'
         rid, output = release_files(SHA, {"index.html": original})
