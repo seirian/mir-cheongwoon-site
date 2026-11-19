@@ -92,6 +92,19 @@ class PortfolioSafetyTests(unittest.TestCase):
         self.assertNotIn(b"mir.yeop.net", updated["index.html"])
         self.assertEqual(updated["index.html"].count(b'"/_portfolio_releases/'), 4)
 
+    def test_social_preview_requires_matching_og_and_twitter_urls(self):
+        social = (b"https://yeop.net/_portfolio_releases/"
+                  b"__PORTFOLIO_RELEASE__/assets/og-portfolio.jpg")
+        html = (
+            b'<head><meta property="og:image" content="' + social + b'">'
+            b'<meta name="twitter:image" content="' + social + b'"></head>'
+        )
+        with self.assertRaises(shared.Stop):
+            release_files(SHA, {
+                "index.html": html,
+                "assets/og-portfolio.jpg": bytes.fromhex("ffd8ff") + b"x" * 22000,
+            })
+
     def test_social_preview_missing_binary_aborts_release(self):
         social = (b"https://yeop.net/_portfolio_releases/"
                   b"__PORTFOLIO_RELEASE__/assets/og-portfolio.jpg")
