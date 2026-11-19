@@ -56,10 +56,20 @@ class PortfolioSafetyTests(unittest.TestCase):
 
     def test_notions_career_filter_is_enforced_for_v3(self):
         from portfolio_deploy_ci import ALLOWED
-        self.assertEqual(len(ALLOWED), 6)
+        self.assertEqual(len(ALLOWED), 7)
         self.assertIn("index.html", ALLOWED)
         self.assertIn("assets/site.js", ALLOWED)
+        self.assertIn("assets/avatar-yeop.webp", ALLOWED)
         self.assertNotIn("index.php", ALLOWED)
+
+    def test_versioned_avatar_is_scoped_to_v4_release(self):
+        original = (b'<head><link href="/assets/site.css"><link href="/assets/favicon.svg">'
+                    b'<script src="/assets/site.js"></script></head>'
+                    b'<body data-site="yeop-portfolio-v4"><img src="/assets/avatar-yeop.webp"></body>')
+        rid, output = release_files(SHA, {"index.html": original})
+        self.assertEqual(rid, RID)
+        self.assertEqual(output["index.html"].count(b'"/_portfolio_releases/'), 4)
+        self.assertNotIn(b'src="/assets/avatar-yeop.webp"', output["index.html"])
 
     def test_versioned_assets_are_release_scoped(self):
         original = b'<head><link href="/assets/site.css"><link href="/assets/favicon.svg"><script src="/assets/site.js"></script></head>'
