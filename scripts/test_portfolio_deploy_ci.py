@@ -56,15 +56,48 @@ class PortfolioSafetyTests(unittest.TestCase):
 
     def test_notions_career_filter_is_enforced_for_v3(self):
         from portfolio_deploy_ci import ALLOWED
-        self.assertEqual(len(ALLOWED), 7)
+        self.assertEqual(len(ALLOWED), 8)
         self.assertIn("index.html", ALLOWED)
         self.assertIn("assets/site.js", ALLOWED)
         self.assertIn("assets/avatar-yeop.webp", ALLOWED)
+        self.assertIn("assets/og-portfolio.jpg", ALLOWED)
         self.assertNotIn("index.php", ALLOWED)
 
     def test_reapplying_identical_main_release_is_idempotent(self):
         initial = BRIDGE + make_block(SHA, RID)
         self.assertEqual(apply_portfolio_block(initial, make_block(SHA, RID)), initial)
+
+    def test_social_preview_is_version_scoped_and_never_points_to_mir(self):
+        social = (b"https://yeop.net/_portfolio_releases/"
+                  b"__PORTFOLIO_RELEASE__/assets/og-portfolio.jpg")
+        original = (
+            b'<head><meta property="og:image" content="' + social + b'">'
+            b'<meta property="og:image:secure_url" content="' + social + b'">'
+            b'<meta name="twitter:image" content="' + social + b'">'
+            b'<link href="/assets/site.css"><link href="/assets/favicon.svg">'
+            b'<script src="/assets/site.js"></script></head>'
+            b'<body data-site="yeop-portfolio-v4">'
+            b'<img src="/assets/avatar-yeop.webp"></body>'
+        )
+        rid, updated = release_files(SHA, {
+            "index.html": original,
+            "assets/og-portfolio.jpg": bytes.fromhex("ffd8ff") + b"a" * 22000,
+        })
+        expected_url = (
+            b"https://yeop.net/_portfolio_releases/" + rid.encode()
+            + b"/assets/og-portfolio.jpg"
+        )
+        self.assertEqual(updated["index.html"].count(expected_url), 3)
+        self.assertNotIn(b"__PORTFOLIO_RELEASE__", updated["index.html"])
+        self.assertNotIn(b"mir.yeop.net", updated["index.html"])
+        self.assertEqual(updated["index.html"].count(b'"/_portfolio_releases/'), 4)
+
+    def test_social_preview_missing_binary_aborts_release(self):
+        social = (b"https://yeop.net/_portfolio_releases/"
+                  b"__PORTFOLIO_RELEASE__/assets/og-portfolio.jpg")
+        original = b'<head><meta property="og:image" content="' + social + b'"></head>'
+        with self.assertRaises(shared.Stop):
+            release_files(SHA, {"index.html": original})
 
     def test_versioned_avatar_is_scoped_to_v4_release(self):
         original = (b'<head><link href="/assets/site.css"><link href="/assets/favicon.svg">'
